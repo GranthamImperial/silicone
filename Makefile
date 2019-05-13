@@ -20,6 +20,59 @@ help:
 test:  $(VENV_DIR) ## run the full testsuite
 	$(VENV_DIR)/bin/pytest --cov -rfsxEX --cov-report term-missing
 
+# first time setup, follow this https://blog.jetbrains.com/pycharm/2017/05/how-to-publish-your-package-on-pypi/
+# then this works
+.PHONY: publish-on-testpypi
+publish-on-testpypi: $(VENV_DIR)  ## publish the current state of the repository to test PyPI
+	-rm -rf build dist
+	@status=$$(git status --porcelain); \
+	if test "x$${status}" = x; then \
+		$(VENV_DIR)/bin/python setup.py sdist bdist_wheel --universal; \
+		$(VENV_DIR)/bin/twine upload -r testpypi dist/*; \
+	else \
+		echo Working directory is dirty >&2; \
+	fi;
+
+test-testpypi-install: $(VENV_DIR)  ## test whether installing from test PyPI works
+	$(eval TEMPVENV := $(shell mktemp -d))
+	python3 -m venv $(TEMPVENV)
+	$(TEMPVENV)/bin/pip install pip --upgrade
+	# Install dependencies not on testpypi registry
+	$(TEMPVENV)/bin/pip install pandas
+	# Install pymagicc without dependencies.
+	$(TEMPVENV)/bin/pip install \
+		-i https://testpypi.python.org/pypi silicone \
+		--no-dependencies --pre
+		# Remove local directory from path to get actual installed version.
+	@echo "This doesn't test dependencies"
+	$(TEMPVENV)/bin/python -c "import sys; sys.path.remove(''); import silicone; print(silicone.__version__)"
+
+.PHONY: publish-on-pypi
+publish-on-pypi:  $(VENV_DIR) ## publish the current state of the repository to PyPI
+	-rm -rf build dist
+	@status=$$(git status --porcelain); \
+	if test "x$${status}" = x; then \
+		$(VENV_DIR)/bin/python setup.py sdist bdist_wheel --universal; \
+		$(VENV_DIR)/bin/twine upload dist/*; \
+	else \
+		echo Working directory is dirty >&2; \
+	fi;
+
+test-pypi-install: $(VENV_DIR)  ## test whether installing from PyPI works
+	$(eval TEMPVENV := $(shell mktemp -d))
+	python3 -m venv $(TEMPVENV)
+	$(TEMPVENV)/bin/pip install pip --upgrade
+	$(TEMPVENV)/bin/pip install silicone --pre
+	$(TEMPVENV)/bin/python scripts/test_install.py
+
+.PHONY: test-install
+test-install: $(VENV_DIR)  ## test whether installing the local setup works
+	$(eval TEMPVENV := $(shell mktemp -d))
+	python3 -m venv $(TEMPVENV)
+	$(TEMPVENV)/bin/pip install pip --upgrade
+	$(TEMPVENV)/bin/pip install .
+	$(TEMPVENV)/bin/python scripts/test_install.py
+
 virtual-environment:  ## update venv, create a new venv if it doesn't exist
 	make $(VENV_DIR)
 

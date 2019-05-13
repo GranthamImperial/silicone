@@ -8,15 +8,15 @@ KEYWORDS = ["emissions", "automation", "filling", "detail", "climate"]
 AUTHORS = [
     ("Zeb Nicholls", "zebedee.nicholls@climate-energy-college.org"),
 ]
-
-SOURCE_DIR = "src"
-
 URL = "https://github.com/znicholls/silicone"
 PROJECT_URLS = {
     "Bug Reports": "https://github.com/znicholls/silicone/issues",
     "Documentation": "https://silicone.readthedocs.io/en/latest",
     "Source": "https://github.com/znicholls/silicone",
 }
+
+SOURCE_DIR = "src"
+
 # LICENSE = "GNU Affero General Public License v3.0 or later"
 CLASSIFIERS = [
     #   3 - Alpha
@@ -51,7 +51,7 @@ REQUIREMENTS_DEV = (
         "isort",
         "mypy",
         "pydocstyle",
-        "pylint @ git+https://github.com/PyCQA/pylint.git@master",  # TODO: change when new release comes out
+        "pylint",
     ]
     + REQUIREMENTS_NOTEBOOKS
     + REQUIREMENTS_TESTS
@@ -67,8 +67,6 @@ REQUIREMENTS_EXTRAS = {
     "deploy": REQUIREMENTS_DEPLOY,
     "dev": REQUIREMENTS_DEV,
 }
-
-PACKAGE_DATA = {}
 
 # Get the long description from the README file
 with open("README.rst", "r", encoding="utf-8") as f:
@@ -106,9 +104,8 @@ setup(
     project_urls=PROJECT_URLS,
     # license=LICENSE,
     classifiers=CLASSIFIERS,
-    packages=find_packages(exclude=["tests"]),
+    packages=find_packages(SOURCE_DIR),
     package_dir={"": SOURCE_DIR},
-    package_data=PACKAGE_DATA,
     install_requires=REQUIREMENTS_INSTALL,
     extras_require=REQUIREMENTS_EXTRAS,
     cmdclass=CMDCLASS,
