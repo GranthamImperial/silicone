@@ -71,9 +71,13 @@ REQUIREMENTS_EXTRAS = {
 }
 
 # Get the long description from the README file
-with open(README, "r") as readme_file:
-    README_TEXT = readme_file.read()
+with open(README, "r", encoding="utf-8") as f:
+    README_LINES = ["Silicone", "========", ""]
+    for line in f:
+        README_LINES.append(line.strip())
 
+if len(README_LINES) < 3:
+    raise RuntimeError("Insufficient description given")
 
 class SiliconeTest(TestCommand):
     def finalize_options(self):
@@ -94,7 +98,7 @@ setup(
     name=NAME,
     version=versioneer.get_version(),
     description=SHORT_DESCRIPTION,
-    long_description=README_TEXT,
+    long_description="\n".join(README_LINES),
     long_description_content_type="text/x-rst",
     keywords=KEYWORDS,
     author=", ".join([author[0] for author in AUTHORS]),
