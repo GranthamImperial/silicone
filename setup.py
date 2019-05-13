@@ -80,7 +80,7 @@ with open(README, "r", encoding="utf-8") as f:
         elif line.strip() == ".. sec-end-long-description":
             break
         elif add_line:
-            README_LINES.append(line)
+            README_LINES.append(line.strip())
 
 if len(README_LINES) < 3:
     raise RuntimeError("Insufficient description given")
