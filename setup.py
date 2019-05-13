@@ -72,9 +72,15 @@ REQUIREMENTS_EXTRAS = {
 
 # Get the long description from the README file
 with open(README, "r", encoding="utf-8") as f:
-    README_LINES = []
+    README_LINES = ["Silicone", "========", ""]
+    add_line = False
     for line in f:
-        README_LINES.append(line.strip())
+        if line.strip() == ".. sec-begin-long-description":
+            add_line = True
+        elif line.strip() == ".. sec-end-long-description":
+            break
+        elif add_line:
+            README_LINES.append(line)
 
 if len(README_LINES) < 3:
     raise RuntimeError("Insufficient description given")
