@@ -8,6 +8,8 @@ KEYWORDS = ["emissions", "automation", "filling", "detail", "climate"]
 AUTHORS = [
     ("Zeb Nicholls", "zebedee.nicholls@climate-energy-college.org"),
 ]
+
+README = "README.rst"
 URL = "https://github.com/znicholls/silicone"
 PROJECT_URLS = {
     "Bug Reports": "https://github.com/znicholls/silicone/issues",
@@ -69,11 +71,8 @@ REQUIREMENTS_EXTRAS = {
 }
 
 # Get the long description from the README file
-with open("README.rst", "r", encoding="utf-8") as f:
-    README_LINES = f.read()
-
-if len(README_LINES) < 3:
-    raise RuntimeError("Insufficient description given")
+with open(README, "r") as readme_file:
+    README_TEXT = readme_file.read()
 
 
 class SiliconeTest(TestCommand):
@@ -95,7 +94,7 @@ setup(
     name=NAME,
     version=versioneer.get_version(),
     description=SHORT_DESCRIPTION,
-    long_description="\n".join(README_LINES),
+    long_description=README_TEXT,
     long_description_content_type="text/x-rst",
     keywords=KEYWORDS,
     author=", ".join([author[0] for author in AUTHORS]),
