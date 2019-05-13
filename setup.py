@@ -72,7 +72,7 @@ REQUIREMENTS_EXTRAS = {
 
 # Get the long description from the README file
 with open(README, "r", encoding="utf-8") as f:
-    README_LINES = ["Silicone", "========", ""]
+    README_LINES = []
     for line in f:
         README_LINES.append(line.strip())
 
