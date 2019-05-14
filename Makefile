@@ -12,7 +12,7 @@ define PRINT_HELP_PYSCRIPT
 import re, sys
 
 for line in sys.stdin:
-	match = re.match(r'^([a-zA-Z_-]+):.*?## (.*)$$', line)
+	match = re.match(r'^([0-9a-zA-Z_-]+):.*?## (.*)$$', line)
 	if match:
 		target, help = match.groups()
 		print("%-20s %s" % (target, help))
@@ -23,14 +23,14 @@ export PRINT_HELP_PYSCRIPT
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
-sr15-emissions: $(VENV_DIR) $(DATA_DIR) $(SR15_EMISSIONS_SCRAPER) ## download all SR1.5 emissions data
+sr15-emissions: $(VENV_DIR) $(DATA_DIR) $(SR15_EMISSIONS_SCRAPER)  ## download all SR1.5 emissions data
 	mkdir -p $(SR15_EMISSIONS_DIR)
 	$(VENV_DIR)/bin/python $(SR15_EMISSIONS_SCRAPER) $(SR15_EMISSIONS_FILE)
 
 $(DATA_DIR):
 	mkdir -p $(DATA_DIR)
 
-test:  $(VENV_DIR) ## run the full testsuite
+test: $(VENV_DIR) ## run the full testsuite
 	$(VENV_DIR)/bin/pytest --cov -rfsxEX --cov-report term-missing
 
 # first time setup, follow this https://blog.jetbrains.com/pycharm/2017/05/how-to-publish-your-package-on-pypi/
