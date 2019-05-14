@@ -1,5 +1,5 @@
-# Example output folder
-example-outputs
+# SR1.5 data
+data/sr15_emissions
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
