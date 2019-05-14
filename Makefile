@@ -1,6 +1,12 @@
 .DEFAULT_GOAL := help
 
 VENV_DIR ?= ./venv
+DATA_DIR ?= ./data
+SCRIPTS_DIR ?= ./scripts
+
+SR15_EMISSIONS_SCRAPER = $(SCRIPTS_DIR)/download_sr15_emissions.py
+SR15_EMISSIONS_DIR = $(DATA_DIR)/sr15_emissions
+SR15_EMISSIONS_FILE = $(SR15_EMISSIONS_DIR)/sr15_emissions.csv
 
 define PRINT_HELP_PYSCRIPT
 import re, sys
@@ -16,6 +22,13 @@ export PRINT_HELP_PYSCRIPT
 .PHONY: help
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
+
+sr15-emissions: $(VENV_DIR) $(DATA_DIR) $(SR15_EMISSIONS_SCRAPER) ## download all SR1.5 emissions data
+	mkdir -p $(SR15_EMISSIONS_DIR)
+	$(VENV_DIR)/bin/python $(SR15_EMISSIONS_SCRAPER) $(SR15_EMISSIONS_FILE)
+
+$(DATA_DIR):
+	mkdir -p $(DATA_DIR)
 
 test:  $(VENV_DIR) ## run the full testsuite
 	$(VENV_DIR)/bin/pytest --cov -rfsxEX --cov-report term-missing
