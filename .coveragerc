@@ -1,6 +1,6 @@
 [run]
 branch = True
-source = silicone
+source = example
 omit = *_version.py
 
 [report]
