@@ -1,6 +1,6 @@
 [run]
 branch = True
-source = example
+source = src
 omit = *_version.py
 
 [report]
