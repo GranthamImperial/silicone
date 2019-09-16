@@ -10,10 +10,10 @@ before_install:
   - pip install pip --upgrade
 
 install:
-  - pip install .[tests]
+  - pip install -e .[tests]
 
 script:
-  - pytest --cov -r a
+  - pytest --cov -r a --cov-report term-missing
 
 after_success:
   - codecov
