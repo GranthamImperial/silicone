@@ -1,5 +1,6 @@
 # SR1.5 data
 notebooks/sr15_scenarios.csv
+script/sr15_scenarios*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
