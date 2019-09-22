@@ -6,9 +6,11 @@ import pyam
 import seaborn as sns
 import pandas as pd
 
+from src.silicone import utils
+
 # Inputs to the code, to be read from a config file later
 
-years_of_interest = [2020, 2030, 2050, 2100]
+years_of_interest = [2030, 2050, 2100]
 save_results = True
 
 # Get the data
@@ -33,12 +35,14 @@ for year_of_interest in years_of_interest:
     assert not any(df_gases.index.duplicated()), "Index contains duplicated entries"
     x_units = df_gases.loc[x_gas, 'unit']
 
-    # Initialise the tables to hold all parameters
+    # Initialise the tables to hold all parameters between runs
     correlations_df = pd.DataFrame(index=df_gases.index, columns=[x_gas])
     rank_corr_df = pd.DataFrame(index=df_gases.index, columns=[x_gas])
     for y_gas_ind in range(df_gases.count()[0]):
         y_gas = df_gases.index[y_gas_ind]
         y_units = df_gases.get('unit')[y_gas_ind]
+
+        # Create the dataframe to plot
         seaborn_df = sr15_data.filter(
             variable=[y_gas, x_gas],
             region="World",
@@ -49,13 +53,16 @@ for year_of_interest in years_of_interest:
             aggfunc="mean"
         ).reset_index()
 
-        # Data cleaning
+        # Cleaning the data
         seaborn_df[y_gas].loc[seaborn_df[y_gas]==""] = np.nan
         seaborn_df[x_gas].loc[seaborn_df[x_gas]==""] = np.nan
         seaborn_df = seaborn_df.dropna()
         seaborn_df.loc[:, [y_gas, x_gas]] = seaborn_df[
             [y_gas, x_gas]
         ].astype(float)
+
+        # Calculate quantiles and plot the results
+        quantiles_df = utils.aggregate_and_find_quantiles(seaborn_df[x_gas], seaborn_df[y_gas])
 
         plotted_fig = sns.jointplot(
             x=x_gas,
@@ -66,6 +73,8 @@ for year_of_interest in years_of_interest:
             "Emissions of " + x_gas[10:] + " (" + x_units + ")",
             "Emissions of " + y_gas[10:] + " (" + y_units + ")"
         )
+
+        # Report the results
         if save_results:
             plotted_fig.savefig('../Output/Plot'+x_gas[10:]+'_'+y_gas[10:]+str(year_of_interest)+'.png')
 
