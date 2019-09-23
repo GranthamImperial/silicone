@@ -4,7 +4,7 @@ import numpy as np
 # Divides the x-axis up into nboxes of equal length, assumes that the contents of this box are all positioned
 # in the center and calculate quantiles from that.
 # The x and y co-ordinates, xs and ys, should be numpy arrays of the same length.
-def aggregate_and_find_quantiles(xs, ys, quantiles=[0.2, 0.33, 0.5, 0.66, 0.8], nboxes=10):
+def aggregate_and_find_quantiles(xs, ys, quantiles, nboxes=10):
     assert xs.size == ys.size
     step = (max(xs)-min(xs))/nboxes
     boxes = np.arange(min(xs)-0.5*step, max(xs)+step, step)
@@ -24,10 +24,7 @@ def aggregate_and_find_quantiles(xs, ys, quantiles=[0.2, 0.33, 0.5, 0.66, 0.8], 
 # The x and y co-ordinates, xs and ys, should be numpy arrays of the same length.
 # decay_length gives the distance over which the weighting of the values falls to 1/2, given by equation
 # w = 1/(1+(distance/decay_length)^2). This defaults to the interbox distance if no argument is given.
-# Note that this uses a different definition of quantiles to the np.quantile function, where the uppermost and
-# lowermost points are 0/1. Here we identify halfway the quantile as equalling the value halfway through a weight
-# cumulative sum, or linear interpolation between these values if there is none.
-def rolling_window_find_quantiles(xs, ys, quantiles=[0.2, 0.33, 0.5, 0.66, 0.8], nboxes=10, decay_length=None):
+def rolling_window_find_quantiles(xs, ys, quantiles, nboxes=10, decay_length=None):
     assert xs.size == ys.size
     step = (max(xs) - min(xs)) / (nboxes+1)
     if decay_length is None:
