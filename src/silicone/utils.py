@@ -1,17 +1,6 @@
 import pandas as pd
 import numpy as np
 
-# A function to return the quantiles of the data that fit into different boxes.
-# Overshoot: the distance beyond the real limits of x to include in our plots, assumed 1
-def linearfit_and_find_quantiles(xs, ys, quantiles=[0.2, 0.33, 0.5, 0.66, 0.8], overshoot=0.1):
-    newxs = range(min(xs) - overshoot * (max(xs) - min(xs)), max(xs) + overshoot * (max(xs) - min(xs)))
-    quantmatrix = pd.DataFrame(index=newxs, columns=quantiles)
-    for x in newxs:
-        y=x
-        #TODO: write this function after clarification of the problem with R code
-
-    return quantmatrix
-
 # Divides the x-axis up into nboxes of equal length, assumes that the contents of this box are all positioned
 # in the center and calculate quantiles from that.
 # The x and y co-ordinates, xs and ys, should be numpy arrays of the same length.
@@ -51,8 +40,8 @@ def rolling_window_find_quantiles(xs, ys, quantiles=[0.2, 0.33, 0.5, 0.66, 0.8],
     for ind in range(box_centers.size):
         weights = 1.0/(1.0+((xs-box_centers[ind])/decay_length)**2)
         # We want to calculate the weights at the midpoint of step corresponding to the y-value.
-        cumsum_weights = np.cumsum(weights)-0.5*weights
-        cumsum_weights /= sum(weights)
+        cumsum_weights = np.cumsum(weights)-0.5*weights-0.5*weights[0]
+        cumsum_weights /= cumsum_weights[-1]
         quantmatrix.iloc[ind, ] = np.interp(quantiles, cumsum_weights, ys)
     return quantmatrix
 
