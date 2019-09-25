@@ -23,12 +23,14 @@ def aggregate_and_find_quantiles(xs, ys, quantiles, nboxes=10):
 # of these boxes. Then finds quantiles of this weighted data.
 # The x and y co-ordinates, xs and ys, should be numpy arrays of the same length.
 # decay_length gives the distance over which the weighting of the values falls to 1/2, given by equation
-# w = 1/(1+(distance/decay_length)^2). This defaults to the interbox distance if no argument is given.
+# w = 1/(1+(distance/decay_length)^2). This defaults to half the interbox distance if no argument is given.
 def rolling_window_find_quantiles(xs, ys, quantiles, nboxes=10, decay_length=None):
     assert xs.size == ys.size
     step = (max(xs) - min(xs)) / (nboxes+1)
     if decay_length is None:
-        decay_length = step
+        decay_length = step/2
+    xs = np.array(xs)
+    ys = np.array(ys)
     sort_order = np.argsort(ys)
     ys = ys[sort_order]
     xs = xs[sort_order]

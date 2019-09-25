@@ -5,6 +5,7 @@ import numpy as np
 import pyam
 import seaborn as sns
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from src.silicone import utils
 
@@ -12,6 +13,10 @@ from src.silicone import utils
 
 years_of_interest = [2030, 2050, 2100]
 save_results = True
+# if non-null, also plot these quantiles.
+plot_quantiles = [0.2, 0.33, 0.5, 0.67, 0.8]
+# if non-null, save data on the quantiles too
+quantiles_savename = '../Output/Quantiles/'
 
 # Get the data
 SR15_SCENARIOS = "./sr15_scenarios.csv"
@@ -39,6 +44,7 @@ for year_of_interest in years_of_interest:
     correlations_df = pd.DataFrame(index=df_gases.index, columns=[x_gas])
     rank_corr_df = pd.DataFrame(index=df_gases.index, columns=[x_gas])
     for y_gas_ind in range(df_gases.count()[0]):
+        plt.close()
         y_gas = df_gases.index[y_gas_ind]
         y_units = df_gases.get('unit')[y_gas_ind]
 
@@ -61,25 +67,34 @@ for year_of_interest in years_of_interest:
             [y_gas, x_gas]
         ].astype(float)
 
-        # Calculate quantiles and plot the results
-        quantiles_df = utils.aggregate_and_find_quantiles(seaborn_df[x_gas], seaborn_df[y_gas])
-
-        plotted_fig = sns.jointplot(
+        # Plot the results
+        plt.scatter(
             x=x_gas,
             y=y_gas,
+            c='black',
             data=seaborn_df,
-            kind="reg"
-        ).set_axis_labels(
-            "Emissions of " + x_gas[10:] + " (" + x_units + ")",
-            "Emissions of " + y_gas[10:] + " (" + y_units + ")"
+            alpha=0.5
         )
+        plt.xlabel("Emissions of " + x_gas[10:] + " (" + x_units + ")")
+        plt.ylabel("Emissions of " + y_gas[10:] + " (" + y_units + ")")
+
+        # Optionally calculate quantiles
+        if plot_quantiles is not None:
+            smooth_quant_df = utils.rolling_window_find_quantiles(seaborn_df[x_gas], seaborn_df[y_gas],
+                                                                  plot_quantiles, 15)
+            plt.plot(smooth_quant_df.index, smooth_quant_df)
+            plt.legend(smooth_quant_df.keys())
+            if quantiles_savename is not None:
+                smooth_quant_df.to_csv(quantiles_savename + x_gas[10:] + '_' + y_gas[10:] + '_' +
+                                       str(year_of_interest) + '.csv')
 
         # Report the results
         if save_results:
-            plotted_fig.savefig('../Output/Plot'+x_gas[10:]+'_'+y_gas[10:]+str(year_of_interest)+'.png')
+            plt.savefig('../Output/Plot'+x_gas[10:]+'_'+y_gas[10:]+str(year_of_interest)+'.png')
 
         correlations_df.at[y_gas, x_gas] = seaborn_df.corr('pearson').loc[x_gas, y_gas]
         rank_corr_df.at[y_gas, x_gas] = seaborn_df.corr('spearman').loc[x_gas, y_gas]
+        print('Finished ' + x_gas + ' vs ' + y_gas + ' in ' + str(year_of_interest))
 
     print(correlations_df)
     print(rank_corr_df)
