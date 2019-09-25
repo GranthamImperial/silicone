@@ -16,13 +16,13 @@ def test_rolling_window_find_quantiles():
     xs = np.array([0, 0, 1])
     ys = np.array([0, 1, 0.5])
     desired_quantiles = [0.4, 0.5, 0.6]
-    quantiles = utils.rolling_window_find_quantiles(xs, ys, desired_quantiles, 9, 1)
+    quantiles = utils.rolling_window_find_quantiles(xs, ys, desired_quantiles, 9, 2*9)
     assert all(quantiles.iloc[0] == desired_quantiles)
     assert all(quantiles.iloc[1] == desired_quantiles)
 
     xs = np.array([0, 0, 1, 1])
     ys = np.array([0, 0, 1, 1])
-    quantiles = utils.rolling_window_find_quantiles(xs, ys, desired_quantiles, 9, 1)
+    quantiles = utils.rolling_window_find_quantiles(xs, ys, desired_quantiles, 9, 2*9)
     assert all(quantiles.iloc[[0, 1], 0] == 0)
     assert all(quantiles.iloc[[-1, -2], -1] == 1)
 

@@ -5,17 +5,25 @@ import numpy as np
 import pyam
 import pandas as pd
 import matplotlib.pyplot as plt
+import scipy.interpolate as sci
 
 from src.silicone import utils
 
-# Inputs to the code, to be read from a config file later
-
-years_of_interest = [2030, 2050, 2100]
+# Inputs to the code, freely modifiable
+# ________________________________________________________
+years_of_interest = [2030]
 save_results = True
 # if non-null, also plot these quantiles.
 plot_quantiles = [0.2, 0.33, 0.5, 0.67, 0.8]
 # if non-null, save data on the quantiles too
 quantiles_savename = '../Output/Quantiles/'
+# How many boxes are used to fit the quantiles?
+quantile_boxes = 20
+# Should we extend the quantile boxes by an additional factor?
+quantile_decay_factor = 4
+# use a smoothing spline? If None, don't. Otherwise this is the smoothing factor, s, used in the spline model.
+smoothing_spline = 0
+# ________________________________________________________
 
 # Get the data
 SR15_SCENARIOS = "./sr15_scenarios.csv"
@@ -77,11 +85,18 @@ for year_of_interest in years_of_interest:
         plt.xlabel("Emissions of " + x_gas[10:] + " (" + x_units + ")")
         plt.ylabel("Emissions of " + y_gas[10:] + " (" + y_units + ")")
 
-        # Optionally calculate quantiles
+        # Optionally calculate and plot quantiles
         if plot_quantiles is not None:
             smooth_quant_df = utils.rolling_window_find_quantiles(seaborn_df[x_gas], seaborn_df[y_gas],
-                                                                  plot_quantiles, 15)
-            plt.plot(smooth_quant_df.index, smooth_quant_df)
+                                                                  plot_quantiles, quantile_boxes, quantile_decay_factor)
+            if smoothing_spline is not None:
+                for col in smooth_quant_df:
+                    manyx = np.arange(min(smooth_quant_df.index), max(smooth_quant_df.index),
+                                      (max(smooth_quant_df.index) - min(smooth_quant_df.index)) / 100)
+                    spline = sci.UnivariateSpline(smooth_quant_df.index, smooth_quant_df[col], s=smoothing_spline)
+                    plt.plot(manyx, spline(manyx))
+            else:
+                plt.plot(smooth_quant_df.index, smooth_quant_df)
             plt.legend(smooth_quant_df.keys())
             if quantiles_savename is not None:
                 smooth_quant_df.to_csv(quantiles_savename + x_gas[10:] + '_' + y_gas[10:] + '_' +
