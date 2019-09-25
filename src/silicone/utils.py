@@ -20,15 +20,16 @@ def aggregate_and_find_quantiles(xs, ys, quantiles, nboxes=10):
 
 
 # Divides the x-axis into nboxes of equal length and weights data by how close they are to the center
-# of these boxes. Then finds quantiles of this weighted data.
-# The x and y co-ordinates, xs and ys, should be numpy arrays of the same length.
-# decay_length gives the distance over which the weighting of the values falls to 1/2, given by equation
+# of these boxes. Then returns the quantiles of this weighted data.
+# The x and y co-ordinates, xs and ys, should be numpy arrays of the same length, pandas series will also work.
+# decay_length gives the distance over which the weighting of the values falls to 1/4, given by equation
 # w = 1/(1+(distance/decay_length)^2). This defaults to half the interbox distance if no argument is given.
 def rolling_window_find_quantiles(xs, ys, quantiles, nboxes=10, decay_length=None):
     assert xs.size == ys.size
     step = (max(xs) - min(xs)) / (nboxes+1)
     if decay_length is None:
         decay_length = step/2
+    # We re-form the arrays in case they were pandas series with integer labels that would mess up the sorting.
     xs = np.array(xs)
     ys = np.array(ys)
     sort_order = np.argsort(ys)
@@ -43,4 +44,5 @@ def rolling_window_find_quantiles(xs, ys, quantiles, nboxes=10, decay_length=Non
         cumsum_weights /= cumsum_weights[-1]
         quantmatrix.iloc[ind, ] = np.interp(quantiles, cumsum_weights, ys)
     return quantmatrix
+
 
