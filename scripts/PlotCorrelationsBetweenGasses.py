@@ -11,18 +11,18 @@ from src.silicone import utils
 
 # Inputs to the code, freely modifiable
 # ________________________________________________________
-years_of_interest = [2030]
+years_of_interest = [2030, 2050, 2100]
 save_results = True
 # if non-null, also plot these quantiles.
 plot_quantiles = [0.2, 0.33, 0.5, 0.67, 0.8]
 # if non-null, save data on the quantiles too
 quantiles_savename = '../Output/Quantiles/'
 # How many boxes are used to fit the quantiles?
-quantile_boxes = 20
+quantile_boxes = 15
 # Should we extend the quantile boxes by an additional factor?
-quantile_decay_factor = 4
+quantile_decay_factor = 0.5
 # use a smoothing spline? If None, don't. Otherwise this is the smoothing factor, s, used in the spline model.
-smoothing_spline = 0
+smoothing_spline = None
 # ________________________________________________________
 
 # Get the data
