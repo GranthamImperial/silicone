@@ -6,6 +6,7 @@ import pyam
 import pandas as pd
 import matplotlib.pyplot as plt
 import scipy.interpolate as sci
+import itertools
 
 from src.silicone import utils
 
@@ -20,9 +21,13 @@ quantiles_savename = '../Output/Quantiles/'
 # How many boxes are used to fit the quantiles?
 quantile_boxes = 15
 # Should we extend the quantile boxes by an additional factor?
-quantile_decay_factor = 0.5
+quantile_decay_factor = 0.7
 # use a smoothing spline? If None, don't. Otherwise this is the smoothing factor, s, used in the spline model.
 smoothing_spline = None
+# Color different models different colours?
+model_colours = True
+# In the model-coloured version, how much does the figure need to be reduced by to leave room for the legend?
+legend_fraction = 0.65
 # ________________________________________________________
 
 # Get the data
@@ -64,24 +69,45 @@ for year_of_interest in years_of_interest:
             ["year", "model", "scenario", "region"],
             ["variable"],
             aggfunc="mean"
-        ).reset_index()
+        )
 
         # Cleaning the data
         seaborn_df[y_gas].loc[seaborn_df[y_gas]==""] = np.nan
         seaborn_df[x_gas].loc[seaborn_df[x_gas]==""] = np.nan
-        seaborn_df = seaborn_df.dropna()
+        seaborn_df = seaborn_df.dropna().reset_index()
         seaborn_df.loc[:, [y_gas, x_gas]] = seaborn_df[
             [y_gas, x_gas]
         ].astype(float)
 
         # Plot the results
-        plt.scatter(
-            x=x_gas,
-            y=y_gas,
-            c='black',
-            data=seaborn_df,
-            alpha=0.5
-        )
+        if model_colours:
+            fig = plt.figure()
+            ax = plt.subplot(111)
+            all_models = list(seaborn_df['model'].unique())
+            markers = itertools.cycle(["s", "o", "v", "<", ">", ","])
+            for model in all_models:
+                to_plot = np.where(seaborn_df['model'] == model)[0]
+                if any(to_plot):
+                    plt.scatter(
+                        x=seaborn_df[x_gas].loc[to_plot],
+                        y=seaborn_df[y_gas].loc[to_plot],
+                        label=model,
+                        alpha=0.5,
+                        marker=next(markers)
+                    )
+            box = ax.get_position()
+            ax.set_position([box.x0, box.y0, box.width * legend_fraction, box.height])
+            ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        # if all plots are the same colour, we don't have to do all this work
+        else:
+            colours_for_plot = 'black'
+            plt.scatter(
+                x=x_gas,
+                y=y_gas,
+                label=colours_for_plot,
+                data=seaborn_df,
+                alpha=0.5
+            )
         plt.xlabel("Emissions of " + x_gas[10:] + " (" + x_units + ")")
         plt.ylabel("Emissions of " + y_gas[10:] + " (" + y_units + ")")
 
@@ -97,7 +123,8 @@ for year_of_interest in years_of_interest:
                     plt.plot(manyx, spline(manyx))
             else:
                 plt.plot(smooth_quant_df.index, smooth_quant_df)
-            plt.legend(smooth_quant_df.keys())
+            if not model_colours:
+                plt.legend(smooth_quant_df.keys())
             if quantiles_savename is not None:
                 smooth_quant_df.to_csv(quantiles_savename + x_gas[10:] + '_' + y_gas[10:] + '_' +
                                        str(year_of_interest) + '.csv')

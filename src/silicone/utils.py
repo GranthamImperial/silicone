@@ -36,7 +36,7 @@ def rolling_window_find_quantiles(xs, ys, quantiles, nboxes=10, decay_length_fac
     sort_order = np.argsort(ys)
     ys = ys[sort_order]
     xs = xs[sort_order]
-    # We want to include the max x point, but not any point above it, the 0.99 factor prevents rounding error inclusion.
+    # We want to include the max x point, but not any point above it. The 0.99 factor prevents rounding error inclusion.
     box_centers = np.arange(min(xs), max(xs) + step*0.99, step)
     quantmatrix = pd.DataFrame(index=box_centers, columns=quantiles)
     for ind in range(box_centers.size):
