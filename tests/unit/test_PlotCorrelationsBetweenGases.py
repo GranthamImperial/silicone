@@ -4,7 +4,8 @@ myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath + '/../../')
 import src.silicone.PlotCorrelationsBetweenGases as PlotCorrelationsBetweenGases
 from conftest import CHECK_AGG_DF
-
+import pandas as pd
+import re
 
 
 def test_PlotCorrelationsBetweenGases(check_aggregate_df):
@@ -29,6 +30,12 @@ def test_PlotCorrelationsBetweenGases(check_aggregate_df):
     PlotCorrelationsBetweenGases.plot_emission_correlations(check_aggregate_df, years_of_interest, save_results, plot_quantiles,
                                     quantiles_savename, quantile_boxes, quantile_decay_factor, smoothing_spline,
                                     model_colours, legend_fraction)
-    quantiles_file = os.listdir(quantiles_savename)
-    assert quantiles_file[1][0:4] == 'CO2_'
-
+    quantiles_files = os.listdir(quantiles_savename)
+    assert quantiles_files[1][0:4] == 'CO2_'
+    regex_match = re.compile(".*" + str(years_of_interest[0]) + "\.csv")
+    csv_files = [x for x in quantiles_files if regex_match.match(x)]
+    with open(quantiles_savename + csv_files[2]) as csv_file:
+        csv_reader = pd.read_csv(csv_file, delimiter=',')
+        assert csv_reader.iloc[1, 1] == 217
+    for csv_file in csv_files:
+        os.remove(quantiles_savename + csv_file)
