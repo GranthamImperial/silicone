@@ -43,6 +43,8 @@ decay_length_factor: float
 """
 def rolling_window_find_quantiles(xs, ys, quantiles, nboxes=10, decay_length_factor=1):
     assert xs.size == ys.size
+    if xs.size == 1:
+        return pd.DataFrame(index=[xs[0]] * nboxes, columns=quantiles, data=ys[0])
     step = (max(xs) - min(xs)) / (nboxes + 1)
     decay_length = step / 2 * decay_length_factor
     # We re-form the arrays in case they were pandas series with integer labels that would mess up the sorting.
@@ -51,8 +53,12 @@ def rolling_window_find_quantiles(xs, ys, quantiles, nboxes=10, decay_length_fac
     sort_order = np.argsort(ys)
     ys = ys[sort_order]
     xs = xs[sort_order]
-    # We want to include the max x point, but not any point above it. The 0.99 factor prevents rounding error inclusion.
-    box_centers = np.arange(min(xs), max(xs) + step*0.99, step)
+    if max(xs) == min(xs):
+        box_centers = np.array([xs[0]])
+    else:
+        # We want to include the max x point, but not any point above it.
+        # The 0.99 factor prevents rounding error inclusion.
+        box_centers = np.arange(min(xs), max(xs) + step*0.99, step)
     quantmatrix = pd.DataFrame(index=box_centers, columns=quantiles)
     for ind in range(box_centers.size):
         weights = 1.0 / (1.0 + ((xs - box_centers[ind]) / decay_length) ** 2)
