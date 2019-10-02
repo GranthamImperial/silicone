@@ -46,16 +46,21 @@ def plot_emission_correlations(emissions_data, years_of_interest, save_results, 
                                model_colours=False, legend_fraction=1):
 
     for year_of_interest in years_of_interest:
-        # Obtain the data as required
+        # Obtain the list of gases to examine
         df_gases = emissions_data.filter(
             region="World",
             year=year_of_interest,
             level=1
-        ).variables('Emissions|*').set_index('variable')
+        ).filter(variable="Emissions|*").variables(True).set_index('variable')
 
+        if df_gases is None:
+            print('No emissions data')
+            return None
+
+        # We currently assume all correlations are with CO2
         x_gas = "Emissions|CO2"
 
-        # Check that the list has only one entry for carbon
+        # Check that the list has only one entry
         assert not any(df_gases.index.duplicated()), "Index contains duplicated entries"
         x_units = df_gases.loc[x_gas, 'unit']
 
@@ -88,7 +93,7 @@ def plot_emission_correlations(emissions_data, years_of_interest, save_results, 
 
             # Plot the results
             if model_colours:
-                fig = plt.figure()
+                fig = plt.figure(figsize=(16, 12))
                 ax = plt.subplot(111)
                 all_models = list(seaborn_df['model'].unique())
                 markers = itertools.cycle(["s", "o", "v", "<", ">", ","])
