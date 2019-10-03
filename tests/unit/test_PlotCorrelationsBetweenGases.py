@@ -7,6 +7,7 @@ import pandas as pd
 import re
 
 def test_PlotCorrelationsBetweenGases(check_aggregate_df):
+    # Assumptions:
     years_of_interest = [2010]
     save_results = None
     # if non-null, also plot these quantiles.
@@ -25,7 +26,7 @@ def test_PlotCorrelationsBetweenGases(check_aggregate_df):
     legend_fraction = 0.65
     # ________________________________________________________
 
-    # Clean the ouput folder before we start.
+    # Clean the output folder before we start.
     if not os.path.isdir(quantiles_savename):
         os.makedirs(quantiles_savename)
     output_files = os.listdir(quantiles_savename)
@@ -41,15 +42,15 @@ def test_PlotCorrelationsBetweenGases(check_aggregate_df):
                                     smoothing_spline, model_colours, legend_fraction)
     quantiles_files = os.listdir(quantiles_savename)
     assert quantiles_files[1][0:4] == 'CO2_'
-    regex_match = re.compile(".*" + str(years_of_interest[0]) + "\.csv")
-    csv_files = [x for x in quantiles_files if regex_match.match(x)]
+    regex_match_csv = re.compile(".*" + str(years_of_interest[0]) + "\.csv")
+    csv_files = [x for x in quantiles_files if regex_match_csv.match(x)]
     with open(quantiles_savename + csv_files[2]) as csv_file:
         csv_reader = pd.read_csv(csv_file, delimiter=',')
         assert csv_reader.iloc[1, 1] == 217
     for csv_file in csv_files:
         os.remove(quantiles_savename + csv_file)
 
-    # Rerun the code with slightly different parameters.
+    # Rerun the code with slightly different parameters to explore more code options.
     plot_quantiles = None
     save_results = '../../Output/TestQuantiles/'
     model_colours = False
@@ -57,12 +58,12 @@ def test_PlotCorrelationsBetweenGases(check_aggregate_df):
                                     plot_quantiles, quantiles_savename, quantile_boxes, quantile_decay_factor,
                                     smoothing_spline, model_colours, legend_fraction)
     quantiles_files = os.listdir(quantiles_savename)
-    csv_files = [x for x in quantiles_files if regex_match.match(x)]
+    csv_files = [x for x in quantiles_files if regex_match_csv.match(x)]
     assert len(csv_files) == 2
     for csv_file in csv_files:
         os.remove(quantiles_savename + csv_file)
-    regex_match = re.compile(".*" + str(years_of_interest[0]) + "\.png")
-    png_files = [x for x in quantiles_files if regex_match.match(x)]
+    regex_match_png = re.compile(".*" + str(years_of_interest[0]) + "\.png")
+    png_files = [x for x in quantiles_files if regex_match_png.match(x)]
     assert len(png_files) == 4
     for png_file in png_files:
         os.remove(quantiles_savename + png_file)
