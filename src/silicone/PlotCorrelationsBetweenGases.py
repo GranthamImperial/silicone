@@ -18,8 +18,8 @@ emissions_data : pyam.IamDataFrame
     The emissions for each year 
 years_of_interest : list 
     for which years should we explore the data?
-save_results : boolean
-    should we save the plots? 
+save_results : String 
+    If not None, the location in which all images and calculations except quantiles are saved to.  
 plot_quantiles : list
     if None, do not calculate or quantiles, otherwise calculate and plot quantiles of the data on the graph. 
     Quantiles are calculated by a rolling filter. All parameters beginning 'quantile' are irrelevant if this is None. 
@@ -128,7 +128,7 @@ def plot_emission_correlations(emissions_data, years_of_interest, save_results, 
                 smooth_quant_df = utils.rolling_window_find_quantiles(seaborn_df[x_gas], seaborn_df[y_gas],
                                                                       plot_quantiles, quantile_boxes,
                                                                       quantile_decay_factor)
-                if smoothing_spline is not None:
+                if smoothing_spline is not None and max(smooth_quant_df.index) != min(smooth_quant_df.index):
                     for col in smooth_quant_df:
                         manyx = np.arange(min(smooth_quant_df.index), max(smooth_quant_df.index),
                                           (max(smooth_quant_df.index) - min(smooth_quant_df.index)) / 100)
@@ -143,8 +143,8 @@ def plot_emission_correlations(emissions_data, years_of_interest, save_results, 
                                            str(year_of_interest) + '.csv')
 
             # Report the results
-            if save_results:
-                plt.savefig('../Output/Plot' + x_gas[10:] + '_' + y_gas[10:] + str(year_of_interest) + '.png')
+            if save_results is not None:
+                plt.savefig(save_results + 'Plot' + x_gas[10:] + '_' + y_gas[10:] + str(year_of_interest) + '.png')
 
             correlations_df.at[y_gas, x_gas] = seaborn_df.corr('pearson').loc[x_gas, y_gas]
             rank_corr_df.at[y_gas, x_gas] = seaborn_df.corr('spearman').loc[x_gas, y_gas]
@@ -154,5 +154,6 @@ def plot_emission_correlations(emissions_data, years_of_interest, save_results, 
         print(rank_corr_df)
 
         if save_results:
-            correlations_df.to_csv('../Output/gasesCorrelation' + str(year_of_interest) + '.csv')
-            rank_corr_df.to_csv('../Output/gasesRankCorr' + str(year_of_interest) + '.csv')
+            correlations_df.to_csv(save_results + 'gasesCorrelation' + str(year_of_interest) + '.csv')
+            rank_corr_df.to_csv(save_results + 'gasesRankCorr' + str(year_of_interest) + '.csv')
+

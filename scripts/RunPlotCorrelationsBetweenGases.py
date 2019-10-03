@@ -4,7 +4,7 @@ from download_sr15_emissions import download_or_load_sr15
 # ________________________________________________________
 
 years_of_interest = [2030, 2050, 2100]
-save_results = True
+save_results = '../Output/'
 # if non-null, also plot these quantiles.
 plot_quantiles = [0.2, 0.33, 0.5, 0.67, 0.8]
 # if non-null, save data on the quantiles too
