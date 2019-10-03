@@ -26,10 +26,14 @@ def test_PlotCorrelationsBetweenGases(check_aggregate_df):
     # ________________________________________________________
 
     # Clean the ouput folder before we start.
+    if not os.path.isdir(quantiles_savename):
+        os.mkdir(quantiles_savename)
     output_files = os.listdir(quantiles_savename)
     for output_file in output_files:
         if output_file[-9:] != 'gitignore':
             os.remove(quantiles_savename + output_file)
+    output_files = os.listdir(quantiles_savename)
+    initial_files = len(output_files)
 
     # Run the first set of parameters
     PlotCorrelationsBetweenGases.plot_emission_correlations(check_aggregate_df, years_of_interest, save_results,
@@ -63,4 +67,5 @@ def test_PlotCorrelationsBetweenGases(check_aggregate_df):
     for png_file in png_files:
         os.remove(quantiles_savename + png_file)
     output_files = os.listdir(quantiles_savename)
-    assert len(output_files) == 1
+    # check no unexpected files created
+    assert len(output_files) == initial_files
