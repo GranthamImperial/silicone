@@ -27,7 +27,7 @@ def test_PlotCorrelationsBetweenGases(check_aggregate_df):
 
     # Clean the ouput folder before we start.
     if not os.path.isdir(quantiles_savename):
-        os.mkdir(quantiles_savename)
+        os.makedirs(quantiles_savename)
     output_files = os.listdir(quantiles_savename)
     for output_file in output_files:
         if output_file[-9:] != 'gitignore':
