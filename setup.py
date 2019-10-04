@@ -6,16 +6,16 @@ NAME = "silicone"
 SHORT_DESCRIPTION = "Automated filling of detail in reported emission scenarios"
 KEYWORDS = ["emissions", "automation", "filling", "detail", "climate"]
 AUTHORS = [
-    ("Zeb Nicholls", "zebedee.nicholls@climate-energy-college.org"),
+    ("Robin Lamboll", "r.lamboll@imperial.ac.uk"),
+    ("Zebedee Nicholls", "zebedee.nicholls@climate-energy-college.org"),
 ]
-
-README = "README.rst"
 URL = "https://github.com/znicholls/silicone"
 PROJECT_URLS = {
     "Bug Reports": "https://github.com/znicholls/silicone/issues",
     "Documentation": "https://silicone.readthedocs.io/en/latest",
     "Source": "https://github.com/znicholls/silicone",
 }
+README = "README.rst"
 
 SOURCE_DIR = "src"
 
@@ -30,32 +30,25 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.7",
 ]
-REQUIREMENTS_INSTALL = ["numpy", "scipy", "pint", "python-dateutil", "pyam-iamc>=0.2.0", "pandas==0.24.2"]
-REQUIREMENTS_NOTEBOOKS = [
-    "matplotlib",
-    "notebook",
-    "seaborn",
-    "statsmodels",
+REQUIREMENTS_INSTALL = [
+    "numpy",
+    "scipy",
+    "pint",
+    "python-dateutil",
+    "pyam-iamc>=0.2.0",
+    "pandas==0.24.2",
 ]
-REQUIREMENTS_TESTS = [
-    "codecov",
-    "nbval",
-    "pytest",
-    "pytest-cov",
+REQUIREMENTS_NOTEBOOKS = ["matplotlib", "notebook", "seaborn", "statsmodels"]
+REQUIREMENTS_TESTS = ["codecov", "nbval", "pytest", "pytest-cov"]
+REQUIREMENTS_DOCS = [
+    "sphinx>=1.4,<2.1",
+    "sphinx_rtd_theme",
+    "sphinx-autodoc-typehints",
+    "sphinx-click",
 ]
-REQUIREMENTS_DOCS = ["sphinx>=1.4,<2.1", "sphinx_rtd_theme", "sphinx-autodoc-typehints", "sphinx-click"]
 REQUIREMENTS_DEPLOY = ["setuptools>=38.6.0", "twine>=1.11.0", "wheel>=0.31.0"]
 REQUIREMENTS_DEV = (
-    [
-        "black",
-        "bandit",
-        "coverage",
-        "flake8",
-        "isort",
-        "mypy",
-        "pydocstyle",
-        "pylint",
-    ]
+    ["black", "bandit", "coverage", "flake8", "isort", "mypy", "pydocstyle", "pylint"]
     + REQUIREMENTS_NOTEBOOKS
     + REQUIREMENTS_TESTS
     + REQUIREMENTS_DOCS
@@ -85,6 +78,7 @@ with open(README, "r", encoding="utf-8") as f:
 
 if len(README_LINES) < 3:
     raise RuntimeError("Insufficient description given")
+
 
 class SiliconeTest(TestCommand):
     def finalize_options(self):

@@ -20,7 +20,7 @@ from silicone._version import get_versions
 
 # -- Project information -----------------------------------------------------
 
-project = 'silicone'
+project = "silicone"
 authors = ", ".join(["Robin Lamboll", "Zebedee Nicholls"])
 # copyright_year = datetime.date.today().year
 copyright_year = "2019"
@@ -67,7 +67,7 @@ autodoc_default_flags = [
 # }
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -99,12 +99,12 @@ pygments_style = "sphinx"
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = "sphinx_rtd_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -215,4 +215,3 @@ todo_include_todos = True
 
 # html_logo = "_static/logo_200px_wide.png"
 # latex_logo = "_static/logo.png"
-

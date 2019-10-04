@@ -1,6 +1,5 @@
-from os.path import splitext
 import argparse
-
+from os.path import splitext
 
 import pyam
 
@@ -30,8 +29,7 @@ def get_sr15_scenarios(output_file):
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="download-sr15-scenarios",
-        description="Download SR15 scenarios",
+        prog="download-sr15-scenarios", description="Download SR15 scenarios"
     )
 
     # Command line args

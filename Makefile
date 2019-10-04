@@ -5,6 +5,8 @@ DATA_DIR ?= ./data
 DOCS_DIR=$(PWD)/docs
 SCRIPTS_DIR ?= ./scripts
 
+FILES_TO_FORMAT_PYTHON=setup.py scripts src tests docs/source/conf.py
+
 SR15_EMISSIONS_SCRAPER = $(SCRIPTS_DIR)/download_sr15_emissions.py
 SR15_EMISSIONS_DIR = $(DATA_DIR)/sr15_emissions
 SR15_EMISSIONS_FILE = $(SR15_EMISSIONS_DIR)/sr15_emissions.csv
@@ -42,7 +44,7 @@ flake8: $(VENV_DIR)  ## check compliance with pep8
 
 .PHONY: isort
 isort: $(VENV_DIR)  ## format the imports in the source and tests
-	$(VENV_DIR)/bin/isort --recursive $(FILES_TO_FORMAT_PYTHON)
+	$(VENV_DIR)/bin/isort -y --recursive $(FILES_TO_FORMAT_PYTHON)
 
 .PHONY: black
 black: $(VENV_DIR)  ## use black to autoformat code
