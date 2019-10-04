@@ -2,7 +2,10 @@
 
 VENV_DIR ?= ./venv
 DATA_DIR ?= ./data
+DOCS_DIR=$(PWD)/docs
 SCRIPTS_DIR ?= ./scripts
+
+FILES_TO_FORMAT_PYTHON=setup.py scripts src tests docs/source/conf.py
 
 SR15_EMISSIONS_SCRAPER = $(SCRIPTS_DIR)/download_sr15_emissions.py
 SR15_EMISSIONS_DIR = $(DATA_DIR)/sr15_emissions
@@ -30,8 +33,42 @@ sr15-emissions: $(VENV_DIR) $(DATA_DIR) $(SR15_EMISSIONS_SCRAPER)  ## download a
 $(DATA_DIR):
 	mkdir -p $(DATA_DIR)
 
+.PHONY: format
+format:  ## re-format files
+	make isort
+	make black
+
+.PHONY: flake8
+flake8: $(VENV_DIR)  ## check compliance with pep8
+	$(VENV_DIR)/bin/flake8 $(FILES_TO_FORMAT_PYTHON)
+
+.PHONY: isort
+isort: $(VENV_DIR)  ## format the imports in the source and tests
+	$(VENV_DIR)/bin/isort -y --recursive $(FILES_TO_FORMAT_PYTHON)
+
+.PHONY: black
+black: $(VENV_DIR)  ## use black to autoformat code
+	@status=$$(git status --porcelain); \
+	if test "x$${status}" = x; then \
+		$(VENV_DIR)/bin/black --exclude _version.py --target-version py37 $(FILES_TO_FORMAT_PYTHON); \
+	else \
+		echo Not trying any formatting, working directory is dirty... >&2; \
+	fi;
+
+.PHONY: test-all
+test-all:  ## run the testsuite and test the notebooks
+	make test
+	make test-notebooks
+
 test: $(VENV_DIR) ## run the full testsuite
 	$(VENV_DIR)/bin/pytest --cov -rfsxEX --cov-report term-missing
+
+.PHONY: docs
+docs:  ## make docs
+	make $(DOCS_DIR)/build/html/index.html
+
+$(DOCS_DIR)/build/html/index.html: $(DOCS_DIR)/source/*.py $(DOCS_DIR)/source/_templates/*.html $(DOCS_DIR)/source/*.rst src/silicone/*.py README.rst CHANGELOG.rst $(VENV_DIR)
+	cd $(DOCS_DIR); make html
 
 # first time setup, follow this https://blog.jetbrains.com/pycharm/2017/05/how-to-publish-your-package-on-pypi/
 # then this works

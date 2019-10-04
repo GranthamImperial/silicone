@@ -1,6 +1,8 @@
 import argparse
 import os.path
+
 import pyam
+
 
 def download_or_load_sr15(filename):
     if not os.path.isfile(filename):
@@ -33,8 +35,7 @@ def get_sr15_scenarios(output_file):
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="download-sr15-scenarios",
-        description="Download SR15 scenarios",
+        prog="download-sr15-scenarios", description="Download SR15 scenarios"
     )
 
     # Command line args
