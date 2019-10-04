@@ -2,6 +2,7 @@
 
 VENV_DIR ?= ./venv
 DATA_DIR ?= ./data
+DOCS_DIR=$(PWD)/docs
 SCRIPTS_DIR ?= ./scripts
 
 SR15_EMISSIONS_SCRAPER = $(SCRIPTS_DIR)/download_sr15_emissions.py
@@ -32,6 +33,13 @@ $(DATA_DIR):
 
 test: $(VENV_DIR) ## run the full testsuite
 	$(VENV_DIR)/bin/pytest --cov -rfsxEX --cov-report term-missing
+
+.PHONY: docs
+docs:  ## make docs
+	make $(DOCS_DIR)/build/html/index.html
+
+$(DOCS_DIR)/build/html/index.html: $(DOCS_DIR)/source/*.py $(DOCS_DIR)/source/_templates/*.html $(DOCS_DIR)/source/*.rst src/silicone/*.py README.rst CHANGELOG.rst $(VENV_DIR)
+	cd $(DOCS_DIR); make html
 
 # first time setup, follow this https://blog.jetbrains.com/pycharm/2017/05/how-to-publish-your-package-on-pypi/
 # then this works
