@@ -11,6 +11,9 @@ SR15_EMISSIONS_SCRAPER = $(SCRIPTS_DIR)/download_sr15_emissions.py
 SR15_EMISSIONS_DIR = $(DATA_DIR)/sr15_emissions
 SR15_EMISSIONS_FILE = $(SR15_EMISSIONS_DIR)/sr15_emissions.csv
 
+NOTEBOOKS_DIR=./notebooks
+NOTEBOOKS_SANITIZE_FILE=$(NOTEBOOKS_DIR)/tests_sanitize.cfg
+
 define PRINT_HELP_PYSCRIPT
 import re, sys
 
@@ -60,8 +63,13 @@ test-all:  ## run the testsuite and test the notebooks
 	make test
 	make test-notebooks
 
+.PHONY: test
 test: $(VENV_DIR) ## run the full testsuite
 	$(VENV_DIR)/bin/pytest --cov -rfsxEX --cov-report term-missing
+
+.PHONY: test-notebooks
+test-notebooks: $(VENV_DIR)  ## test the notebooks
+	$(VENV_DIR)/bin/pytest -r a --nbval $(NOTEBOOKS_DIR) --sanitize $(NOTEBOOKS_SANITIZE_FILE)
 
 .PHONY: docs
 docs:  ## make docs
