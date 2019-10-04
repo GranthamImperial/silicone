@@ -69,3 +69,5 @@ Why is there a ``Makefile`` in a pure Python repository?
 
 Whilst it may not be standard practice, a ``Makefile`` is a simple way to automate general setup (environment setup in particular).
 Hence we have one here which basically acts as a notes file for how to do all those little jobs which we often forget e.g. setting up environments, running tests (and making sure we're in the right environment), building docs, setting up auxillary bits and pieces.
+
+.. _Sphinx: http://www.sphinx-doc.org/en/master/
