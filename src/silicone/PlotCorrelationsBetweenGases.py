@@ -31,8 +31,9 @@ quantile_decay_factor: float
     Default is one, meaning that data halfway between quantile evaluation points matters half as much as the 
     data at that point. Lower values means that the filter falls to 0 slower. 
     Formula is 1/(1+(distance/(box_width*decay_factor/2)^2) 
-model_colours : boolean
-    Should different models be distinguishable on the plots? If false, legend_fraction is ignored.  
+models_separate : boolean
+    Should different models be distinguishable on the plots? If false, legend_fraction is ignored. If true, we return
+    the correlation coefficients for each model 
 legend_fraction : float
     In the model-coloured version, how much does the figure need to be reduced by to leave room for the legend?
 """
@@ -62,6 +63,10 @@ def plot_emission_correlations(emissions_data, years_of_interest, save_results, 
         # Initialise the tables to hold all parameters between runs
         correlations_df = pd.DataFrame(index=df_gases.index, columns=[x_gas])
         rank_corr_df = pd.DataFrame(index=df_gases.index, columns=[x_gas])
+        if models_separate:
+            model_correl_df = pd.DataFrame(index=df_gases.index, columns=emissions_data['model'].unique())
+            model_grad_df = pd.DataFrame(index=df_gases.index, columns=emissions_data['model'].unique())
+
         for y_gas_ind in range(df_gases.count()[0]):
             plt.close()
             y_gas = df_gases.index[y_gas_ind]
@@ -98,9 +103,9 @@ def plot_emission_correlations(emissions_data, years_of_interest, save_results, 
                                                                       plot_quantiles, quantile_boxes,
                                                                       quantile_decay_factor)
                 plt.plot(smooth_quant_df.index, smooth_quant_df)
-                if not model_colours:
+                if not models_separate:
                     plt.legend(smooth_quant_df.keys())
-                if quantiles_savename is not None:
+                if quantiles_savename is not None and plot_quantiles is not None:
                     silicone.utils.ensure_savepath(quantiles_savename)
                     smooth_quant_df.to_csv(quantiles_savename + x_gas[10:] + '_' + y_gas[10:] + '_' +
                                            str(year_of_interest) + '.csv')
@@ -120,6 +125,9 @@ def plot_emission_correlations(emissions_data, years_of_interest, save_results, 
         if save_results is not None:
             correlations_df.to_csv(save_results + 'gasesCorrelation' + str(year_of_interest) + '.csv')
             rank_corr_df.to_csv(save_results + 'gasesRankCorr' + str(year_of_interest) + '.csv')
+            if models_separate:
+                model_correl_df.to_csv(save_results + 'modelsCorrelation' + str(year_of_interest) + '.csv')
+                model_grad_df.to_csv(save_results + 'modelsCorrelation' + str(year_of_interest) + '.csv')
 
 
 
