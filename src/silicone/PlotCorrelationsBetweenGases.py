@@ -35,15 +35,16 @@ quantile_decay_factor: float
 smoothing_spline: None or float. 
     If none, do not fit a smoothing spline to the quantiles, otherwise this is the degree
     of smoothing, s, of the spline.  
-model_colours : boolean
-    Should different models be distinguishable on the plots? If false, legend_fraction is ignored.  
+models_separate : boolean
+    Should different models be distinguishable on the plots? If false, legend_fraction is ignored. If true, we return
+    the correlation coefficients for each model 
 legend_fraction : float
     In the model-coloured version, how much does the figure need to be reduced by to leave room for the legend?
 """
 
 def plot_emission_correlations(emissions_data, years_of_interest, save_results, plot_quantiles, quantiles_savename,
                                quantile_boxes, quantile_decay_factor=1, smoothing_spline=None,
-                               model_colours=False, legend_fraction=1):
+                               models_separate=False, legend_fraction=1):
 
     for year_of_interest in years_of_interest:
         # Obtain the list of gases to examine
@@ -67,6 +68,10 @@ def plot_emission_correlations(emissions_data, years_of_interest, save_results, 
         # Initialise the tables to hold all parameters between runs
         correlations_df = pd.DataFrame(index=df_gases.index, columns=[x_gas])
         rank_corr_df = pd.DataFrame(index=df_gases.index, columns=[x_gas])
+        if models_separate:
+            model_correl_df = pd.DataFrame(index=df_gases.index, columns=emissions_data['model'].unique())
+            model_grad_df = pd.DataFrame(index=df_gases.index, columns=emissions_data['model'].unique())
+
         for y_gas_ind in range(df_gases.count()[0]):
             plt.close()
             y_gas = df_gases.index[y_gas_ind]
@@ -92,8 +97,8 @@ def plot_emission_correlations(emissions_data, years_of_interest, save_results, 
             ].astype(float)
 
             # Plot the results
-            if model_colours:
-                fig = plt.figure(figsize=(16, 12))
+            if models_separate:
+                fig = plt.figure(figsize=(12, 9))
                 ax = plt.subplot(111)
                 all_models = list(seaborn_df['model'].unique())
                 markers = itertools.cycle(["s", "o", "v", "<", ">", ","])
@@ -107,6 +112,10 @@ def plot_emission_correlations(emissions_data, years_of_interest, save_results, 
                             alpha=0.5,
                             marker=next(markers)
                         )
+                        model_correl_df.loc[y_gas, model] = seaborn_df.loc[to_plot, [x_gas, y_gas]].corr(
+                            'pearson').iloc[1, 0]
+                        model_grad_df.loc[y_gas, model] = np.polyfit(seaborn_df.loc[to_plot, x_gas],
+                                                                     seaborn_df.loc[to_plot, y_gas], 1)[0]
                 box = ax.get_position()
                 ax.set_position([box.x0, box.y0, box.width * legend_fraction, box.height])
                 ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
@@ -136,9 +145,9 @@ def plot_emission_correlations(emissions_data, years_of_interest, save_results, 
                         plt.plot(manyx, spline(manyx))
                 else:
                     plt.plot(smooth_quant_df.index, smooth_quant_df)
-                if not model_colours:
+                if not models_separate:
                     plt.legend(smooth_quant_df.keys())
-                if quantiles_savename is not None:
+                if quantiles_savename is not None and plot_quantiles is not None:
                     smooth_quant_df.to_csv(quantiles_savename + x_gas[10:] + '_' + y_gas[10:] + '_' +
                                            str(year_of_interest) + '.csv')
 
@@ -156,4 +165,7 @@ def plot_emission_correlations(emissions_data, years_of_interest, save_results, 
         if save_results:
             correlations_df.to_csv(save_results + 'gasesCorrelation' + str(year_of_interest) + '.csv')
             rank_corr_df.to_csv(save_results + 'gasesRankCorr' + str(year_of_interest) + '.csv')
+            if models_separate:
+                model_correl_df.to_csv(save_results + 'modelsCorrelation' + str(year_of_interest) + '.csv')
+                model_grad_df.to_csv(save_results + 'modelsCorrelation' + str(year_of_interest) + '.csv')
 

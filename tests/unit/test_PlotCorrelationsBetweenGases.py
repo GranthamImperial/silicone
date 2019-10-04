@@ -49,6 +49,9 @@ def test_PlotCorrelationsBetweenGases(check_aggregate_df):
         assert csv_reader.iloc[1, 1] == 217
     for csv_file in csv_files:
         os.remove(quantiles_savename + csv_file)
+    regex_match_png = re.compile(".*" + str(years_of_interest[0]) + "\.png")
+    png_files = [x for x in quantiles_files if regex_match_png.match(x)]
+    assert len(png_files) == 0
 
     # Rerun the code with slightly different parameters to explore more code options.
     plot_quantiles = None
@@ -62,7 +65,6 @@ def test_PlotCorrelationsBetweenGases(check_aggregate_df):
     assert len(csv_files) == 2
     for csv_file in csv_files:
         os.remove(quantiles_savename + csv_file)
-    regex_match_png = re.compile(".*" + str(years_of_interest[0]) + "\.png")
     png_files = [x for x in quantiles_files if regex_match_png.match(x)]
     assert len(png_files) == 4
     for png_file in png_files:
