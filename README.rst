@@ -1,8 +1,6 @@
 Silicone
 ========
 
-.. sec-begin-index
-
 +-------------------+----------------+-----------+
 | Repository health | |Build Status| | |Codecov| |
 +-------------------+----------------+-----------+
@@ -15,13 +13,41 @@ Silicone
 | Latest activity | |Contributors| | |Last Commit| | |Commits Since Last Release| |
 +-----------------+----------------+---------------+------------------------------+
 
+.. sec-begin-index
+
+Silicone is a Python package which can be used to automatically fill in detail in emissions scenarios.
+For example, adding emissions of aerosol precurors and methane based on carbon dioxide and nitrous oxide emissions pathways or adding regional emissions based on a global emissions pathway.
+
 .. sec-end-index
 
-.. sec-begin-long-description
+License
+-------
 
-Automated filling of detail in reported emission scenarios.
+.. sec-begin-license
 
-.. sec-end-long-description
+Silicone does not yet include a license.
+We will choose one as soon as possible.
+
+.. sec-end-license
+
+.. sec-begin-installation
+
+Installation
+------------
+
+Instructions to be written.
+
+.. sec-end-installation
+
+Documentation
+-------------
+
+Documentation can be found at our `documentation pages <https://silicone.readthedocs.io/en/latest/>`_ (we are thankful to `Read the Docs <https://readthedocs.org/>`_ for hosting us).
+
+Contributing
+------------
+
+Please see the `Development section of the docs <https://silicone.readthedocs.io/en/latest/development.html>`_.
 
 .. sec-begin-links
 

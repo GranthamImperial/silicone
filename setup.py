@@ -43,7 +43,7 @@ REQUIREMENTS_TESTS = [
     "pytest",
     "pytest-cov",
 ]
-REQUIREMENTS_DOCS = ["sphinx>=1.8", "sphinx_rtd_theme", "sphinx-autodoc-typehints"]
+REQUIREMENTS_DOCS = ["sphinx>=1.4,<2.1", "sphinx_rtd_theme", "sphinx-autodoc-typehints", "sphinx-click"]
 REQUIREMENTS_DEPLOY = ["setuptools>=38.6.0", "twine>=1.11.0", "wheel>=0.31.0"]
 REQUIREMENTS_DEV = (
     [
