@@ -7,7 +7,7 @@ from pyam import IamDataFrame
 
 from silicone.database_crunchers import DatabaseCruncherLeadGas
 
-from .base import _DataBaseCruncherTester
+from base import _DataBaseCruncherTester
 
 
 class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
@@ -33,8 +33,8 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
         assert False, "sjkalfd"
 
     def test_derive_relationship_error_too_much_info(self, test_db):
-        # test that crunching fails if there's more than a single point for the
-        # gas to downscale to in the database
+        # test that crunching fails if there's more than a single point (whether year
+        # or scenario) for the gas to downscale to in the database
         tcruncher = self.tclass(test_db)
         res = tcruncher.derive_relationship("Emissions|HFC|C5F12", "Emissions|HFC|C2F6")
         assert isinstance(res, object)
@@ -73,7 +73,7 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
         self.check_downscaled_variables(res)
         self.check_downscaled_variable_metadata(res_downscaled)
 
-    @pytest.fixture.parametrize("interpolate", [True, False])
+    @pytest.mark.parametrize("interpolate", [True, False])
     def test_relationship_usage_interpolation(
         self, test_db, test_downscale_df, interpolate
     ):
