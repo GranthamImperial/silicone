@@ -88,3 +88,23 @@ def plot_emission_correlations_cruncher_quantile_rolling_windows_cli(
         model_colours,
         legend_fraction,
     )
+
+
+@click.command(context_settings={"help_option_names": ["-h", "--help"]})
+@click.argument("scenarios_raw", type=click.Path(exists=True, readable=True, resolve_path=True))
+@click.argument("scenarios_db", type=click.Path(exists=True, readable=True, resolve_path=True))
+@click.argument(
+    "scenarios_output", type=click.Path(writable=True, resolve_path=True)
+)
+@click.option("--config", default=None, type=click.Path(readable=True, resolve_path=True), show_default=True, help="Configuration to use when infilling (this should be a yaml file)")
+def infill(scenarios_raw, scenarios_db, scenarios_output, config):
+    r"""
+    In fill data in ``scenarios_raw`` using information from ``scenarios_db``.
+
+    The output is written in ``scenarios_output``.
+
+    The configuration to use for the run is read from ``config``. If ``config`` is not
+    supplied, the default config will be used. These can be found in
+    ``silicone.cli.default_infill_config``.
+    """
+    raise NotImplementedError
