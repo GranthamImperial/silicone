@@ -38,6 +38,7 @@ REQUIREMENTS_INSTALL = [
     "pyam-iamc>=0.2.0",
     "pandas==0.24.2",
     "click",
+    "dill",
 ]
 REQUIREMENTS_NOTEBOOKS = ["matplotlib", "notebook", "seaborn", "statsmodels"]
 REQUIREMENTS_TESTS = ["codecov", "nbval", "pytest>=4.0,<5.0", "pytest-cov"]
