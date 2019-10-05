@@ -9,6 +9,7 @@ master
 - (`#13 <https://github.com/znicholls/silicone/pull/13>`_) Get initial work (see `#11 <https://github.com/znicholls/silicone/pull/11>`_) into package structure, still requires tests (see `#16 <https://github.com/znicholls/silicone/pull/16>`_)
 - (`#12 <https://github.com/znicholls/silicone/pull/12>`_) Add BSD-3-Clause license
 - (`#9 <https://github.com/znicholls/silicone/pull/9>`_) Add lead gas cruncher
+- (`#8 <https://github.com/znicholls/silicone/pull/8>`_) Add sketch of basic command line interface
 - (`#6 <https://github.com/znicholls/silicone/pull/6>`_) Update development docs
 - (`#5 <https://github.com/znicholls/silicone/pull/5>`_) Put notebooks under CI
 - (`#4 <https://github.com/znicholls/silicone/pull/4>`_) Add basic documentation structure
