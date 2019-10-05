@@ -29,6 +29,7 @@ As a contributor, please follow a couple of conventions:
 - Be welcoming to newcomers and encourage diverse new contributors from all backgrounds: see the `Python Community Code of Conduct <https://www.python.org/psf/codeofconduct/>`_
 - Only push to your own branches, this allows people to force push to their own branches as they need without fear or causing others headaches
 - Start all pull requests as draft pull requests and only mark them as ready for review once they've been rebased onto master, this makes it much simpler for reviewers
+- Try and make lots of small pull requests, this makes it easier for reviewers and faster for everyone as review time grows exponentially with the number of lines in a pull request
 
 
 Getting setup
