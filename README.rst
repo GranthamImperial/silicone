@@ -1,6 +1,10 @@
 Silicone
 ========
 
++--------+--------+
+| Basics | |Docs| |
++--------+--------+
+
 +-------------------+----------------+-----------+
 | Repository health | |Build Status| | |Codecov| |
 +-------------------+----------------+-----------+
@@ -51,6 +55,8 @@ Please see the `Development section of the docs <https://silicone.readthedocs.io
 
 .. sec-begin-links
 
+.. |Docs| image:: https://readthedocs.org/projects/silicone/badge/?version=latest
+    :target: https://silicone.readthedocs.io/en/latest/
 .. |Build Status| image:: https://travis-ci.com/znicholls/silicone.svg?branch=master
     :target: https://travis-ci.com/znicholls/silicone
 .. |Codecov| image:: https://img.shields.io/codecov/c/github/znicholls/silicone.svg
