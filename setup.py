@@ -34,6 +34,7 @@ CLASSIFIERS = [
 ENTRY_POINTS = {
     "console_scripts": [
         "silicone-explore-quantiles-rolling-windows = silicone.cli:plot_emission_correlations_cruncher_quantile_rolling_windows_cli"
+        "silicone-infill = silicone.cli:infill",
     ]
 }
 
