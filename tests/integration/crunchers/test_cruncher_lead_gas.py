@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from pyam import IamDataFrame
+
 from silicone.database_crunchers import DatabaseCruncherLeadGas
 
 from .base import _DataBaseCruncherTester
