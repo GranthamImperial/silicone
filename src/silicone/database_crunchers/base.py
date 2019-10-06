@@ -1,12 +1,14 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
 
-class _DatabaseCruncher(meta_class=ABCMeta):
+
+class _DatabaseCruncher(metaclass=ABCMeta):
     """
     Base class for database crunching.
 
     Common operations are shared here, allowing subclasses to just focus on
     implementing the crunching algorithms.
     """
+
     def __init__(self, db):
         """
         Initialise the database cruncher

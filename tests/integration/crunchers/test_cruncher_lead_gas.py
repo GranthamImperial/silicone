@@ -3,11 +3,12 @@ import re
 import numpy as np
 import pandas as pd
 import pytest
+from base import _DataBaseCruncherTester
 from pyam import IamDataFrame
 
 from silicone.database_crunchers import DatabaseCruncherLeadGas
 
-from base import _DataBaseCruncherTester
+# test that using filler with `time` time_col if you derived the relationship with `year` time_col explodes
 
 
 class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
@@ -19,24 +20,30 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
 
     def test_derive_relationship(self, test_db):
         tcruncher = self.tclass(test_db)
-        res = tcruncher.derive_relationship("Emissions|HFC|C5F12", "Emissions|HFC|C2F6")
+        res = tcruncher.derive_relationship(
+            "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
+        )
         assert isinstance(res, object)
-        assert False, "sjkalfd"
 
     def test_derive_relationship_error_no_info(self, test_db):
-        # TODO: move this to base testing class
         # test that crunching fails if there's no data about the lead gas in the
         # database
-        tcruncher = self.tclass(test_db)
-        res = tcruncher.derive_relationship("Emissions|HFC|C5F12", "Emissions|HFC|C2F6")
-        assert isinstance(res, object)
-        assert False, "sjkalfd"
+        variable_leaders = ["Emissions|HFC|C2F6"]
+        tcruncher = self.tclass(test_db.filter(variable=variable_leaders, keep=False))
+
+        error_msg = re.escape(
+            "No data for `variable_leaders` ({}) in database".format(variable_leaders)
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            tcruncher.derive_relationship("Emissions|HFC|C5F12", variable_leaders)
 
     def test_derive_relationship_error_too_much_info(self, test_db):
         # test that crunching fails if there's more than a single point (whether year
         # or scenario) for the gas to downscale to in the database
         tcruncher = self.tclass(test_db)
-        res = tcruncher.derive_relationship("Emissions|HFC|C5F12", "Emissions|HFC|C2F6")
+        res = tcruncher.derive_relationship(
+            "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
+        )
         assert isinstance(res, object)
         assert False, "sjkalfd"
 
@@ -46,7 +53,7 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
         tcruncher = self.tclass(test_db)
 
         filler = tcruncher.derive_relationship(
-            "Emissions|HFC|C5F12", "Emissions|HFC|C2F6"
+            "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
         )
         res = filler(test_downscale_df)
 
@@ -82,7 +89,7 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
         tcruncher = self.tclass(test_db)
 
         filler = tcruncher.derive_relationship(
-            "Emissions|HFC|C5F12", "Emissions|HFC|C2F6"
+            "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
         )
 
         if not interpolate:
