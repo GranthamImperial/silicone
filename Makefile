@@ -75,7 +75,7 @@ test-notebooks: $(VENV_DIR)  ## test the notebooks
 docs:  ## make docs
 	make $(DOCS_DIR)/build/html/index.html
 
-$(DOCS_DIR)/build/html/index.html: $(DOCS_DIR)/source/*.py $(DOCS_DIR)/source/_templates/*.html $(DOCS_DIR)/source/*.rst src/silicone/*.py README.rst CHANGELOG.rst $(VENV_DIR)
+$(DOCS_DIR)/build/html/index.html: $(DOCS_DIR)/source/*.py $(DOCS_DIR)/source/_templates/*.html $(DOCS_DIR)/source/*.rst src/silicone/**.py README.rst CHANGELOG.rst $(VENV_DIR)
 	cd $(DOCS_DIR); make html
 
 # first time setup, follow this https://blog.jetbrains.com/pycharm/2017/05/how-to-publish-your-package-on-pypi/

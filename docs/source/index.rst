@@ -26,6 +26,7 @@ Silicone
     :maxdepth: 2
     :caption: API reference
 
+    database-crunchers
     utils
 
 .. toctree::
