@@ -6,17 +6,11 @@ import pandas as pd
 import pytest
 from pyam import IamDataFrame
 
+msa = ["model_a", "scen_a"]
 TEST_DB = pd.DataFrame(
     [
-        [
-            "model_a",
-            "scen_a",
-            "World",
-            "Emissions|HFC|C5F12",
-            "kt C5F12/yr",
-            np.nan,
-            3.14,
-        ]
+        msa + ["World", "Emissions|HFC|C5F12", "kt C5F12/yr", np.nan, 3.14],
+        msa + ["World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.2, 1.5],
     ],
     columns=["model", "scenario", "region", "variable", "unit", 2010, 2015],
 )

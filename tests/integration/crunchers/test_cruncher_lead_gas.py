@@ -1,3 +1,4 @@
+import datetime as dt
 import re
 
 import numpy as np
@@ -18,6 +19,27 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
         columns=["model", "scenario", "region", "variable", "unit", 2015, 2020, 2050],
     )
 
+    def _join_iamdfs_time_wrangle(self, base, other):
+        # TODO: put this in base class
+        return base.append(self._adjust_time_style_to_match(other, base))
+
+    def _adjust_time_style_to_match(self, in_df, target_df):
+        # TODO: put this in base class
+        if in_df.time_col != target_df.time_col:
+            in_df = in_df.timeseries()
+            if target_df.time_col == "time":
+                target_df_year_map = {v.year: v for v in target_df.timeseries().columns}
+                in_df.columns = in_df.columns.map(
+                    lambda x: target_df_year_map[x]
+                    if x in target_df_year_map
+                    else dt.datetime(x, 1, 1)
+                )
+            else:
+                in_df.columns = in_df.columns.map(lambda x: x.year)
+            return IamDataFrame(in_df)
+
+        return in_df
+
     def test_derive_relationship(self, test_db):
         tcruncher = self.tclass(test_db)
         res = tcruncher.derive_relationship(
@@ -37,15 +59,36 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
         with pytest.raises(ValueError, match=error_msg):
             tcruncher.derive_relationship("Emissions|HFC|C5F12", variable_leaders)
 
-    def test_derive_relationship_error_too_much_info(self, test_db):
+    @pytest.mark.parametrize(
+        "extra_info",
+        (
+            pd.DataFrame(
+                [["ma", "sb", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1, 2]],
+                columns=["model", "scenario", "region", "variable", "unit", 2010, 2015],
+            ),
+            pd.DataFrame(
+                [
+                    ["ma", "sa", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1],
+                    ["ma", "sb", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 3],
+                ],
+                columns=["model", "scenario", "region", "variable", "unit", 2010],
+            ),
+        ),
+    )
+    def test_derive_relationship_error_too_much_info(self, test_db, extra_info):
         # test that crunching fails if there's more than a single point (whether year
         # or scenario) for the gas to downscale to in the database
-        tcruncher = self.tclass(test_db)
-        res = tcruncher.derive_relationship(
-            "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
+        tdb = test_db.filter(variable="Emissions|HFC|C5F12", keep=False)
+        tcruncher = self.tclass(
+            self._join_iamdfs_time_wrangle(tdb, IamDataFrame(extra_info))
         )
-        assert isinstance(res, object)
-        assert False, "sjkalfd"
+        error_msg = re.escape(
+            "More than one data point for `variable_follower` ({}) in database".format(
+                "Emissions|HFC|C5F12"
+            )
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            tcruncher.derive_relationship("Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"])
 
     def test_relationship_usage(self, test_db, test_downscale_df):
         # TODO, make this an abstract method in base class to ensure all crunchers
@@ -55,30 +98,28 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
         filler = tcruncher.derive_relationship(
             "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
         )
+
+        test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db)
         res = filler(test_downscale_df)
 
-        res_downscaled = res.filter(
-            variable="Emissions|HFC|C5F12", region="World", unit="kt C5F12/yr"
-        )
-        res_downscaled_timeseries = res_downscaled.timeseries()
-
-        lead_iamdf = test_downscale_df.filter(
-            variable="Emissions|HFC|C2F6", region="World", unit="kt C2F6/yr"
-        )
-        lead_vals = lead_iamdf.timeseries().values.squeeze()
+        lead_iamdf = test_downscale_df.filter(variable="Emissions|HFC|C2F6")
         lead_val_2015 = lead_iamdf.filter(year=2015).timeseries().values.squeeze()
 
-        np.testing.assert_array_equal(
-            res_downscaled_timeseries.values.squeeze(), lead_vals * 3.14 / lead_val_2015
+        exp = lead_iamdf.timeseries() * 3.14 / lead_val_2015
+        exp = exp.reset_index()
+        exp["variable"] = "Emissions|HFC|C5F12"
+        exp["unit"] = "kt C5F12/yr"
+        exp = IamDataFrame(exp)
+
+        pd.testing.assert_frame_equal(
+            res.timeseries(), exp.timeseries(), check_like=True
         )
+
         # comes back on input timepoints
         np.testing.assert_array_equal(
             res.timeseries().columns.values.squeeze(),
             test_downscale_df.timeseries().columns.values.squeeze(),
         )
-
-        self.check_downscaled_variables(res)
-        self.check_downscaled_variable_metadata(res_downscaled)
 
     @pytest.mark.parametrize("interpolate", [True, False])
     def test_relationship_usage_interpolation(
@@ -126,27 +167,3 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
 
         self.check_downscaled_variables(res)
         self.check_downscaled_variable_metadata(res_downscaled)
-
-    def check_downscaled_variable_metadata(self, downscaled_iamdf):
-        assert downscaled_iamdf.models().tolist() == ["model_b"]
-        assert downscaled_iamdf.scenarios().tolist() == ["scen_b"]
-        assert downscaled_iamdf.regions().tolist() == ["World"]
-        pd.testing.assert_frame_equal(
-            downscaled_iamdf.variables(True),
-            pd.DataFrame(
-                ["Emissions|HFC|C5F12", "kt C5F12/yr"], columns=["variable", "unit"]
-            ),
-        )
-
-    def check_downscaled_variables(self, downscaled_iamdf):
-        # old variables part of res too
-        pd.testing.assert_frame_equal(
-            downscaled_iamdf.variables(True),
-            pd.DataFrame(
-                [
-                    ["Emissions|HFC|C2F6", "kt C2F6/yr"],
-                    ["Emissions|HFC|C5F12", "kt C5F12/yr"],
-                ],
-                columns=["variable", "unit"],
-            ),
-        )
