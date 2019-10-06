@@ -46,7 +46,9 @@ class _DataBaseCruncherTester(metaclass=ABCMeta):
 
         if test_db.time_col == "year":
             test_downscale_df = test_downscale_df.timeseries()
-            test_downscale_df.columns = test_downscale_df.columns.map(lambda x: dt.datetime(x, 1, 1))
+            test_downscale_df.columns = test_downscale_df.columns.map(
+                lambda x: dt.datetime(x, 1, 1)
+            )
             test_downscale_df = IamDataFrame(test_downscale_df)
 
         error_msg = re.escape(

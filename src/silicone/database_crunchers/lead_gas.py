@@ -155,8 +155,11 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
 
             if lead_var_val_in_key_timepoint.data.empty:
                 if not interpolate:
-                    error_msg = "Required downscaling timepoint ({}) is not in the data for the lead gas ({})".format(
-                        data_follower_key_timepoint, variable_leaders[0]
+                    error_msg = (
+                        "Required downscaling timepoint ({}) is not in the data for "
+                        "the lead gas ({})".format(
+                            data_follower_key_timepoint, variable_leaders[0]
+                        )
                     )
                     raise ValueError(error_msg)
                 else:
@@ -224,4 +227,3 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
             raise ValueError(error_msg)
 
         return iamdf_follower
-
