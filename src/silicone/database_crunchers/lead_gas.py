@@ -78,14 +78,21 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
         iamdf_follower = self._db.filter(variable=variable_follower)
         data_follower = iamdf_follower.data
         if data_follower.shape[0] != 1:
-            raise ValueError
+            error_msg = "More than one data point for `variable_follower` ({}) in database".format(
+                variable_follower
+            )
+            raise ValueError(error_msg)
 
-        data_follower_time_col = iamdf_follower.time_col
-        data_follower_key_timepoint = data_follower[
-            data_follower_time_col
-        ].values.squeeze()
         data_follower_key_year_val = data_follower["value"].values.squeeze()
         data_follower_unit = data_follower["unit"].values[0]
+
+        data_follower_time_col = iamdf_follower.time_col
+        if data_follower_time_col == "time":
+            data_follower_key_timepoint = (
+                data_follower[data_follower_time_col].iloc[0].to_pydatetime()
+            )
+        else:
+            data_follower_key_timepoint = data_follower[data_follower_time_col].iloc[0]
 
         def filler(in_iamdf, interpolate=False):
             """
@@ -111,34 +118,40 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
                 The key year for filling is not in ``in_iamdf`` and ``interpolate is
                 False``.
             """
-            import pdb
-
-            pdb.set_trace()
-            # unit check (can be conversion in future)
             lead_var = in_iamdf.filter(variable=variable_leaders)
 
             # for other crunchers, unit check would look like this (doesn't actually
             # matter for this cruncher)
-            import pdb
-
-            pdb.set_trace()
+            # when we do unit conversion we should add OpenSCM as a dependency as it
+            # has all the emissions units inbuilt
+            """
             var_units = lead_var.variables(True)
             if var_units.shape[0] != 1:
                 raise ValueError("More than one unit detected for input timeseries")
             if (
-                var_units.set_index("variable")[variable_leaders[0]]["unit"]
+                var_units.set_index("variable").loc[variable_leaders[0]]["unit"]
                 != "expected_unit"
             ):
                 raise ValueError(
                     "Units of lead variable is meant to be `expected_unit`, found `other_unit`"
                 )
+            """
 
-            key_timepoint_filter = {data_follower_time_col: data_follower_key_timepoint}
+            key_timepoint_filter = {
+                data_follower_time_col: [data_follower_key_timepoint]
+            }
             lead_var_val_in_key_timepoint = lead_var.filter(
                 **key_timepoint_filter
             ).timeseries()
+            if not lead_var_val_in_key_timepoint.shape[1] == 1:
+                raise AssertionError(
+                    "How did filtering for a single timepoint result in more than one column?"
+                )
+            lead_var_val_in_key_timepoint = lead_var_val_in_key_timepoint.iloc[:, 0]
+
             scaling = data_follower_key_year_val / lead_var_val_in_key_timepoint
-            output_ts = (lead_var.timeseries() * scaling).reset_index()
+            output_ts = (lead_var.timeseries().T * scaling).T.reset_index()
+
             output_ts["variable"] = variable_follower
             output_ts["unit"] = data_follower_unit
 
