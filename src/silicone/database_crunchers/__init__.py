@@ -1,1 +1,1 @@
-from .lead_gas import DatabaseCruncherLeadGas
+from .lead_gas import DatabaseCruncherLeadGas  # noqa: F401

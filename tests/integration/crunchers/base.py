@@ -1,10 +1,10 @@
 import datetime as dt
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
 
 from pyam import IamDataFrame
 
-class _DataBaseCruncherTester(metaclass=ABCMeta):
 
+class _DataBaseCruncherTester(metaclass=ABCMeta):
     def _join_iamdfs_time_wrangle(self, base, other):
         return base.append(self._adjust_time_style_to_match(other, base))
 

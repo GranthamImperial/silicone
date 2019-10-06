@@ -94,7 +94,6 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
         if data_follower_time_col == "time":
             data_follower_key_timepoint = data_follower_key_timepoint.to_pydatetime()
 
-
         def filler(in_iamdf, interpolate=False):
             """
             Filler function derived from :obj:`DatabaseCruncherLeadGas`.
@@ -146,22 +145,28 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
                 # filter warning about empty data frame as we handle it ourselves
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
-                    return idf.filter(
-                        **key_timepoint_filter
-                    )
+                    return idf.filter(**key_timepoint_filter)
 
             lead_var_val_in_key_timepoint = get_values_in_key_timepoint(lead_var)
 
             if lead_var_val_in_key_timepoint.data.empty:
                 if not interpolate:
-                    error_msg = "Required downscaling timepoint ({}) is not in the data for the lead gas ({})".format(data_follower_key_timepoint, variable_leaders[0])
+                    error_msg = "Required downscaling timepoint ({}) is not in the data for the lead gas ({})".format(
+                        data_follower_key_timepoint, variable_leaders[0]
+                    )
                     raise ValueError(error_msg)
                 else:
                     lead_var_interp = lead_var.timeseries()
                     lead_var_interp[data_follower_key_timepoint] = np.nan
-                    lead_var_interp = lead_var_interp.reindex(sorted(lead_var_interp.columns), axis=1)
-                    lead_var_interp = IamDataFrame(lead_var_interp.interpolate(method="index", axis=1))
-                    lead_var_val_in_key_timepoint = get_values_in_key_timepoint(lead_var_interp)
+                    lead_var_interp = lead_var_interp.reindex(
+                        sorted(lead_var_interp.columns), axis=1
+                    )
+                    lead_var_interp = IamDataFrame(
+                        lead_var_interp.interpolate(method="index", axis=1)
+                    )
+                    lead_var_val_in_key_timepoint = get_values_in_key_timepoint(
+                        lead_var_interp
+                    )
 
             lead_var_val_in_key_timepoint = lead_var_val_in_key_timepoint.timeseries()
             if not lead_var_val_in_key_timepoint.shape[1] == 1:
