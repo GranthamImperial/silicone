@@ -82,7 +82,8 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
         """
         if len(variable_leaders) > 1:
             raise ValueError(
-                "For `DatabaseCruncherLeadGas`, ``variable_leaders`` should only contain one variable"
+                "For `DatabaseCruncherLeadGas`, ``variable_leaders`` should only "
+                "contain one variable"
             )
 
         if not all([v in self._db.variables().tolist() for v in variable_leaders]):
@@ -159,7 +160,13 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
                     "Units of lead variable is meant to be `expected_unit`, found `other_unit`"
                 )
             """
-
+            if data_follower_time_col != in_iamdf.time_col:
+                raise ValueError(
+                    "`in_iamdf` time column must be the same as the time column used "
+                    "to generate this filler function (`{}`)".format(
+                        data_follower_time_col
+                    )
+                )
             key_timepoint_filter = {
                 data_follower_time_col: [data_follower_key_timepoint]
             }
@@ -192,7 +199,7 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
                     )
 
             lead_var_val_in_key_timepoint = lead_var_val_in_key_timepoint.timeseries()
-            if not lead_var_val_in_key_timepoint.shape[1] == 1:
+            if not lead_var_val_in_key_timepoint.shape[1] == 1:  # pragma: no cover
                 raise AssertionError(
                     "How did filtering for a single timepoint result in more than one column?"
                 )

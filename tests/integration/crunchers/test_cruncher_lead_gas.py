@@ -1,3 +1,4 @@
+import datetime as dt
 import re
 
 import numpy as np
@@ -7,8 +8,6 @@ from base import _DataBaseCruncherTester
 from pyam import IamDataFrame
 
 from silicone.database_crunchers import DatabaseCruncherLeadGas
-
-# test that using filler with `time` time_col if you derived the relationship with `year` time_col explodes
 
 
 class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
@@ -24,6 +23,15 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
             "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
         )
         assert isinstance(res, object)
+
+    def test_derive_relationship_error_multiple_lead_vars(self, test_db):
+        tcruncher = self.tclass(test_db)
+        error_msg = re.escape(
+            "For `DatabaseCruncherLeadGas`, ``variable_leaders`` should only "
+            "contain one variable"
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            tcruncher.derive_relationship("Emissions|HFC|C5F12", ["a", "b"])
 
     def test_derive_relationship_error_no_info_leader(self, test_db):
         # test that crunching fails if there's no data about the lead gas in the
@@ -119,9 +127,7 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
             "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
         )
 
-        test_downscale_df = self._adjust_time_style_to_match(
-            test_downscale_df.filter(year=2015, keep=False), test_db
-        )
+        test_downscale_df = self._adjust_time_style_to_match(test_downscale_df.filter(year=2015, keep=False), test_db)
 
         required_timepoint = test_db.filter(year=2015).data[test_db.time_col].iloc[0]
         if not interpolate:
