@@ -80,35 +80,8 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
         ValueError
             There is more than one value for ``variable_follower`` in the database.
         """
-        if len(variable_leaders) > 1:
-            raise ValueError(
-                "For `DatabaseCruncherLeadGas`, ``variable_leaders`` should only "
-                "contain one variable"
-            )
-
-        if not all([v in self._db.variables().tolist() for v in variable_leaders]):
-            error_msg = "No data for `variable_leaders` ({}) in database".format(
-                variable_leaders
-            )
-            raise ValueError(error_msg)
-
-        # filter warning about empty data frame as we handle it ourselves
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            iamdf_follower = self._db.filter(variable=variable_follower)
-
+        iamdf_follower = self._get_iamdf_follower(variable_follower, variable_leaders)
         data_follower = iamdf_follower.data
-        if data_follower.empty:
-            error_msg = "No data for `variable_follower` ({}) in database".format(
-                variable_follower
-            )
-            raise ValueError(error_msg)
-
-        if data_follower.shape[0] != 1:
-            error_msg = "More than one data point for `variable_follower` ({}) in database".format(
-                variable_follower
-            )
-            raise ValueError(error_msg)
 
         data_follower_key_year_val = data_follower["value"].values.squeeze()
         data_follower_unit = data_follower["unit"].values[0]
@@ -167,6 +140,7 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
                         data_follower_time_col
                     )
                 )
+
             key_timepoint_filter = {
                 data_follower_time_col: [data_follower_key_timepoint]
             }
@@ -186,6 +160,7 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
                     )
                     raise ValueError(error_msg)
                 else:
+                    # TODO: make interpolate method of IamDataFrame datetime friendly
                     lead_var_interp = lead_var.timeseries()
                     lead_var_interp[data_follower_key_timepoint] = np.nan
                     lead_var_interp = lead_var_interp.reindex(
@@ -201,8 +176,10 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
             lead_var_val_in_key_timepoint = lead_var_val_in_key_timepoint.timeseries()
             if not lead_var_val_in_key_timepoint.shape[1] == 1:  # pragma: no cover
                 raise AssertionError(
-                    "How did filtering for a single timepoint result in more than one column?"
+                    "How did filtering for a single timepoint result in more than "
+                    "one column?"
                 )
+
             lead_var_val_in_key_timepoint = lead_var_val_in_key_timepoint.iloc[:, 0]
 
             scaling = data_follower_key_year_val / lead_var_val_in_key_timepoint
@@ -214,3 +191,37 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
             return IamDataFrame(output_ts)
 
         return filler
+
+    def _get_iamdf_follower(self, variable_follower, variable_leaders):
+        if len(variable_leaders) > 1:
+            raise ValueError(
+                "For `DatabaseCruncherLeadGas`, ``variable_leaders`` should only "
+                "contain one variable"
+            )
+
+        if not all([v in self._db.variables().tolist() for v in variable_leaders]):
+            error_msg = "No data for `variable_leaders` ({}) in database".format(
+                variable_leaders
+            )
+            raise ValueError(error_msg)
+
+        # filter warning about empty data frame as we handle it ourselves
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            iamdf_follower = self._db.filter(variable=variable_follower)
+
+        data_follower = iamdf_follower.data
+        if data_follower.empty:
+            error_msg = "No data for `variable_follower` ({}) in database".format(
+                variable_follower
+            )
+            raise ValueError(error_msg)
+
+        if data_follower.shape[0] != 1:
+            error_msg = "More than one data point for `variable_follower` ({}) in database".format(
+                variable_follower
+            )
+            raise ValueError(error_msg)
+
+        return iamdf_follower
+

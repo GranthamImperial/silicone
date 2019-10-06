@@ -13,7 +13,10 @@ from silicone.database_crunchers import DatabaseCruncherLeadGas
 class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
     tclass = DatabaseCruncherLeadGas
     tdownscale_df = pd.DataFrame(
-        [["model_b", "scen_b", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1, 2, 3]],
+        [
+            ["model_b", "scen_b", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1, 2, 3],
+            ["model_b", "scen_c", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.1, 2.2, 2.8],
+        ],
         columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2050],
     )
 
@@ -101,7 +104,7 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
         lead_iamdf = test_downscale_df.filter(variable="Emissions|HFC|C2F6")
         lead_val_2015 = lead_iamdf.filter(year=2015).timeseries().values.squeeze()
 
-        exp = lead_iamdf.timeseries() * 3.14 / lead_val_2015
+        exp = (lead_iamdf.timeseries().T * 3.14 / lead_val_2015).T
         exp = exp.reset_index()
         exp["variable"] = "Emissions|HFC|C5F12"
         exp["unit"] = "kt C5F12/yr"
@@ -153,10 +156,9 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
         lead_df[required_timepoint] = np.nan
         lead_df = lead_df.reindex(sorted(lead_df.columns), axis=1)
         lead_df = lead_df.interpolate(method="index", axis=1)
-        lead_val_2015 = lead_df[required_timepoint].values[0]
+        lead_val_2015 = lead_df[required_timepoint]
 
-        exp *= 3.14 / lead_val_2015
-        exp = exp.reset_index()
+        exp = (exp.T * 3.14 / lead_val_2015).T.reset_index()
         exp["variable"] = "Emissions|HFC|C5F12"
         exp["unit"] = "kt C5F12/yr"
         exp = IamDataFrame(exp)
