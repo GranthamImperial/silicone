@@ -16,29 +16,8 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
     tclass = DatabaseCruncherLeadGas
     tdownscale_df = pd.DataFrame(
         [["model_b", "scen_b", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1, 2, 3]],
-        columns=["model", "scenario", "region", "variable", "unit", 2015, 2020, 2050],
+        columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2050],
     )
-
-    def _join_iamdfs_time_wrangle(self, base, other):
-        # TODO: put this in base class
-        return base.append(self._adjust_time_style_to_match(other, base))
-
-    def _adjust_time_style_to_match(self, in_df, target_df):
-        # TODO: put this in base class
-        if in_df.time_col != target_df.time_col:
-            in_df = in_df.timeseries()
-            if target_df.time_col == "time":
-                target_df_year_map = {v.year: v for v in target_df.timeseries().columns}
-                in_df.columns = in_df.columns.map(
-                    lambda x: target_df_year_map[x]
-                    if x in target_df_year_map
-                    else dt.datetime(x, 1, 1)
-                )
-            else:
-                in_df.columns = in_df.columns.map(lambda x: x.year)
-            return IamDataFrame(in_df)
-
-        return in_df
 
     def test_derive_relationship(self, test_db):
         tcruncher = self.tclass(test_db)
@@ -91,8 +70,6 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
             tcruncher.derive_relationship("Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"])
 
     def test_relationship_usage(self, test_db, test_downscale_df):
-        # TODO, make this an abstract method in base class to ensure all crunchers
-        # have at least one basic test of how their output works
         tcruncher = self.tclass(test_db)
 
         filler = tcruncher.derive_relationship(
@@ -125,18 +102,21 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
     def test_relationship_usage_interpolation(
         self, test_db, test_downscale_df, interpolate
     ):
-        # TODO, make this an abstract method in base class to ensure all crunchers
-        # have at least one basic test of how their output works
         tcruncher = self.tclass(test_db)
 
         filler = tcruncher.derive_relationship(
             "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
         )
 
+        test_downscale_df = self._adjust_time_style_to_match(test_downscale_df.filter(year=2015, keep=False), test_db)
+
+        required_timepoint = test_db.filter(year=2015).data[test_db.time_col].iloc[0]
         if not interpolate:
+            if isinstance(required_timepoint, pd.Timestamp):
+                required_timepoint = required_timepoint.to_pydatetime()
             error_msg = re.escape(
-                "Required downscaling year (2015) is not in the data for the "
-                "lead gas (Emissions|HFC|C2F6)"
+                "Required downscaling timepoint ({}) is not in the data for the "
+                "lead gas (Emissions|HFC|C2F6)".format(required_timepoint)
             )
             with pytest.raises(ValueError, match=error_msg):
                 filler(test_downscale_df, interpolate=interpolate)
@@ -144,26 +124,30 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
 
         res = filler(test_downscale_df, interpolate=interpolate)
 
-        res_downscaled = res.filter(
-            variable="Emissions|HFC|C5F12", region="World", unit="kt C5F12/yr"
-        )
-        res_downscaled_timeseries = res_downscaled.timeseries()
-
         lead_iamdf = test_downscale_df.filter(
             variable="Emissions|HFC|C2F6", region="World", unit="kt C2F6/yr"
         )
-        lead_vals = lead_iamdf.timeseries().values.squeeze()
-        lead_iamdf.interpolate(2015)
-        lead_val_2015 = lead_iamdf.filter(year=2015).timeseries().values.squeeze()
+        exp = lead_iamdf.timeseries()
 
-        np.testing.assert_array_equal(
-            res_downscaled_timeseries.values.squeeze(), lead_vals * 3.14 / lead_val_2015
+        # will have to make this more intelligent for time handling
+        lead_df = lead_iamdf.timeseries()
+        lead_df[required_timepoint] = np.nan
+        lead_df = lead_df.reindex(sorted(lead_df.columns), axis=1)
+        lead_df = lead_df.interpolate(method="index", axis=1)
+        lead_val_2015 = lead_df[required_timepoint].values[0]
+
+        exp *= 3.14 / lead_val_2015
+        exp = exp.reset_index()
+        exp["variable"] = "Emissions|HFC|C5F12"
+        exp["unit"] = "kt C5F12/yr"
+        exp = IamDataFrame(exp)
+
+        pd.testing.assert_frame_equal(
+            res.timeseries(), exp.timeseries(), check_like=True
         )
+
         # comes back on input timepoints
         np.testing.assert_array_equal(
             res.timeseries().columns.values.squeeze(),
             test_downscale_df.timeseries().columns.values.squeeze(),
         )
-
-        self.check_downscaled_variables(res)
-        self.check_downscaled_variable_metadata(res_downscaled)
