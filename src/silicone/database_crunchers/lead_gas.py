@@ -1,3 +1,6 @@
+"""
+Module for the database cruncher which uses the 'lead gas' technique.
+"""
 import warnings
 
 import numpy as np
@@ -19,17 +22,21 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
     the derived relationship only depends on a single point in the database, no
     regressions or other calculations are performed.
 
-    # TODO: turn this into latex which will render properly in the docs
+    Once the relationship is derived, the 'filler' function will infill following:
 
-    Mathematically we have:
+    .. math::
+        E_f(t) = s * E_l(t)
 
-    E_f(t) = s * E_l(t)
+    where :math:`E_f(t)` is emissions of the follower variable and :math:`E_l(t)` is
+    emissions of the lead variable.
 
-    where E_f(t) is emissions of the follower variable, s is the scaling factor and E_l(t) is emissions of the lead variable.
+    :math:`s` is the scaling factor, calculated as
 
-    s = E_f(t_{fdb}) / E_l(t_{fdb})
+    .. math::
+        s = \\frac{ E_f(t_{\\text{fdb}}) }{ E_l(t_{\\text{fdb}}) }
 
-    where t_{fdb} is the only time at which the follower gas appears in the database.
+    where :math:`t_{\\text{fdb}}` is the only time at which the follower gas
+    appears in the database.
     """
 
     def derive_relationship(self, variable_follower, variable_leaders, **kwargs):
@@ -45,7 +52,7 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
         variable_leaders : list[str]
             The variable we want to use in order to infer timeseries of
             ``variable_follower`` (e.g. ["CO2"]). Note that the 'lead gas' methodology
-            gives the same result, indepent of the value of `variable_leaders` in the
+            gives the same result, indepent of the value of ``variable_leaders`` in the
             database.
 
         **kwargs
@@ -55,14 +62,20 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
         Returns
         -------
         :obj:`func`
-            Function which takes `pyam.IamDataFrame`s containing `variable_leaders`
-            timeseries and returns timeseries for `variable_follower` based on the
-            derived relationship between the two.
+            Function which takes a :obj:`pyam.IamDataFrame` containing
+            ``variable_leaders`` timeseries and returns timeseries for
+            ``variable_follower`` based on the derived relationship between the two.
+            Please see the source code for the exact definition (and docstring) of the
+            returned function.
 
         Raises
         ------
         ValueError
             ``variable_leaders`` contains more than one variable.
+
+        ValueError
+            There is no data for ``variable_leaders`` or ``variable_follower`` in the
+            database.
 
         ValueError
             There is more than one value for ``variable_follower`` in the database.
@@ -78,8 +91,18 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
             )
             raise ValueError(error_msg)
 
-        iamdf_follower = self._db.filter(variable=variable_follower)
+        # filter warning about empty data frame as we handle it ourselves
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            iamdf_follower = self._db.filter(variable=variable_follower)
+
         data_follower = iamdf_follower.data
+        if data_follower.empty:
+            error_msg = "No data for `variable_follower` ({}) in database".format(
+                variable_follower
+            )
+            raise ValueError(error_msg)
+
         if data_follower.shape[0] != 1:
             error_msg = "More than one data point for `variable_follower` ({}) in database".format(
                 variable_follower

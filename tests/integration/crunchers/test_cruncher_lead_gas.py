@@ -25,7 +25,7 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
         )
         assert isinstance(res, object)
 
-    def test_derive_relationship_error_no_info(self, test_db):
+    def test_derive_relationship_error_no_info_leader(self, test_db):
         # test that crunching fails if there's no data about the lead gas in the
         # database
         variable_leaders = ["Emissions|HFC|C2F6"]
@@ -36,6 +36,18 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
         )
         with pytest.raises(ValueError, match=error_msg):
             tcruncher.derive_relationship("Emissions|HFC|C5F12", variable_leaders)
+
+    def test_derive_relationship_error_no_info_follower(self, test_db):
+        # test that crunching fails if there's no data about the follower gas in the
+        # database
+        variable_follower = "Emissions|HFC|C5F12"
+        tcruncher = self.tclass(test_db.filter(variable=variable_follower, keep=False))
+
+        error_msg = re.escape(
+            "No data for `variable_follower` ({}) in database".format(variable_follower)
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            tcruncher.derive_relationship(variable_follower, ["Emissions|HFC|C2F6"])
 
     @pytest.mark.parametrize(
         "extra_info",
