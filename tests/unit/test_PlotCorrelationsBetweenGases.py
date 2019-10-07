@@ -18,8 +18,6 @@ def test_PlotCorrelationsBetweenGases(check_aggregate_df):
     quantile_boxes = 3
     # Should we extend the quantile boxes by an additional factor?
     quantile_decay_factor = 1
-    # use a smoothing spline? If None, don't. Otherwise this is the smoothing factor, s, used in the spline model.
-    smoothing_spline = 10
     # Color different models different colours?
     model_colours = True
     # In the model-coloured version, how much does the figure need to be reduced by to leave room for the legend?
@@ -39,14 +37,14 @@ def test_PlotCorrelationsBetweenGases(check_aggregate_df):
     # Run without anything to correlate, saving output (which should be nothing) to quantiles output folder
     PlotCorrelationsBetweenGases.plot_emission_correlations(check_aggregate_df.filter(variable='Primary Energy'),
                                     years_of_interest, quantiles_savename, plot_quantiles, quantiles_savename,
-                                    quantile_boxes, quantile_decay_factor, smoothing_spline, model_colours,
+                                    quantile_boxes, quantile_decay_factor, model_colours,
                                     legend_fraction)
     assert output_files == os.listdir(quantiles_savename)
 
     # Run the first set of parameters
     PlotCorrelationsBetweenGases.plot_emission_correlations(check_aggregate_df, years_of_interest, save_results,
                                     plot_quantiles, quantiles_savename, quantile_boxes, quantile_decay_factor,
-                                    smoothing_spline, model_colours, legend_fraction)
+                                    model_colours, legend_fraction)
     quantiles_files = os.listdir(quantiles_savename)
     assert quantiles_files[1][0:4] == 'CO2_'
     regex_match_csv = re.compile(".*" + str(years_of_interest[0]) + ".csv")
@@ -63,7 +61,7 @@ def test_PlotCorrelationsBetweenGases(check_aggregate_df):
     model_colours = False
     PlotCorrelationsBetweenGases.plot_emission_correlations(check_aggregate_df, years_of_interest, save_results,
                                     plot_quantiles, quantiles_savename, quantile_boxes, quantile_decay_factor,
-                                    smoothing_spline, model_colours, legend_fraction)
+                                    model_colours, legend_fraction)
     quantiles_files = os.listdir(quantiles_savename)
     csv_files = [x for x in quantiles_files if regex_match_csv.match(x)]
     assert len(csv_files) == 2

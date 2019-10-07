@@ -13,8 +13,6 @@ quantiles_savename = '../Output/Quantiles/'
 quantile_boxes = 15
 # Should we extend the quantile boxes by an additional factor?
 quantile_decay_factor = 0.7
-# use a smoothing spline? If None, don't. Otherwise this is the smoothing factor, s, used in the spline model.
-smoothing_spline = None
 # Color different models different colours?
 model_colours = True
 # In the model-coloured version, how much does the figure need to be reduced by to leave room for the legend?
@@ -25,5 +23,5 @@ SR15_SCENARIOS = "./sr15_scenarios.csv"
 sr15_data = download_or_load_sr15(SR15_SCENARIOS)
 
 pltcor.plot_emission_correlations(sr15_data, years_of_interest, save_results, plot_quantiles, quantiles_savename,
-                                  quantile_boxes, quantile_decay_factor, smoothing_spline, model_colours,
+                                  quantile_boxes, quantile_decay_factor, model_colours,
                                   legend_fraction)
