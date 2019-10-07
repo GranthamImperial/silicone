@@ -53,14 +53,14 @@ def plot_emission_correlations(emissions_data, years_of_interest, save_results, 
             level=1
         ).filter(variable="Emissions|*").variables(True).set_index('variable')
 
-        if df_gases is None:
-            print('No emissions data')
-            return None
-
         # We currently assume all correlations are with CO2
         x_gas = "Emissions|CO2"
 
-        # Check that the list has only one entry
+        if x_gas not in df_gases.index:
+            print('No emissions data')
+            return None
+
+        # Check that the list has only one entry for each gas
         assert not any(df_gases.index.duplicated()), "Index contains duplicated entries"
         x_units = df_gases.loc[x_gas, 'unit']
 
@@ -84,8 +84,7 @@ def plot_emission_correlations(emissions_data, years_of_interest, save_results, 
             )
 
             # Cleaning the data
-            seaborn_df[y_gas].loc[seaborn_df[y_gas] == ""] = np.nan
-            seaborn_df[x_gas].loc[seaborn_df[x_gas] == ""] = np.nan
+            seaborn_df.replace(r'^\s*$', np.nan, regex=True, inplace=True)
             seaborn_df = seaborn_df.dropna().reset_index()
             seaborn_df.loc[:, [y_gas, x_gas]] = seaborn_df[
                 [y_gas, x_gas]
@@ -153,7 +152,7 @@ def plot_emission_correlations(emissions_data, years_of_interest, save_results, 
         print(correlations_df)
         print(rank_corr_df)
 
-        if save_results:
+        if save_results is not None:
             correlations_df.to_csv(save_results + 'gasesCorrelation' + str(year_of_interest) + '.csv')
             rank_corr_df.to_csv(save_results + 'gasesRankCorr' + str(year_of_interest) + '.csv')
 

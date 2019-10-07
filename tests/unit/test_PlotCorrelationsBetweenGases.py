@@ -13,7 +13,7 @@ def test_PlotCorrelationsBetweenGases(check_aggregate_df):
     # if non-null, also plot these quantiles.
     plot_quantiles = [0.2, 0.5, 0.8]
     # if non-null, save data on the quantiles too
-    quantiles_savename = '../../Output/TestQuantiles/'
+    quantiles_savename = '../../Output/Test/'
     # How many boxes are used to fit the quantiles?
     quantile_boxes = 3
     # Should we extend the quantile boxes by an additional factor?
@@ -36,6 +36,13 @@ def test_PlotCorrelationsBetweenGases(check_aggregate_df):
     output_files = os.listdir(quantiles_savename)
     initial_files = len(output_files)
 
+    # Run without anything to correlate, saving output (which should be nothing) to quantiles output folder
+    PlotCorrelationsBetweenGases.plot_emission_correlations(check_aggregate_df.filter(variable='Primary Energy'),
+                                    years_of_interest, quantiles_savename, plot_quantiles, quantiles_savename,
+                                    quantile_boxes, quantile_decay_factor, smoothing_spline, model_colours,
+                                    legend_fraction)
+    assert output_files == os.listdir(quantiles_savename)
+
     # Run the first set of parameters
     PlotCorrelationsBetweenGases.plot_emission_correlations(check_aggregate_df, years_of_interest, save_results,
                                     plot_quantiles, quantiles_savename, quantile_boxes, quantile_decay_factor,
@@ -52,7 +59,7 @@ def test_PlotCorrelationsBetweenGases(check_aggregate_df):
 
     # Rerun the code with slightly different parameters to explore more code options.
     plot_quantiles = None
-    save_results = '../../Output/TestQuantiles/'
+    save_results = '../../Output/Test/'
     model_colours = False
     PlotCorrelationsBetweenGases.plot_emission_correlations(check_aggregate_df, years_of_interest, save_results,
                                     plot_quantiles, quantiles_savename, quantile_boxes, quantile_decay_factor,
