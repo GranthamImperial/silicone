@@ -40,7 +40,7 @@ REQUIREMENTS_INSTALL = [
     "click",
 ]
 REQUIREMENTS_NOTEBOOKS = ["matplotlib", "notebook", "seaborn", "statsmodels"]
-REQUIREMENTS_TESTS = ["codecov", "nbval", "pytest", "pytest-cov"]
+REQUIREMENTS_TESTS = ["codecov", "nbval", "pytest>=4.0,<5.0", "pytest-cov"]
 REQUIREMENTS_DOCS = [
     "sphinx>=1.4,<2.1",
     "sphinx_rtd_theme",
