@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy.interpolate as sci
+import os
 
 from src.silicone import utils
 
@@ -24,7 +25,7 @@ plot_quantiles : list
     if None, do not calculate or quantiles, otherwise calculate and plot quantiles of the data on the graph. 
     Quantiles are calculated by a rolling filter. All parameters beginning 'quantile' are irrelevant if this is None. 
 quantiles_savename : string
-    if not None, the quantiles are saved to the output folder too
+    if not None, the quantiles are saved to this location. 
 quantile_boxes : int
     the number of points at which we evaluate the quantiles
 quantile_decay_factor: float
@@ -138,11 +139,15 @@ def plot_emission_correlations(emissions_data, years_of_interest, save_results, 
                 if not model_colours:
                     plt.legend(smooth_quant_df.keys())
                 if quantiles_savename is not None:
+                    if not os.path.exists(os.path.dirname(quantiles_savename)):
+                        os.makedirs(os.path.dirname(quantiles_savename))
                     smooth_quant_df.to_csv(quantiles_savename + x_gas[10:] + '_' + y_gas[10:] + '_' +
                                            str(year_of_interest) + '.csv')
 
             # Report the results
             if save_results is not None:
+                if not os.path.exists(os.path.dirname(save_results)):
+                    os.makedirs(os.path.dirname(save_results))
                 plt.savefig(save_results + 'Plot' + x_gas[10:] + '_' + y_gas[10:] + str(year_of_interest) + '.png')
 
             correlations_df.at[y_gas, x_gas] = seaborn_df.corr('pearson').loc[x_gas, y_gas]

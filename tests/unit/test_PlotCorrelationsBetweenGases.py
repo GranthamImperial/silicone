@@ -49,7 +49,7 @@ def test_PlotCorrelationsBetweenGases(check_aggregate_df):
                                     smoothing_spline, model_colours, legend_fraction)
     quantiles_files = os.listdir(quantiles_savename)
     assert quantiles_files[1][0:4] == 'CO2_'
-    regex_match_csv = re.compile(".*" + str(years_of_interest[0]) + "\.csv")
+    regex_match_csv = re.compile(".*" + str(years_of_interest[0]) + ".csv")
     csv_files = [x for x in quantiles_files if regex_match_csv.match(x)]
     with open(quantiles_savename + csv_files[2]) as csv_file:
         csv_reader = pd.read_csv(csv_file, delimiter=',')
@@ -69,7 +69,7 @@ def test_PlotCorrelationsBetweenGases(check_aggregate_df):
     assert len(csv_files) == 2
     for csv_file in csv_files:
         os.remove(quantiles_savename + csv_file)
-    regex_match_png = re.compile(".*" + str(years_of_interest[0]) + "\.png")
+    regex_match_png = re.compile(".*" + str(years_of_interest[0]) + ".png")
     png_files = [x for x in quantiles_files if regex_match_png.match(x)]
     assert len(png_files) == 4
     for png_file in png_files:
