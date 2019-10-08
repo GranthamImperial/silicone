@@ -9,11 +9,10 @@ import re
 def test_PlotCorrelationsBetweenGases(check_aggregate_df):
     # Assumptions:
     years_of_interest = [2010]
-    save_results = None
     # if non-null, also plot these quantiles.
     plot_quantiles = [0.2, 0.5, 0.8]
     # if non-null, save data on the quantiles too
-    quantiles_savename = '../../Output/Test/'
+    saveplace = '../../Output/Test/'
     # How many boxes are used to fit the quantiles?
     quantile_boxes = 3
     # Should we extend the quantile boxes by an additional factor?
@@ -25,53 +24,74 @@ def test_PlotCorrelationsBetweenGases(check_aggregate_df):
     # ________________________________________________________
 
     # Clean the output folder before we start.
-    if not os.path.isdir(quantiles_savename):
-        os.makedirs(quantiles_savename)
-    output_files = os.listdir(quantiles_savename)
+    if not os.path.isdir(saveplace):
+        os.makedirs(saveplace)
+    output_files = os.listdir(saveplace)
     for output_file in output_files:
         if output_file[-9:] != 'gitignore':
-            os.remove(quantiles_savename + output_file)
-    output_files = os.listdir(quantiles_savename)
+            os.remove(saveplace + output_file)
+    output_files = os.listdir(saveplace)
     initial_files = len(output_files)
 
     # Run without anything to correlate, saving output (which should be nothing) to quantiles output folder
     PlotCorrelationsBetweenGases.plot_emission_correlations(check_aggregate_df.filter(variable='Primary Energy'),
-                                    years_of_interest, quantiles_savename, plot_quantiles, quantiles_savename,
+                                    years_of_interest, saveplace, plot_quantiles, saveplace,
                                     quantile_boxes, quantile_decay_factor, model_colours,
                                     legend_fraction)
-    assert output_files == os.listdir(quantiles_savename)
+    # Nothing should be created by this
+    assert output_files == os.listdir(saveplace)
 
     # Run the first set of parameters
-    PlotCorrelationsBetweenGases.plot_emission_correlations(check_aggregate_df, years_of_interest, save_results,
-                                    plot_quantiles, quantiles_savename, quantile_boxes, quantile_decay_factor,
+    PlotCorrelationsBetweenGases.plot_emission_correlations(check_aggregate_df, years_of_interest, None,
+                                    plot_quantiles, saveplace, quantile_boxes, quantile_decay_factor,
                                     model_colours, legend_fraction)
-    quantiles_files = os.listdir(quantiles_savename)
+    quantiles_files = os.listdir(saveplace)
     assert quantiles_files[1][0:4] == 'CO2_'
-    regex_match_csv = re.compile(".*" + str(years_of_interest[0]) + ".csv")
-    csv_files = [x for x in quantiles_files if regex_match_csv.match(x)]
-    with open(quantiles_savename + csv_files[2]) as csv_file:
+
+    png_files, csv_files = png_and_csv_files(saveplace)
+    with open(saveplace + csv_files[2]) as csv_file:
         csv_reader = pd.read_csv(csv_file, delimiter=',')
         assert csv_reader.iloc[1, 1] == 217
-    for csv_file in csv_files:
-        os.remove(quantiles_savename + csv_file)
+    count_and_delete_files(csv_files, saveplace, 4)
+    assert len(png_files) == 0
+
+    # Rerun the code with slightly different parameters to explore more code options.
+    PlotCorrelationsBetweenGases.plot_emission_correlations(check_aggregate_df, years_of_interest, saveplace,
+                                    plot_quantiles, saveplace, quantile_boxes, quantile_decay_factor,
+                                    model_colours, legend_fraction)
+    png_files, csv_files = png_and_csv_files(saveplace)
+    with open(saveplace + csv_files[2]) as csv_file:
+        csv_reader = pd.read_csv(csv_file, delimiter=',')
+        assert csv_reader.iloc[1, 1] == 217
+
+    count_and_delete_files(png_files, saveplace, 4)
+    count_and_delete_files(csv_files, saveplace, 6)
 
     # Rerun the code with slightly different parameters to explore more code options.
     plot_quantiles = None
     save_results = '../../Output/Test/'
     model_colours = False
     PlotCorrelationsBetweenGases.plot_emission_correlations(check_aggregate_df, years_of_interest, save_results,
-                                    plot_quantiles, quantiles_savename, quantile_boxes, quantile_decay_factor,
+                                    plot_quantiles, saveplace, quantile_boxes, quantile_decay_factor,
                                     model_colours, legend_fraction)
-    quantiles_files = os.listdir(quantiles_savename)
-    csv_files = [x for x in quantiles_files if regex_match_csv.match(x)]
-    assert len(csv_files) == 2
-    for csv_file in csv_files:
-        os.remove(quantiles_savename + csv_file)
-    regex_match_png = re.compile(".*" + str(years_of_interest[0]) + ".png")
-    png_files = [x for x in quantiles_files if regex_match_png.match(x)]
-    assert len(png_files) == 4
-    for png_file in png_files:
-        os.remove(quantiles_savename + png_file)
-    output_files = os.listdir(quantiles_savename)
+    png_files, csv_files = png_and_csv_files(saveplace)
+    count_and_delete_files(csv_files, saveplace, 2)
+    count_and_delete_files(png_files, saveplace, 4)
+    output_files = os.listdir(saveplace)
     # check no unexpected files created
     assert len(output_files) == initial_files
+
+
+def count_and_delete_files(files, file_root, length_of_files):
+    assert len(files) == length_of_files
+    for files in files:
+        os.remove(file_root + files)
+
+def png_and_csv_files(saveplace):
+    # Detect file types
+    regex_match_png = re.compile(".*" + ".png")
+    regex_match_csv = re.compile(".*" + ".csv")
+    quantiles_files = os.listdir(saveplace)
+    png_files = [x for x in quantiles_files if regex_match_png.match(x)]
+    csv_files = [x for x in quantiles_files if regex_match_csv.match(x)]
+    return png_files, csv_files
