@@ -62,9 +62,6 @@ def test_PlotCorrelationsBetweenGases(check_aggregate_df):
                                     plot_quantiles, saveplace, quantile_boxes, quantile_decay_factor,
                                     model_colours, legend_fraction)
     png_files, csv_files = png_and_csv_files(saveplace)
-    with open(saveplace + csv_files[2]) as csv_file:
-        csv_reader = pd.read_csv(csv_file, delimiter=',')
-        assert csv_reader.iloc[1, 1] == 217
 
     count_and_delete_files(png_files, saveplace, 4)
     count_and_delete_files(csv_files, saveplace, 6)
