@@ -49,7 +49,9 @@ def test_PlotCorrelationsBetweenGases(check_aggregate_df):
     assert quantiles_files[1][0:4] == 'CO2_'
 
     png_files, csv_files = png_and_csv_files(saveplace)
-    with open(saveplace + csv_files[2]) as csv_file:
+    CH4_file = 'CO2_CH4_2010.csv'
+    assert CH4_file in csv_files
+    with open(saveplace + CH4_file) as csv_file:
         csv_reader = pd.read_csv(csv_file, delimiter=',')
         assert csv_reader.iloc[1, 1] == 217
     count_and_delete_files(csv_files, saveplace, 4)
@@ -89,8 +91,8 @@ def count_and_delete_files(files, file_root, length_of_files):
 
 def png_and_csv_files(saveplace):
     # Detect file types
-    regex_match_png = re.compile(".*" + ".png")
-    regex_match_csv = re.compile(".*" + ".csv")
+    regex_match_png = re.compile(".*" + "\.png")
+    regex_match_csv = re.compile(".*" + "\.csv")
     quantiles_files = os.listdir(saveplace)
     png_files = [x for x in quantiles_files if regex_match_png.match(x)]
     csv_files = [x for x in quantiles_files if regex_match_csv.match(x)]
