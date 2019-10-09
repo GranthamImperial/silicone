@@ -32,6 +32,7 @@ def test_PlotCorrelationsBetweenGases(check_aggregate_df):
             os.remove(saveplace + output_file)
     output_files = os.listdir(saveplace)
     initial_files = len(output_files)
+    assert initial_files == 0
 
     # Run without anything to correlate, saving output (which should be nothing) to quantiles output folder
     PlotCorrelationsBetweenGases.plot_emission_correlations(check_aggregate_df.filter(variable='Primary Energy'),
@@ -44,7 +45,7 @@ def test_PlotCorrelationsBetweenGases(check_aggregate_df):
     # Run the first set of parameters
     PlotCorrelationsBetweenGases.plot_emission_correlations(check_aggregate_df, years_of_interest, None,
                                     plot_quantiles, saveplace, quantile_boxes, quantile_decay_factor,
-                                    model_colours, legend_fraction)
+                                    False, legend_fraction)
     quantiles_files = os.listdir(saveplace)
     assert quantiles_files[1][0:4] == 'CO2_'
 

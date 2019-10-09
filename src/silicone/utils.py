@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 import numpy as np
 
@@ -70,3 +72,16 @@ def rolling_window_find_quantiles(xs, ys, quantiles, nboxes=10, decay_length_fac
         for i_quantile in range(quantiles.__len__()):
             quantmatrix.iloc[ind, i_quantile] = min(ys[cumsum_weights >= quantiles[i_quantile]])
     return quantmatrix
+
+
+"""
+Checks if a folder already exists for the filepath entered and creates it if it does not. 
+Parameters
+----------
+save_path: string
+     The directory or a file in the directory that we wish to ensure exists. If a directory, it must include a / 
+     at the end. 
+"""
+def ensure_savepath(save_path):
+    if not os.path.exists(os.path.dirname(save_path)):
+        os.makedirs(os.path.dirname(save_path))

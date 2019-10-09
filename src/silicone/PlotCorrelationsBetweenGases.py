@@ -1,12 +1,10 @@
 import itertools
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scipy.interpolate as sci
-import os
-
-from src.silicone import utils
-
+import silicone.utils
+from silicone import utils
 
 """
 Calculates the relationship between CO2 and other emissions. Prints to screen and, optionally, saves the correlations
@@ -89,19 +87,10 @@ def plot_emission_correlations(emissions_data, years_of_interest, save_results, 
 
             # Plot the results
             if model_colours:
-                plot_multiple_models(legend_fraction, seaborn_df, x_gas, y_gas)
+                plot_multiple_models(legend_fraction, seaborn_df, x_gas, y_gas, x_units, y_units)
             # if all plots are the same colour, we don't have to do all this work
             else:
-                colours_for_plot = 'black'
-                plt.scatter(
-                    x=x_gas,
-                    y=y_gas,
-                    label=colours_for_plot,
-                    data=seaborn_df,
-                    alpha=0.5
-                )
-            plt.xlabel("Emissions of " + x_gas[10:] + " (" + x_units + ")")
-            plt.ylabel("Emissions of " + y_gas[10:] + " (" + y_units + ")")
+                plot_emissions(seaborn_df, x_gas, y_gas, x_units, y_units)
 
             # Optionally calculate and plot quantiles
             if plot_quantiles is not None:
@@ -112,15 +101,13 @@ def plot_emission_correlations(emissions_data, years_of_interest, save_results, 
                 if not model_colours:
                     plt.legend(smooth_quant_df.keys())
                 if quantiles_savename is not None:
-                    if not os.path.exists(os.path.dirname(quantiles_savename)):
-                        os.makedirs(os.path.dirname(quantiles_savename))
+                    silicone.utils.ensure_savepath(quantiles_savename)
                     smooth_quant_df.to_csv(quantiles_savename + x_gas[10:] + '_' + y_gas[10:] + '_' +
                                            str(year_of_interest) + '.csv')
 
             # Report the results
             if save_results is not None:
-                if not os.path.exists(os.path.dirname(save_results)):
-                    os.makedirs(os.path.dirname(save_results))
+                silicone.utils.ensure_savepath(save_results)
                 plt.savefig(save_results + 'Plot' + x_gas[10:] + '_' + y_gas[10:] + str(year_of_interest) + '.png')
 
             correlations_df.at[y_gas, x_gas] = seaborn_df.corr('pearson').loc[x_gas, y_gas]
@@ -135,7 +122,21 @@ def plot_emission_correlations(emissions_data, years_of_interest, save_results, 
             rank_corr_df.to_csv(save_results + 'gasesRankCorr' + str(year_of_interest) + '.csv')
 
 
-def plot_multiple_models(legend_fraction, seaborn_df, x_gas, y_gas):
+
+def plot_emissions(seaborn_df, x_gas, y_gas, x_units, y_units):
+    colours_for_plot = 'black'
+    plt.scatter(
+        x=x_gas,
+        y=y_gas,
+        label=colours_for_plot,
+        data=seaborn_df,
+        alpha=0.5
+    )
+    plt.xlabel("Emissions of " + x_gas[10:] + " (" + x_units + ")")
+    plt.ylabel("Emissions of " + y_gas[10:] + " (" + y_units + ")")
+
+
+def plot_multiple_models(legend_fraction, seaborn_df, x_gas, y_gas, x_units, y_units):
     fig = plt.figure(figsize=(16, 12))
     ax = plt.subplot(111)
     all_models = list(seaborn_df['model'].unique())
@@ -153,4 +154,6 @@ def plot_multiple_models(legend_fraction, seaborn_df, x_gas, y_gas):
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * legend_fraction, box.height])
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.xlabel("Emissions of " + x_gas[10:] + " (" + x_units + ")")
+    plt.ylabel("Emissions of " + y_gas[10:] + " (" + y_units + ")")
 
