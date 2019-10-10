@@ -18,7 +18,7 @@ model_colours = True
 # In the model-coloured version, how much does the figure need to be reduced by to leave room for the legend?
 legend_fraction = 0.65
 # ________________________________________________________
-# Get the data
+# where do we get the data from?
 SR15_SCENARIOS = "./sr15_scenarios.csv"
 sr15_data = download_or_load_sr15(SR15_SCENARIOS)
 

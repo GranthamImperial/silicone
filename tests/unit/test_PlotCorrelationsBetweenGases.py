@@ -57,9 +57,6 @@ def test_PlotCorrelationsBetweenGases(check_aggregate_df):
         assert csv_reader.iloc[1, 1] == 217
     count_and_delete_files(csv_files, saveplace, 4)
     assert len(png_files) == 0
-    regex_match_png = re.compile(".*" + str(years_of_interest[0]) + "\.png")
-    png_files = [x for x in quantiles_files if regex_match_png.match(x)]
-    assert len(png_files) == 0
 
     # Rerun the code with slightly different parameters to explore more code options.
     PlotCorrelationsBetweenGases.plot_emission_correlations(check_aggregate_df, years_of_interest, saveplace,
