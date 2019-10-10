@@ -1,5 +1,10 @@
+'''
+This script creates graphs and statistics for the relationships between emissions of the differences between SSP
+models for a given scenario.
+'''
+
 from download_sr15_emissions import download_or_load_sr15
-import src.silicone.PlotCorrelationsBetweenGases as pltcor
+import silicone.PlotCorrelationsBetweenGases as pltcor
 
 # Get the data
 SR15_SCENARIOS = "./sr15_scenarios.csv"
@@ -24,7 +29,7 @@ quantile_decay_factor = 0.7
 # use a smoothing spline? If None, don't. Otherwise this is the smoothing factor, s, used in the spline model.
 smoothing_spline = None
 # Color different models different colours?
-model_colours = True
+models_separate = True
 # In the model-coloured version, how much does the figure need to be reduced by to leave room for the legend?
 legend_fraction = 0.65
 # ________________________________________________________
@@ -34,8 +39,8 @@ for scenario in scenarios_of_interest:
     scenario_data = sr15_data.filter(scenario=scenario)
 
     save_results = save_results_stem + scenario[:-1]
-    pltcor.plot_emission_correlations(scenario_data, years_of_interest, save_results, plot_quantiles, quantiles_savename,
-                                      quantile_boxes, quantile_decay_factor, smoothing_spline, model_colours,
+    pltcor.plot_emission_correlations(scenario_data, years_of_interest, save_results, plot_quantiles,
+                                      quantiles_savename, quantile_boxes, quantile_decay_factor, models_separate,
                                       legend_fraction)
 
 
