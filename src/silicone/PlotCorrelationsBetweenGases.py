@@ -3,7 +3,6 @@ import itertools
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import silicone.utils
 from silicone import utils
 
 """
@@ -101,13 +100,13 @@ def plot_emission_correlations(emissions_data, years_of_interest, save_results, 
                 if not model_colours:
                     plt.legend(smooth_quant_df.keys())
                 if quantiles_savename is not None:
-                    silicone.utils.ensure_savepath(quantiles_savename)
+                    utils.ensure_savepath(quantiles_savename)
                     smooth_quant_df.to_csv(quantiles_savename + x_gas[10:] + '_' + y_gas[10:] + '_' +
                                            str(year_of_interest) + '.csv')
 
             # Report the results
             if save_results is not None:
-                silicone.utils.ensure_savepath(save_results)
+                utils.ensure_savepath(save_results)
                 plt.savefig(save_results + 'Plot' + x_gas[10:] + '_' + y_gas[10:] + str(year_of_interest) + '.png')
 
             correlations_df.at[y_gas, x_gas] = seaborn_df.corr('pearson').loc[x_gas, y_gas]
