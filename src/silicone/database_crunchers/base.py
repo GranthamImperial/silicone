@@ -28,12 +28,12 @@ class _DatabaseCruncher(metaclass=ABCMeta):
         Parameters
         ----------
         variable_follower : str
-            The variable for which we want to calculate timeseries in future (e.g.
-            "C5F12").
+            The variable for which we want to calculate timeseries (e.g.
+            ``"Emissions|C5F12"``).
 
         variable_leaders : list[str]
             The variables we want to use in order to infer timeseries of
-            ``variable_follower`` (e.g. ["CO2", "CH4"])
+            ``variable_follower`` (e.g. ``["Emissions|CO2", "Emissions|CH4"]``)
 
         **kwargs
             Keyword arguments used by this class to derive the relationship between
@@ -42,8 +42,10 @@ class _DatabaseCruncher(metaclass=ABCMeta):
         Returns
         -------
         :obj:`func`
-            Function which takes `pyam.IamDataFrame`s containing `variable_leaders`
-            and adds in timeseries for `variable_follower` based on the derived
-            relationship between the two.
+            Function which takes a :obj:`pyam.IamDataFrame` containing
+            ``variable_leaders`` timeseries and returns timeseries for
+            ``variable_follower`` based on the derived relationship between the two.
+            Please see the source code for the exact definition (and docstring) of the
+            returned function.
         """
         # TODO: think about how to add region handling in here...

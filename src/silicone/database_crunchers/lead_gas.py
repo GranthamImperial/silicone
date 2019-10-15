@@ -46,14 +46,14 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
         Parameters
         ----------
         variable_follower : str
-            The variable for which we want to calculate timeseries in future (e.g.
-            "C5F12").
+            The variable for which we want to calculate timeseries (e.g.
+            ``"Emissions|C5F12"``).
 
         variable_leaders : list[str]
             The variable we want to use in order to infer timeseries of
-            ``variable_follower`` (e.g. ["CO2"]). Note that the 'lead gas' methodology
-            gives the same result, indepent of the value of ``variable_leaders`` in the
-            database.
+            ``variable_follower`` (e.g. ``["CO2"]``). Note that the 'lead gas'
+            methodology gives the same result, indepent of the value of
+            ``variable_leaders`` in the database.
 
         **kwargs
             Keyword arguments used by this class to derive the relationship between
