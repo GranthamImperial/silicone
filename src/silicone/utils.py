@@ -92,9 +92,8 @@ Finds what quantile a time-series corresponds to given a time series of scattere
 aggregate_and_find_quantiles definition of what a quantile is, with the box width determined by the spacing of the 
 new data
 ----------
-save_path: string
-     The directory or a file in the directory that we wish to ensure exists. If a directory, it must include a / 
-     at the end. 
+orig_xs :  
+    the x position of the larger data source. This will usually be the time axis. It must be sorted in ascending order
 """
 def which_quantile(orig_xs, orig_ys, new_xs, new_ys):
     if len(np.unique(new_xs)) != len(new_xs):
@@ -110,10 +109,16 @@ def which_quantile(orig_xs, orig_ys, new_xs, new_ys):
     new_xs = new_xs[sort_xs]
     new_ys = new_ys[sort_xs]
 
-    # Divide the x-axis into boxes centered around the new_xs
-    boxes = 0.5*(new_xs[1:] + new_xs[:-1])
-    boxes = np.insert(boxes, 0, new_xs[0] - 0.5 * (new_xs[1] - new_xs[0]))
-    boxes = np.append(boxes, new_xs[-1]+0.5*(new_xs[-1]-new_xs[-2]))
+
+    if len(new_xs) > 1:
+        # Divide the x-axis into boxes centered around the new_xs
+        boxes = 0.5 * (new_xs[1:] + new_xs[:-1])
+        boxes = np.insert(boxes, 0, new_xs[0] - 0.5 * (new_xs[1] - new_xs[0]))
+        boxes = np.append(boxes, new_xs[-1]+0.5*(new_xs[-1]-new_xs[-2]))
+    elif len(new_xs) == 1:
+        # There is no natural lengthscale, so we just use +/- 1
+        boxes = np.insert(new_xs-1, 1, new_xs+1)
+
     quantile_of_xs = np.array(np.nan * new_xs)
     for ind in range(quantile_of_xs.size):
         ins = (orig_xs < boxes[ind + 1]) & (orig_xs >= boxes[ind])
