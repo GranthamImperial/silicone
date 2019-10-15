@@ -1,9 +1,12 @@
 import os.path
 
+import pandas as pd
 from click.testing import CliRunner
 
 from silicone.cli import plot_correlations_between_gases
 
+# TODO:
+# - test of what happens if you run with nothing to correlate
 
 def test_plot_correlations_between_gases(check_aggregate_df, tmpdir, caplog):
     runner = CliRunner(mix_stderr=False)
@@ -47,3 +50,27 @@ def test_plot_correlations_between_gases(check_aggregate_df, tmpdir, caplog):
                 LEGEND_FRACTION,
             ],
         )
+
+    quantiles_files = os.listdir(OUTPUT_DIR)
+    assert quantiles_files[1].startswith('CO2_')
+
+    png_files, csv_files = _get_png_and_csv_files(OUTPUT_DIR)
+
+    CH4_file = 'CO2_CH4_2010.csv'
+    assert CH4_file in csv_files
+    with open(os.path.join(OUTPUT_DIR, CH4_file)) as f:
+        res_csv = pd.read_csv(f, delimiter=',')
+        assert res_csv.iloc[1, 1] == 217
+
+    assert len(csv_files) == 4
+    assert len(png_files) == 0
+
+
+def _get_png_and_csv_files(dir_to_search):
+    # Detect file types
+    quantiles_files = os.listdir(dir_to_search)
+
+    png_files = [x for x in quantiles_files if x.endswith(".png")]
+    csv_files = [x for x in quantiles_files if x.endswith(".csv")]
+
+    return png_files, csv_files
