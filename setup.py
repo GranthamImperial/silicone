@@ -31,6 +31,13 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
 ]
+
+ENTRY_POINTS = {
+    "console_scripts": [
+        "silicone-explore-quantiles = silicone.cli:plot_emission_correlations",
+    ]
+}
+
 REQUIREMENTS_INSTALL = [
     "numpy",
     "scipy",
@@ -115,4 +122,5 @@ setup(
     install_requires=REQUIREMENTS_INSTALL,
     extras_require=REQUIREMENTS_EXTRAS,
     cmdclass=CMDCLASS,
+    entry_points=ENTRY_POINTS,
 )
