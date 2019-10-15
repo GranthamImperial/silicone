@@ -3,7 +3,7 @@ Modules for the database cruncher which uses the 'constant quantile' technique.
 We initially consider a case where there is no known data for the follower emission
 """
 import warnings
-
+import pandas as pd
 import numpy as np
 from pyam import IamDataFrame
 import silicone.utils as utils
@@ -63,6 +63,8 @@ class DatabaseCruncherFixedQuantile(_DatabaseCruncher):
 
     def derive_relationship(self, variable_follower, variable_leaders, **kwargs):
         self._check_data_is_consistent(variable_follower, variable_leaders, **kwargs)
+        if "year" not in self._db.data.columns:
+            self._db["year"] = pd.DatetimeIndex(self._db["time"]).year
         variable_follower_db = self._db.filter(variable=variable_follower, **kwargs)\
             .pivot_table(index=['year'], columns=['model', 'scenario'], values='value', aggfunc='sum')
         variable_leaders_db = self._db.filter(variable=variable_leaders)\
