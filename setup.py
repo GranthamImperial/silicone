@@ -19,7 +19,7 @@ README = "README.rst"
 
 SOURCE_DIR = "src"
 
-# LICENSE = "GNU Affero General Public License v3.0 or later"
+LICENSE = "2-Clause BSD License"
 CLASSIFIERS = [
     #   3 - Alpha
     #   4 - Beta
@@ -107,7 +107,7 @@ setup(
     author_email=", ".join([author[1] for author in AUTHORS]),
     url=URL,
     project_urls=PROJECT_URLS,
-    # license=LICENSE,
+    license=LICENSE,
     classifiers=CLASSIFIERS,
     packages=find_packages(SOURCE_DIR),
     package_dir={"": SOURCE_DIR},
