@@ -1,9 +1,9 @@
 Silicone
 ========
 
-+--------+--------+
-| Basics | |Docs| |
-+--------+--------+
++--------+--------+-----------+
+| Basics | |Docs| | |License| |
++--------+--------+-----------+
 
 +-------------------+----------------+-----------+
 | Repository health | |Build Status| | |Codecov| |
@@ -57,6 +57,8 @@ Please see the `Development section of the docs <https://silicone.readthedocs.io
 
 .. |Docs| image:: https://readthedocs.org/projects/silicone/badge/?version=latest
     :target: https://silicone.readthedocs.io/en/latest/
+.. |License| image:: https://img.shields.io/github/license/znicholls/netcdf-scm.svg
+    :target: https://github.com/znicholls/netcdf-scm/blob/master/LICENSE
 .. |Build Status| image:: https://travis-ci.com/znicholls/silicone.svg?branch=master
     :target: https://travis-ci.com/znicholls/silicone
 .. |Codecov| image:: https://img.shields.io/codecov/c/github/znicholls/silicone.svg
