@@ -14,7 +14,16 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
     tdownscale_df = pd.DataFrame(
         [
             ["model_b", "scen_b", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1, 2, 3],
-            ["model_b", "scen_c", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.1, 2.2, 2.8],
+            [
+                "model_b",
+                "scen_c",
+                "World",
+                "Emissions|HFC|C2F6",
+                "kt C2F6/yr",
+                1.1,
+                2.2,
+                2.8,
+            ],
         ],
         columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2050],
     )
@@ -129,7 +138,9 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
             "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
         )
 
-        test_downscale_df = self._adjust_time_style_to_match(test_downscale_df.filter(year=2015, keep=False), test_db)
+        test_downscale_df = self._adjust_time_style_to_match(
+            test_downscale_df.filter(year=2015, keep=False), test_db
+        )
 
         required_timepoint = test_db.filter(year=2015).data[test_db.time_col].iloc[0]
         if not interpolate:
