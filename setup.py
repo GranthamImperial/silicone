@@ -34,7 +34,7 @@ CLASSIFIERS = [
 
 ENTRY_POINTS = {
     "console_scripts": [
-        "silicone-explore-quantiles = silicone.cli:plot_emission_correlations",
+        "silicone-explore-quantiles = silicone.cli:plot_emission_correlations"
     ]
 }
 

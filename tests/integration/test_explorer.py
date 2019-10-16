@@ -16,6 +16,7 @@ def _make_input_file(df, dpath):
 
     return input_file
 
+
 def test_plot_emission_correlations(check_aggregate_df, tmpdir, caplog):
     runner = CliRunner(mix_stderr=False)
 
@@ -68,7 +69,9 @@ def test_plot_emission_correlations(check_aggregate_df, tmpdir, caplog):
     assert len(png_files) == 4
 
 
-def test_plot_emission_correlations_no_quantiles_or_model_colours(check_aggregate_df, tmpdir, caplog):
+def test_plot_emission_correlations_no_quantiles_or_model_colours(
+    check_aggregate_df, tmpdir, caplog
+):
     runner = CliRunner(mix_stderr=False)
 
     input_file = _make_input_file(check_aggregate_df, tmpdir)
@@ -145,7 +148,9 @@ def test_plot_emission_correlations_no_output(check_aggregate_df, tmpdir, caplog
 def test_plot_emission_correlations_no_co2_emms(check_aggregate_df, tmpdir, caplog):
     runner = CliRunner(mix_stderr=False)
 
-    input_file = _make_input_file(check_aggregate_df.filter(variable="Primary Energy"), tmpdir)
+    input_file = _make_input_file(
+        check_aggregate_df.filter(variable="Primary Energy"), tmpdir
+    )
 
     years_of_interest = "2010"
     output_dir = os.path.join(tmpdir, "output")
