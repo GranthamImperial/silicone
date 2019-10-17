@@ -1,3 +1,4 @@
+"""Command line interface"""
 import click
 import pyam
 
@@ -66,6 +67,11 @@ def plot_emission_correlations_cli(
     model_colours,
     legend_fraction,
 ):
+    r"""
+    Plot correlations between emisssions timeseries in ``emissions_data``.
+
+    ``emissions_data`` is the file from which to load the emissions timeseries.
+    """
     years = [int(y.strip()) for y in years.split(",")]
     if quantiles is not None:
         quantiles = [float(q.strip()) for q in quantiles.split(",")]
