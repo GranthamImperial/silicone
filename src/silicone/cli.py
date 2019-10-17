@@ -2,7 +2,7 @@
 import click
 import pyam
 
-from .plotting import plot_emissions, plot_multiple_models, plot_emission_correlations
+from .plotting import plot_emission_correlations, plot_emissions, plot_multiple_models
 
 
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})

@@ -49,3 +49,17 @@ class _DatabaseCruncher(metaclass=ABCMeta):
             returned function.
         """
         # TODO: think about how to add region handling in here...
+
+    def _check_follower_and_leader_in_db(self, variable_follower, variable_leaders):
+
+        if not all([v in self._db.variables().tolist() for v in variable_leaders]):
+            error_msg = "No data for `variable_leaders` ({}) in database".format(
+                variable_leaders
+            )
+            raise ValueError(error_msg)
+
+        if variable_follower not in self._db.variables().tolist():
+            error_msg = "No data for `variable_follower` ({}) in database".format(
+                variable_follower
+            )
+            raise ValueError(error_msg)

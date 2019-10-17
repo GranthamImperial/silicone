@@ -10,6 +10,9 @@ class _DataBaseCruncherTester(metaclass=ABCMeta):
     # crunching class to test
     tclass = None
 
+    # dataframe to use when testing deriving relationship
+    tdb = None
+
     # dataframe to use when testing downscaling (i.e. dataframe containing lead gases)
     tdownscale_df = None
 
@@ -33,11 +36,22 @@ class _DataBaseCruncherTester(metaclass=ABCMeta):
         return in_df
 
     @abstractmethod
+    def test_derive_relationship(self, test_db):
+        """Test that derive relationship returns the expected type"""
+        # should be something like this
+        tcruncher = self.tclass(test_db)
+        res = tcruncher.derive_relationship("Follower gas", ["Lead gas"])
+        assert callable(res)
+
+    @abstractmethod
     def test_relationship_usage(self):
         """Test that derived relationship gives expected results when used"""
         pass
 
     def test_relationship_usage_wrong_time_col(self, test_db, test_downscale_df):
+        test_db = test_db.filter(
+            variable = ["Emissions|HFC|C5F12", "Emissions|HFC|C2F6"]
+        )
         tcruncher = self.tclass(test_db)
 
         filler = tcruncher.derive_relationship(
