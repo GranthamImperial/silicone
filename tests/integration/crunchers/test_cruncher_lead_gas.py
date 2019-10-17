@@ -8,9 +8,18 @@ from pyam import IamDataFrame
 
 from silicone.database_crunchers import DatabaseCruncherLeadGas
 
+_msa = ["model_a", "scen_a"]
+
 
 class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
     tclass = DatabaseCruncherLeadGas
+    tdb = pd.DataFrame(
+        [
+            _msa + ["World", "Emissions|HFC|C5F12", "kt C5F12/yr", np.nan, 3.14],
+            _msa + ["World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.2, 1.5],
+        ],
+        columns=["model", "scenario", "region", "variable", "unit", 2010, 2015],
+    )
     tdownscale_df = pd.DataFrame(
         [
             ["model_b", "scen_b", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1, 2, 3],
@@ -33,7 +42,7 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
         res = tcruncher.derive_relationship(
             "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
         )
-        assert isinstance(res, object)
+        assert callable(res)
 
     def test_derive_relationship_error_multiple_lead_vars(self, test_db):
         tcruncher = self.tclass(test_db)

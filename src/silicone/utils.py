@@ -2,22 +2,36 @@
 Utils contains a number of helpful functions that don't belong elsewhere.
 """
 
-
-def add_example(a, b):
+# TODO: put this in pyam
+def _get_unit_of_variable(df, variable, multiple_units="raise"):
     """
-    Add two numbers
+    Get the unit of a variable in ``self._db``
 
     Parameters
     ----------
-    a : float
-        First number to add
+    variable : str
+        String to use to filter variables
 
-    b : float
-        Second number to add
+    multiple_units : str
+        If ``"raise"``, check that the variable only has one unit and raise an ``AssertionError`` if it has more than one unit.
 
     Returns
     -------
-    float
-        Result of adding `a` and `b`
+    list
+        List of units for the variable
+
+    Raises
+    ------
+    AssertionError
+        ``multiple_units=="raise"`` and the filter results in more than one unit
     """
-    return a + b
+    units = df.filter(variable=variable).data["unit"].unique()
+    if multiple_units == "raise":
+        if len(units) > 1:
+            raise AssertionError("`{}` has multiple units".format(variable))
+        return units
+
+    return units
+
+
+

@@ -1,9 +1,11 @@
+"""Utility plotting functions"""
 import itertools
 import os.path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+
 
 def plot_emission_correlations(
     emms_df,

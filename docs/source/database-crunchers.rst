@@ -13,3 +13,10 @@ Lead gas cruncher API
 .. automodule:: silicone.database_crunchers.lead_gas
     :members:
 
+
+Rolling windows cruncher API
+============================
+
+.. automodule:: silicone.database_crunchers.rolling_window_quantiles
+    :members:
+

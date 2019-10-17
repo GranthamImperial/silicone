@@ -39,7 +39,7 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
     appears in the database.
     """
 
-    def derive_relationship(self, variable_follower, variable_leaders, **kwargs):
+    def derive_relationship(self, variable_follower, variable_leaders):
         """
         Derive the relationship between two variables from the database.
 
@@ -51,13 +51,9 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
 
         variable_leaders : list[str]
             The variable we want to use in order to infer timeseries of
-            ``variable_follower`` (e.g. ``["CO2"]``). Note that the 'lead gas'
-            methodology gives the same result, indepent of the value of
+            ``variable_follower`` (e.g. ``["Emissions|CO2"]``). Note that the 'lead
+            gas' methodology gives the same result, indepent of the value of
             ``variable_leaders`` in the database.
-
-        **kwargs
-            Keyword arguments used by this class to derive the relationship between
-            ``variable_follower`` and ``variable_leaders``.
 
         Returns
         -------
@@ -117,22 +113,6 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
             """
             lead_var = in_iamdf.filter(variable=variable_leaders)
 
-            # for other crunchers, unit check would look like this (doesn't actually
-            # matter for this cruncher)
-            # when we do unit conversion we should add OpenSCM as a dependency as it
-            # has all the emissions units inbuilt
-            """
-            var_units = lead_var.variables(True)
-            if var_units.shape[0] != 1:
-                raise ValueError("More than one unit detected for input timeseries")
-            if (
-                var_units.set_index("variable").loc[variable_leaders[0]]["unit"]
-                != "expected_unit"
-            ):
-                raise ValueError(
-                    "Units of lead variable is meant to be `expected_unit`, found `other_unit`"
-                )
-            """
             if data_follower_time_col != in_iamdf.time_col:
                 raise ValueError(
                     "`in_iamdf` time column must be the same as the time column used "
@@ -202,24 +182,10 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
                 "contain one variable"
             )
 
-        if not all([v in self._db.variables().tolist() for v in variable_leaders]):
-            error_msg = "No data for `variable_leaders` ({}) in database".format(
-                variable_leaders
-            )
-            raise ValueError(error_msg)
+        self._check_follower_and_leader_in_db(variable_follower, variable_leaders)
 
-        # filter warning about empty data frame as we handle it ourselves
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            iamdf_follower = self._db.filter(variable=variable_follower)
-
+        iamdf_follower = self._db.filter(variable=variable_follower)
         data_follower = iamdf_follower.data
-        if data_follower.empty:
-            error_msg = "No data for `variable_follower` ({}) in database".format(
-                variable_follower
-            )
-            raise ValueError(error_msg)
-
         if data_follower.shape[0] != 1:
             error_msg = "More than one data point for `variable_follower` ({}) in database".format(
                 variable_follower
