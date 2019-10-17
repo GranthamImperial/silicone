@@ -29,8 +29,7 @@ License
 
 .. sec-begin-license
 
-Silicone does not yet include a license.
-We will choose one as soon as possible.
+Silicone is free software under a BSD 3-Clause License, see `LICENSE <https://github.com/znicholls/silicone/blob/master/LICENSE>`_.
 
 .. sec-end-license
 
@@ -57,8 +56,8 @@ Please see the `Development section of the docs <https://silicone.readthedocs.io
 
 .. |Docs| image:: https://readthedocs.org/projects/silicone/badge/?version=latest
     :target: https://silicone.readthedocs.io/en/latest/
-.. |License| image:: https://img.shields.io/github/license/znicholls/netcdf-scm.svg
-    :target: https://github.com/znicholls/netcdf-scm/blob/master/LICENSE
+.. |License| image:: https://img.shields.io/github/license/znicholls/silicone.svg
+    :target: https://github.com/znicholls/silicone/blob/master/LICENSE
 .. |Build Status| image:: https://travis-ci.com/znicholls/silicone.svg?branch=master
     :target: https://travis-ci.com/znicholls/silicone
 .. |Codecov| image:: https://img.shields.io/codecov/c/github/znicholls/silicone.svg
