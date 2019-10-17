@@ -26,6 +26,7 @@ Silicone
     :maxdepth: 2
     :caption: API reference
 
+    cli
     database-crunchers
     utils
 
