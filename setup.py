@@ -19,7 +19,7 @@ README = "README.rst"
 
 SOURCE_DIR = "src"
 
-LICENSE = "2-Clause BSD License"
+LICENSE = "3-Clause BSD License"
 CLASSIFIERS = [
     #   3 - Alpha
     #   4 - Beta
