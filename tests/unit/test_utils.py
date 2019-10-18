@@ -1,14 +1,19 @@
-import pytest
 import re
+
+import pytest
 
 from silicone.utils import _get_unit_of_variable
 
-@pytest.mark.parametrize("var,exp", (
-    ["Emissions|CO2", "Mt CO2/yr"],
-    ["Primary Energy", "EJ/y"],
-    ["Primary Energy|*", "EJ/y"],
-))
-def test_get_unit_of_variable(var, exp, check_aggregate_df, ):
+
+@pytest.mark.parametrize(
+    "var,exp",
+    (
+        ["Emissions|CO2", "Mt CO2/yr"],
+        ["Primary Energy", "EJ/y"],
+        ["Primary Energy|*", "EJ/y"],
+    ),
+)
+def test_get_unit_of_variable(var, exp, check_aggregate_df):
     assert _get_unit_of_variable(check_aggregate_df, var) == [exp]
 
 
@@ -25,4 +30,8 @@ def test_get_unit_of_variable_error(check_aggregate_df):
     with pytest.raises(AssertionError, match=error_msg):
         _get_unit_of_variable(check_aggregate_df, "Emissions|CH4")
 
-    assert sorted(_get_unit_of_variable(check_aggregate_df, "Emissions|CH4", multiple_units="continue")) == sorted(["Mt CH4/yr", "Mt C/yr"])
+    assert sorted(
+        _get_unit_of_variable(
+            check_aggregate_df, "Emissions|CH4", multiple_units="continue"
+        )
+    ) == sorted(["Mt CH4/yr", "Mt C/yr"])

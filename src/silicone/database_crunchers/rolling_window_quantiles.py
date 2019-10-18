@@ -8,8 +8,9 @@ import pandas as pd
 import scipy.interpolate
 from pyam import IamDataFrame
 
-from .base import _DatabaseCruncher
 from ..utils import _get_unit_of_variable
+from .base import _DatabaseCruncher
+
 
 class DatabaseCruncherRollingWindows(_DatabaseCruncher):
     """
@@ -116,12 +117,18 @@ class DatabaseCruncherRollingWindows(_DatabaseCruncher):
 
         columns = "variable"
         idx = list(set(self._db.data.columns) - {columns, "value", "unit"})
-        wide_db = self._db.pivot_table(index=idx, columns=columns, aggfunc="sum")
+        wide_db = self._db.filter(
+            variable=[variable_follower] + variable_leaders
+        ).pivot_table(index=idx, columns=columns, aggfunc="sum")
+        # TODO: add proper test for this, which makes sure we don't have empty strings
+        # floating around
+        wide_db = wide_db.applymap(lambda x: np.nan if isinstance(x, str) else x)
+        wide_db = wide_db.dropna(axis=0)
 
         derived_relationships = {}
         for db_time, dbtdf in wide_db.groupby(db_time_col):
-            xs = dbtdf[variable_follower].values.squeeze()
-            ys = dbtdf[variable_leaders].values.squeeze()
+            xs = dbtdf[variable_leaders].values.squeeze()
+            ys = dbtdf[variable_follower].values.squeeze()
             if xs.shape != ys.shape:
                 raise NotImplementedError(
                     "Having more than one `variable_leaders` is not yet implemented"
@@ -147,10 +154,10 @@ class DatabaseCruncherRollingWindows(_DatabaseCruncher):
                 # We want to include the max x point, but not any point above it.
                 # The 0.99 factor prevents rounding error inclusion.
                 window_centers = np.arange(min(xs), max(xs) + step * 0.99, step)
+
             db_time_table = pd.DataFrame(
                 index=pd.MultiIndex.from_arrays(
-                    ([db_time], [quantile]),
-                    names=["db_time", "quantile"]
+                    ([db_time], [quantile]), names=["db_time", "quantile"]
                 ),
                 columns=window_centers,
             )
@@ -162,15 +169,21 @@ class DatabaseCruncherRollingWindows(_DatabaseCruncher):
                 # We want to calculate the weights at the midpoint of step corresponding
                 # to the y-value.
                 cumsum_weights = np.cumsum(weights)
-                db_time_table.loc[(db_time, quantile), window_center] = min(ys[cumsum_weights >= quantile])
+                db_time_table.loc[(db_time, quantile), window_center] = min(
+                    ys[cumsum_weights >= quantile]
+                )
 
+            fill_value = (
+                "extrapolate"
+                if not (db_time_table == db_time_table.iloc[0, 0]).all().all()
+                else db_time_table.iloc[0, 0]
+            )
             derived_relationships[db_time] = scipy.interpolate.interp1d(
                 db_time_table.columns.values.squeeze(),
                 db_time_table.loc[(db_time, quantile), :].values.squeeze(),
                 bounds_error=False,  # TODO: decide whether to do this...
-                fill_value="extrapolate",
+                fill_value=fill_value,
             )
-
 
         def filler(in_iamdf, interpolate=False):
             """
@@ -200,9 +213,7 @@ class DatabaseCruncherRollingWindows(_DatabaseCruncher):
             if db_time_col != in_iamdf.time_col:
                 raise ValueError(
                     "`in_iamdf` time column must be the same as the time column used "
-                    "to generate this filler function (`{}`)".format(
-                        db_time_col
-                    )
+                    "to generate this filler function (`{}`)".format(db_time_col)
                 )
 
             var_units = _get_unit_of_variable(in_iamdf, variable_leaders)[0]
@@ -215,19 +226,13 @@ class DatabaseCruncherRollingWindows(_DatabaseCruncher):
             if db_time_col != in_iamdf.time_col:
                 raise ValueError(
                     "`in_iamdf` time column must be the same as the time column used "
-                    "to generate this filler function (`{}`)".format(
-                        db_time_col
-                    )
+                    "to generate this filler function (`{}`)".format(db_time_col)
                 )
 
-            def get_values_in_timepoint(idf, timepoint):
-                # filter warning about empty data frame as we handle it ourselves
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    return idf.filter(**{db_time_col: timepoint})
-
             # check whether we have all the required timepoints or not
-            have_all_timepoints = all([c in derived_relationships for c in in_iamdf.timeseries()])
+            have_all_timepoints = all(
+                [c in derived_relationships for c in in_iamdf.timeseries()]
+            )
 
             if not have_all_timepoints:
                 raise NotImplementedError

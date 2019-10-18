@@ -21,7 +21,7 @@ _mtch4 = "Mt CH4/yr"
 _ec5f12 = "Emissions|HFC|C5F12"
 _ktc5f12 = "kt C5F12/yr"
 _ec2f6 = "Emissions|HFC|C2F6"
-_ktc2f6 ="kt C2F6/yr"
+_ktc2f6 = "kt C2F6/yr"
 _msrvu = ["model", "scenario", "region", "variable", "unit"]
 
 
@@ -68,7 +68,11 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         obs = res(test_downscale_df)
         # going to need a plotter before we can work out what is meant to actually
         # happen here...
-        pd.testing.assert_frame_equal( obs.timeseries(), test_downscale_df.filter(variable="Emissions|CO2").timeseries(), check_like=True)
+        pd.testing.assert_frame_equal(
+            obs.timeseries(),
+            test_downscale_df.filter(variable="Emissions|CO2").timeseries(),
+            check_like=True,
+        )
 
     def test_derive_relationship_error_no_info_leader(self, test_db):
         # test that crunching fails if there's no data about the lead gas in the
@@ -168,6 +172,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         self, test_db, test_downscale_df, interpolate
     ):
         assert False, "this requires some thought"
+
     #     tcruncher = self.tclass(test_db)
 
     #     filler = tcruncher.derive_relationship(

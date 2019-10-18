@@ -5,6 +5,9 @@ import os.path
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from pyam import IamDataFrame
+
+from .database_crunchers import DatabaseCruncherRollingWindows
 
 
 def plot_emission_correlations(
@@ -17,6 +20,17 @@ def plot_emission_correlations(
     model_colours,
     legend_fraction,
 ):
+    if quantiles is not None:
+        cruncher = DatabaseCruncherRollingWindows(
+            emms_df.filter(region="World", level=0, variable="Emissions|*")
+        )
+
+    # re-write to something like
+    # loop over years
+    # filter the data
+    # derive the relationship
+    # plot based on the filler, needs a new function, plot filler
+    # plot raw data too
     for year_of_interest in years:
         # Obtain the list of gases to examine
         df_gases = (
@@ -68,23 +82,56 @@ def plot_emission_correlations(
 
             # Optionally calculate and plot quantiles
             if quantiles is not None:
-                smooth_quant_df = rolling_window_find_quantiles(
-                    seaborn_df[x_gas],
-                    seaborn_df[y_gas],
-                    quantiles,
-                    quantile_boxes,
-                    quantile_decay_factor,
+                x_max = seaborn_df[x_gas].max()
+                x_range = x_max - seaborn_df[x_gas].min()
+                x_range = x_range if not np.equal(x_range, 0) else np.abs(0.1 * x_max)
+                no_x_pts = 101
+                x_pts = np.linspace(
+                    seaborn_df[x_gas].min() - 0.1 * x_range,
+                    seaborn_df[x_gas].max() + 0.1 * x_range,
+                    no_x_pts,
                 )
-                plt.plot(smooth_quant_df.index, smooth_quant_df)
+
+                tmp_df = (
+                    cruncher._db.filter(variable=x_gas, year=year_of_interest)
+                    .data.iloc[0, :]
+                    .to_frame()
+                    .T
+                )
+                tmp_df = pd.concat([tmp_df] * len(x_pts))
+                tmp_df["value"] = x_pts
+                tmp_df["scenario"] = [str(i) for i in range(no_x_pts)]
+                tmp_df = IamDataFrame(tmp_df)
+
+                smooth_quant_df = pd.DataFrame(columns=x_pts, index=quantiles)
+                for quantile in quantiles:
+                    filler = cruncher.derive_relationship(
+                        y_gas,
+                        [x_gas],
+                        quantile=quantile,
+                        nwindows=quantile_boxes,
+                        decay_length_factor=quantile_decay_factor,
+                    )
+
+                    filled_points = filler(tmp_df).timeseries().values.squeeze()
+                    smooth_quant_df.loc[quantile, :] = filled_points
+                    plt.plot(
+                        x_pts,
+                        filled_points,
+                        label=quantile if not model_colours else None,
+                    )
+
                 if not model_colours:
-                    plt.legend(smooth_quant_df.keys())
+                    plt.legend()
 
                 if output_dir is not None:
                     smooth_quant_df.to_csv(
                         os.path.join(
                             output_dir,
                             "{}_{}_{}.csv".format(
-                                x_gas[10:], y_gas[10:], year_of_interest
+                                x_gas.replace("Emissions|", ""),
+                                y_gas.replace("Emissions|", ""),
+                                year_of_interest,
                             ),
                         )
                     )
@@ -148,39 +195,3 @@ def plot_multiple_models(legend_fraction, seaborn_df, x_gas, y_gas, x_units, y_u
     ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
     plt.xlabel("Emissions of {} ({})".format(x_gas[10:], x_units))
     plt.ylabel("Emissions of {} ({})".format(y_gas[10:], y_units))
-
-
-# TODO: move this
-def rolling_window_find_quantiles(xs, ys, quantiles, nboxes=10, decay_length_factor=1):
-    assert xs.size == ys.size
-    if xs.size == 1:
-        return pd.DataFrame(index=[xs[0]] * nboxes, columns=quantiles, data=ys[0])
-    step = (max(xs) - min(xs)) / (nboxes + 1)
-    decay_length = step / 2 * decay_length_factor
-    # We re-form the arrays in case they were pandas series with integer labels that
-    # would mess up the sorting.
-    xs = np.array(xs)
-    ys = np.array(ys)
-    sort_order = np.argsort(ys)
-    ys = ys[sort_order]
-    xs = xs[sort_order]
-    if max(xs) == min(xs):
-        # We must prevent singularity behaviour if all the points are at the same x value.
-        box_centers = np.array([xs[0]])
-        decay_length = 1
-    else:
-        # We want to include the max x point, but not any point above it.
-        # The 0.99 factor prevents rounding error inclusion.
-        box_centers = np.arange(min(xs), max(xs) + step * 0.99, step)
-
-    quantmatrix = pd.DataFrame(index=box_centers, columns=quantiles)
-    for ind in range(box_centers.size):
-        weights = 1.0 / (1.0 + ((xs - box_centers[ind]) / decay_length) ** 2)
-        weights /= sum(weights)
-        # We want to calculate the weights at the midpoint of step corresponding to the y-value.
-        cumsum_weights = np.cumsum(weights)
-        for i_quantile in range(quantiles.__len__()):
-            quantmatrix.iloc[ind, i_quantile] = min(
-                ys[cumsum_weights >= quantiles[i_quantile]]
-            )
-    return quantmatrix
