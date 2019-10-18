@@ -62,8 +62,9 @@ def test_plot_emission_correlations(check_aggregate_df, tmpdir, caplog):
     CH4_file = "CO2_CH4_2010.csv"
     assert CH4_file in csv_files
     with open(os.path.join(output_dir, CH4_file)) as f:
-        res_csv = pd.read_csv(f, delimiter=",")
-        assert res_csv.iloc[1, 1] == 217
+        res_csv = pd.read_csv(f, delimiter=",", index_col=0)
+        # only one point to regress so should all be identical
+        assert (res_csv == 217).all().all()
 
     assert len(csv_files) == 6
     assert len(png_files) == 4

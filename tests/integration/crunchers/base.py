@@ -49,9 +49,7 @@ class _DataBaseCruncherTester(metaclass=ABCMeta):
         pass
 
     def test_relationship_usage_wrong_time_col(self, test_db, test_downscale_df):
-        test_db = test_db.filter(
-            variable = ["Emissions|HFC|C5F12", "Emissions|HFC|C2F6"]
-        )
+        test_db = test_db.filter(variable=["Emissions|HFC|C5F12", "Emissions|HFC|C2F6"])
         tcruncher = self.tclass(test_db)
 
         filler = tcruncher.derive_relationship(

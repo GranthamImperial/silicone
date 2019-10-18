@@ -32,6 +32,3 @@ def _get_unit_of_variable(df, variable, multiple_units="raise"):
         return units
 
     return units
-
-
-
