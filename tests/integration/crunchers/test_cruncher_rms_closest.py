@@ -9,54 +9,217 @@ from pyam import concat
 from silicone.database_crunchers import DatabaseCruncherRMSClosest
 from silicone.database_crunchers.rms_closest import _select_closest
 
+_msa = ["model_a", "scen_a"]
+
 
 class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
     tclass = DatabaseCruncherRMSClosest
+    tdb = pd.DataFrame(
+        [
+            _msa + ["World", "Emissions|HFC|C5F12", "kt C5F12/yr", np.nan, 3.14],
+            _msa + ["World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.2, 1.5],
+        ],
+        columns=["model", "scenario", "region", "variable", "unit", 2010, 2015],
+    )
+
     tdownscale_df = pd.DataFrame(
         [
             ["model_b", "scen_b", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1, 2, 3],
-            ["model_b", "scen_c", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.1, 2.2, 2.8],
+            [
+                "model_b",
+                "scen_c",
+                "World",
+                "Emissions|HFC|C2F6",
+                "kt C2F6/yr",
+                1.1,
+                2.2,
+                2.8,
+            ],
         ],
         columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2050],
     )
     larger_df = pd.DataFrame(
         [
-            ["model_c", "scen_b", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.001, 2, 3],
-            ["model_c", "scen_c", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.1, 2.2, 2.8],
-            ["model_c", "scen_d", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.2, 2.3, 2.8],
-            ["model_c", "scen_b", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1, 2, 3],
-            ["model_c", "scen_c", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1.1, 2.2, 2.8],
-            ["model_c", "scen_d", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1.2, 2.3, 2.8],
+            [
+                "model_c",
+                "scen_b",
+                "World",
+                "Emissions|HFC|C2F6",
+                "kt C2F6/yr",
+                1.001,
+                2,
+                3,
+            ],
+            [
+                "model_c",
+                "scen_c",
+                "World",
+                "Emissions|HFC|C2F6",
+                "kt C2F6/yr",
+                1.1,
+                2.2,
+                2.8,
+            ],
+            [
+                "model_c",
+                "scen_d",
+                "World",
+                "Emissions|HFC|C2F6",
+                "kt C2F6/yr",
+                1.2,
+                2.3,
+                2.8,
+            ],
+            [
+                "model_c",
+                "scen_b",
+                "World",
+                "Emissions|HFC|C5F12",
+                "kt C5F12/yr",
+                1,
+                2,
+                3,
+            ],
+            [
+                "model_c",
+                "scen_c",
+                "World",
+                "Emissions|HFC|C5F12",
+                "kt C5F12/yr",
+                1.1,
+                2.2,
+                2.8,
+            ],
+            [
+                "model_c",
+                "scen_d",
+                "World",
+                "Emissions|HFC|C5F12",
+                "kt C5F12/yr",
+                1.2,
+                2.3,
+                2.8,
+            ],
         ],
         columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2050],
     )
 
     bad_df = pd.DataFrame(
         [
-            ["model_a", "scen_a", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1, np.nan, np.nan],
-            ["model_b", "scen_d", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1.2, 2.3, 2.8]
+            [
+                "model_a",
+                "scen_a",
+                "World",
+                "Emissions|HFC|C2F6",
+                "kt C2F6/yr",
+                1,
+                np.nan,
+                np.nan,
+            ],
+            [
+                "model_b",
+                "scen_d",
+                "World",
+                "Emissions|HFC|C5F12",
+                "kt C5F12/yr",
+                1.2,
+                2.3,
+                2.8,
+            ],
         ],
         columns=["model", "scenario", "region", "variable", "unit", 2012, 2015, 2050],
     )
 
     bad_units_df = pd.DataFrame(
         [
-            ["model_c", "scen_b", "World", "Emissions|HFC|C2F6", "Gt C2F6/yr", 1.001, 2, 3],
-            ["model_c", "scen_c", "World", "Emissions|HFC|C2F6", "Gt C2F6/yr", 1.1, 2.2, 2.8],
-            ["model_c", "scen_b", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1, 2, 3],
-            ["model_c", "scen_c", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1.1, 2.2, 2.8],
+            [
+                "model_c",
+                "scen_b",
+                "World",
+                "Emissions|HFC|C2F6",
+                "Gt C2F6/yr",
+                1.001,
+                2,
+                3,
+            ],
+            [
+                "model_c",
+                "scen_c",
+                "World",
+                "Emissions|HFC|C2F6",
+                "Gt C2F6/yr",
+                1.1,
+                2.2,
+                2.8,
+            ],
+            [
+                "model_c",
+                "scen_b",
+                "World",
+                "Emissions|HFC|C5F12",
+                "kt C5F12/yr",
+                1,
+                2,
+                3,
+            ],
+            [
+                "model_c",
+                "scen_c",
+                "World",
+                "Emissions|HFC|C5F12",
+                "kt C5F12/yr",
+                1.1,
+                2.2,
+                2.8,
+            ],
         ],
-        columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2050]
+        columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2050],
     )
 
     multiple_units_df = pd.DataFrame(
         [
-            ["model_c", "scen_b", "World", "Emissions|HFC|C2F6", "Gt C2F6/yr", 1.001, 2, 3],
-            ["model_c", "scen_c", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.1, 2.2, 2.8],
-            ["model_c", "scen_b", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1, 2, 3],
-            ["model_c", "scen_c", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1.1, 2.2, 2.8],
+            [
+                "model_c",
+                "scen_b",
+                "World",
+                "Emissions|HFC|C2F6",
+                "Gt C2F6/yr",
+                1.001,
+                2,
+                3,
+            ],
+            [
+                "model_c",
+                "scen_c",
+                "World",
+                "Emissions|HFC|C2F6",
+                "kt C2F6/yr",
+                1.1,
+                2.2,
+                2.8,
+            ],
+            [
+                "model_c",
+                "scen_b",
+                "World",
+                "Emissions|HFC|C5F12",
+                "kt C5F12/yr",
+                1,
+                2,
+                3,
+            ],
+            [
+                "model_c",
+                "scen_c",
+                "World",
+                "Emissions|HFC|C5F12",
+                "kt C5F12/yr",
+                1.1,
+                2.2,
+                2.8,
+            ],
         ],
-        columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2050]
+        columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2050],
     )
 
     def test_multiple_units_error(self, multiple_units_df, bad_units_df):
@@ -75,8 +238,9 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         filler = tcruncher.derive_relationship(
             "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
         )
-        error_msg = "Units of lead variable is meant to be {}, found {}".format(bad_units_df.data.unit[0],
-                                                                    test_downscale_df.data.unit[0])
+        error_msg = "Units of lead variable is meant to be {}, found {}".format(
+            bad_units_df.data.unit[0], test_downscale_df.data.unit[0]
+        )
         with pytest.raises(ValueError, match=error_msg):
             filler(test_downscale_df)
 
@@ -97,14 +261,17 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         )
         res = filler(test_downscale_df)
         np.testing.assert_allclose(
-            res.filter(model="model_b", scenario="scen_b").timeseries().values.squeeze(),
-            [1, 2, 3]
+            res.filter(model="model_b", scenario="scen_b")
+            .timeseries()
+            .values.squeeze(),
+            [1, 2, 3],
         )
         np.testing.assert_allclose(
-            res.filter(model="model_b", scenario="scen_c").timeseries().values.squeeze(),
-            [1.1, 2.2, 2.8]
+            res.filter(model="model_b", scenario="scen_c")
+            .timeseries()
+            .values.squeeze(),
+            [1.1, 2.2, 2.8],
         )
-
 
     def test_derive_relationship(self, test_db):
         tcruncher = self.tclass(test_db)
@@ -158,10 +325,10 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
 
         scen_b_df = test_db.filter(variable="Emissions|HFC|C5F12")
         scen_c_df = test_db.filter(variable="Emissions|HFC|C5F12")
-        scen_b_df['model'] = 'model_b'
-        scen_b_df['scenario'] = 'scen_b'
-        scen_c_df['model'] = 'model_b'
-        scen_c_df['scenario'] = 'scen_c'
+        scen_b_df["model"] = "model_b"
+        scen_b_df["scenario"] = "scen_b"
+        scen_c_df["model"] = "model_b"
+        scen_c_df["scenario"] = "scen_c"
         exp = concat([scen_b_df, scen_c_df])
 
         pd.testing.assert_frame_equal(
@@ -174,9 +341,7 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
             exp.timeseries().columns.values.squeeze(),
         )
 
-    def test_relationship_usage_no_overlap(
-        self, test_db, test_downscale_df
-    ):
+    def test_relationship_usage_no_overlap(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db.filter(year=2015))
 
         filler = tcruncher.derive_relationship(
@@ -201,7 +366,7 @@ def test_select_closest():
         index=pd.MultiIndex.from_arrays(
             [("blue", "red", "green", "yellow"), (1.5, 1.6, 2, 0.4)],
             names=("colour", "height"),
-        )
+        ),
     )
 
     closest_meta = _select_closest(possible_answers, target)
