@@ -7,7 +7,6 @@ import pyam
 
 from .base import _DatabaseCruncher
 
-# TODO: add `interpolate` to filler
 
 class DatabaseCruncherRMSClosest(_DatabaseCruncher):
     """
@@ -92,13 +91,11 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
             Raises
             ------
             ValueError
-                If there are any inconsistencies between the timeseries, units or expectations of the program and the
-                in_amdf, compared to the database passed to the cruncher, one of many errors are thrown.
+                If there are any inconsistencies between the timeseries, units or
+                expectations of the program and ``in_iamdf``, compared to the database
+                used to generate this ``filler`` function.
             """
             lead_var = in_iamdf.filter(variable=variable_leaders)
-
-            # when we do unit conversion we should add OpenSCM as a dependency as it
-            # has all the emissions units inbuilt
 
             var_units = lead_var["unit"].unique()
             if len(var_units) != 1:
@@ -107,7 +104,9 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
             var_units = var_units[0]
             if var_units != leader_unit:
                 raise ValueError(
-                    "Units of lead variable is meant to be {}, found {}".format(leader_unit, var_units)
+                    "Units of lead variable is meant to be {}, found {}".format(
+                        leader_unit, var_units
+                    )
                 )
 
             if data_follower_time_col != in_iamdf.time_col:
@@ -129,7 +128,9 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
                 # filter warning about empty data frame as we handle it ourselves
                 to_return = idf.filter(**time_filter)
                 if to_return.data.empty:
-                    raise ValueError("No time series overlap between the original and unfilled data")
+                    raise ValueError(
+                        "No time series overlap between the original and unfilled data"
+                    )
                 return to_return
 
             lead_var_timeseries = get_values_at_key_timepoints(
@@ -141,10 +142,7 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
 
             output_ts_list = []
             for label, row in lead_var_timeseries.iterrows():
-                closest_ts = _select_closest(
-                    iamdf_lead_timeseries,
-                    row
-                )
+                closest_ts = _select_closest(iamdf_lead_timeseries, row)
 
                 # Filter to find the matching follow data for the same model, scenario
                 # and region
@@ -153,8 +151,10 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
                 ).data
 
                 # Update the model and scenario to match the elements of the input.
-                tmp['model'] = label[lead_var_timeseries.index.names.index("model")]
-                tmp['scenario'] = label[lead_var_timeseries.index.names.index("scenario")]
+                tmp["model"] = label[lead_var_timeseries.index.names.index("model")]
+                tmp["scenario"] = label[
+                    lead_var_timeseries.index.names.index("scenario")
+                ]
                 output_ts_list.append(tmp)
 
             return pyam.concat(output_ts_list)
@@ -188,6 +188,7 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
             raise ValueError(error_msg)
 
         return iamdf_section
+
 
 def _select_closest(to_search_df, target_series):
     """
