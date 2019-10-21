@@ -3,16 +3,26 @@ import os
 import pandas as pd
 import numpy as np
 
-
+"""
 # Divides the x-axis up into nboxes of equal length, assumes that the contents of this box are all positioned
 # in the center and calculate quantiles from that.
 # The x and y co-ordinates, xs and ys, should be numpy arrays of the same length.
-# This function is currently unused and scheduled for deletion.
+Parameters
+----------
+xs/ ys: Numpy arrays of the same length, pandas series will also work. 
+    The x and y co-ordinates. 
+quantiles: Array-like
+    The 
+"""
 def aggregate_and_find_quantiles(xs, ys, quantiles, nboxes=10):
     assert xs.size == ys.size
     step = (max(xs) - min(xs)) / nboxes
-    boxes = np.arange(min(xs) - 0.5 * step, max(xs) + step, step)
-    box_centers = (boxes[1:] + boxes[0:-1]) / 2.0
+    if step == 0:
+        box_centers = xs
+        boxes = np.array([0, 2*max(xs)])
+    else:
+        boxes = np.arange(min(xs) - 0.5 * step, max(xs) + step, step)
+        box_centers = (boxes[1:] + boxes[0:-1]) / 2.0
     quantmatrix = pd.DataFrame(index=box_centers, columns=quantiles)
     for ind in range(box_centers.size):
         ins = (xs < boxes[ind + 1]) & (xs >= boxes[ind])
@@ -92,8 +102,13 @@ Finds what quantile a time-series corresponds to given a time series of scattere
 aggregate_and_find_quantiles definition of what a quantile is, with the box width determined by the spacing of the 
 new data
 ----------
-orig_xs :  
-    the x position of the larger data source. This will usually be the time axis. It must be sorted in ascending order
+orig_xs: ndarray  
+    The x position of the larger data source. This will usually be the time axis. 
+orig_ys: ndarray
+    The y position of the larger data source, typically the emissions data.
+new_xs/new_ys: ndarray
+    The x/y position of the points which we will split into boxes and calculate the quantiles of.  
+    
 """
 def which_quantile(orig_xs, orig_ys, new_xs, new_ys):
     if len(np.unique(new_xs)) != len(new_xs):
@@ -108,7 +123,6 @@ def which_quantile(orig_xs, orig_ys, new_xs, new_ys):
     sort_xs = np.argsort(new_xs)
     new_xs = new_xs[sort_xs]
     new_ys = new_ys[sort_xs]
-
 
     if len(new_xs) > 1:
         # Divide the x-axis into boxes centered around the new_xs
@@ -126,4 +140,4 @@ def which_quantile(orig_xs, orig_ys, new_xs, new_ys):
             quantile_of_xs[ind] = np.nan
         else:
             quantile_of_xs[ind] = sum(new_ys[ind] > orig_ys[ins]) / len(orig_ys[ins])
-    return quantile_of_xs
+    return pd.Series(data=quantile_of_xs, index=new_xs)

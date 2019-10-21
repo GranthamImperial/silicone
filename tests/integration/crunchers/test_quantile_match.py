@@ -1,11 +1,8 @@
 import re
 
-import numpy as np
 import pandas as pd
 import pytest
 from base import _DataBaseCruncherTester
-from pyam import IamDataFrame
-
 from silicone.database_crunchers import DatabaseCruncherFixedQuantile
 
 
@@ -29,18 +26,10 @@ class TestDatabaseCruncherQuantileMatcher(_DataBaseCruncherTester):
         )
         assert isinstance(res, object)
 
-    def test_derive_relationship_error_follow_vars_already_exist(self, test_db):
-        tcruncher = self.tclass(test_db.filter(variable=self.variable_leaders))
-        error_msg = "There should be pre-existing data for `variable_follower` ({}) in database".format(
-            self.variable_follower
-        )
-        with pytest.raises(ValueError, match=error_msg):
-            tcruncher.derive_relationship(self.variable_follower, self.variable_leaders)
-
     def test_derive_relationship_error_multiple_lead_vars(self, test_db):
         tcruncher = self.tclass(test_db)
         error_msg = re.escape(
-            "For `DatabaseCruncherLeadGas`, ``variable_leaders`` should only "
+            "For `DatabaseCruncherQuantile`, ``variable_leaders`` should only "
             "contain one variable"
         )
         with pytest.raises(ValueError, match=error_msg):
