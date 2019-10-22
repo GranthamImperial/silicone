@@ -37,3 +37,11 @@ def test_db(request):
 @pytest.fixture(scope="function")
 def test_downscale_df(request):
     return IamDataFrame(request.cls.tdownscale_df)
+
+@pytest.fixture(scope="function")
+def larger_df(request):
+    return IamDataFrame(request.cls.larger_df)
+
+@pytest.fixture(scope="function")
+def bad_df(request):
+    return IamDataFrame(request.cls.bad_df)

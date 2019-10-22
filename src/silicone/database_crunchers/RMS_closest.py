@@ -145,10 +145,10 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
                 raise ValueError("No time series overlap between the original and unfilled data.")
             closest_index = []
             output_ts_list = []
-            for row in range(lead_var_timeseries.shape[1]):
+            for row in range(lead_var_timeseries.shape[0]):
                 closest_index.append(select_closest(iamf_lead_timeseries, lead_var_timeseries.iloc[row]))
                 # Filter to find the matching follow data for the same model, scenario and region
-                tmp = iamdf_follower.filter(closest_index[row][0:3])
+                tmp = iamdf_follower.filter(model=closest_index[row][0], scenario=closest_index[row][1])
                 # Update the model and scenario to match the elements of the input.
                 tmp['model'] = lead_var_timeseries.index[row][0]
                 tmp['scenario'] = lead_var_timeseries.index[row][1]
