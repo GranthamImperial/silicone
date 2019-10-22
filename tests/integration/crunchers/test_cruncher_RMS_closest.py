@@ -18,6 +18,44 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         ],
         columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2050],
     )
+    larger_df = pd.DataFrame(
+        [
+            ["model_b", "scen_b", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.001, 2, 3],
+            ["model_b", "scen_c", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.1, 2.2, 2.8],
+            ["model_b", "scen_d", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.2, 2.3, 2.8],
+            ["model_b", "scen_b", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1, 2, 3],
+            ["model_b", "scen_c", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1.1, 2.2, 2.8],
+            ["model_b", "scen_d", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1.2, 2.3, 2.8],
+        ],
+        columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2050],
+    )
+
+    bad_df = pd.DataFrame(
+        [
+            ["model_a", "scen_a", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1, np.nan, np.nan],
+            ["model_b", "scen_d", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1.2, 2.3, 2.8]
+        ],
+        columns=["model", "scenario", "region", "variable", "unit", 2012, 2015, 2050],
+    )
+
+    def test_relationship_bad_data(self, bad_df, test_downscale_df):
+        tcruncher = self.tclass(bad_df)
+
+        filler = tcruncher.derive_relationship(
+            "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
+        )
+        error_msg = "No time series overlap between the original and unfilled data."
+        with pytest.raises(ValueError, match=error_msg):
+            filler(test_downscale_df)
+
+    def test_relationship_complex_usage(self, larger_df, test_downscale_df):
+        tcruncher = self.tclass(larger_df)
+        filler = tcruncher.derive_relationship(
+            "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
+        )
+        res = filler(test_downscale_df)
+        print(res)
+
 
     def test_derive_relationship(self, test_db):
         tcruncher = self.tclass(test_db)
