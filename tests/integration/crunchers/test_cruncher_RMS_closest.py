@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from base import _DataBaseCruncherTester
-from pyam import IamDataFrame
+from pyam import concat
 
 from silicone.database_crunchers import DatabaseCruncherRMSClosest
 
@@ -69,14 +69,13 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db)
         res = filler(test_downscale_df)
 
-        lead_iamdf = test_downscale_df.filter(variable="Emissions|HFC|C2F6")
-        lead_val_2015 = lead_iamdf.filter(year=2015).timeseries().values.squeeze()
-
-        exp = (lead_iamdf.timeseries().T * 3.14 / lead_val_2015).T
-        exp = exp.reset_index()
-        exp["variable"] = "Emissions|HFC|C5F12"
-        exp["unit"] = "kt C5F12/yr"
-        exp = IamDataFrame(exp)
+        scen_b_df = test_db.filter(variable="Emissions|HFC|C5F12")
+        scen_c_df = test_db.filter(variable="Emissions|HFC|C5F12")
+        scen_b_df['model'] = 'model_b'
+        scen_c_df['model'] = 'model_b'
+        scen_b_df['scenario'] = 'scen_b'
+        scen_c_df['scenario'] = 'scen_c'
+        exp = concat([scen_b_df, scen_c_df])
 
         pd.testing.assert_frame_equal(
             res.timeseries(), exp.timeseries(), check_like=True
@@ -85,7 +84,7 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         # comes back on input timepoints
         np.testing.assert_array_equal(
             res.timeseries().columns.values.squeeze(),
-            test_downscale_df.timeseries().columns.values.squeeze(),
+            exp.timeseries().columns.values.squeeze(),
         )
 
     def test_relationship_usage_no_overlap(

@@ -129,19 +129,20 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
 
             def get_values_at_key_timepoints(idf, time_filter):
                 # filter warning about empty data frame as we handle it ourselves
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    return idf.filter(**time_filter)
+               try:
+                    to_return = idf.filter(**time_filter)
+                    if to_return.data.empty:
+                        raise ValueError("No time series overlap between the original and unfilled data.")
+                    return to_return
+               except KeyError as e:
+                   raise ValueError("No time series overlap between the original and unfilled data.")
 
             lead_var_timeseries = get_values_at_key_timepoints(lead_var, key_timepoints_filter_lead)\
                 .timeseries().dropna()
             iamf_lead_timeseries = get_values_at_key_timepoints(iamdf_lead, key_timepoints_filter_iamdf)\
                 .timeseries().dropna()
             if lead_var_timeseries.empty or iamf_lead_timeseries.empty:
-                error_msg = (
-                    "No time series overlap between the original and unfilled data."
-                )
-                raise ValueError(error_msg)
+                raise ValueError("No time series overlap between the original and unfilled data.")
             closest_index = []
             output_ts_list = []
             for row in range(lead_var_timeseries.shape[1]):
