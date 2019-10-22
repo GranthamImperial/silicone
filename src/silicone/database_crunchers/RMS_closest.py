@@ -3,8 +3,8 @@ Module for the database cruncher which uses the 'lead gas' technique.
 """
 import warnings
 
-import numpy as np
-from pyam import IamDataFrame
+import pyam
+from silicone.utils import select_closest
 
 from .base import _DatabaseCruncher
 
@@ -60,16 +60,15 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
         ValueError
             There is more than one value for ``variable_follower`` in the database.
         """
-        iamdf_follower = self._get_iamdf_follower(variable_follower, variable_leaders)
+        self._check_iamdf_follower_and_lead(variable_follower, variable_leaders)
+        iamdf_follower = self._get_iamdf_section(variable_follower)
+        iamdf_lead = self._get_iamdf_section(variable_leaders)
         data_follower = iamdf_follower.data
 
         data_follower_key_year_val = data_follower["value"].values.squeeze()
         data_follower_unit = data_follower["unit"].values[0]
 
         data_follower_time_col = iamdf_follower.time_col
-        data_follower_key_timepoint = data_follower[data_follower_time_col].iloc[0]
-        if data_follower_time_col == "time":
-            data_follower_key_timepoint = data_follower_key_timepoint.to_pydatetime()
 
         def filler(in_iamdf, interpolate=False):
             """
@@ -121,61 +120,44 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
                     )
                 )
 
-            key_timepoint_filter = {
-                data_follower_time_col: [data_follower_key_timepoint]
+            key_timepoints_filter_iamdf = {
+                data_follower_time_col: lead_var[data_follower_time_col]
+            }
+            key_timepoints_filter_lead = {
+                data_follower_time_col: iamdf_lead[data_follower_time_col]
             }
 
-            def get_values_in_key_timepoint(idf):
+            def get_values_at_key_timepoints(idf, time_filter):
                 # filter warning about empty data frame as we handle it ourselves
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
-                    return idf.filter(**key_timepoint_filter)
+                    return idf.filter(**time_filter)
 
-            lead_var_val_in_key_timepoint = get_values_in_key_timepoint(lead_var)
-
-            if lead_var_val_in_key_timepoint.data.empty:
-                if not interpolate:
-                    error_msg = (
-                        "Required downscaling timepoint ({}) is not in the data for "
-                        "the lead gas ({})".format(
-                            data_follower_key_timepoint, variable_leaders[0]
-                        )
-                    )
-                    raise ValueError(error_msg)
-                else:
-                    # TODO: make interpolate method of IamDataFrame datetime friendly
-                    lead_var_interp = lead_var.timeseries()
-                    lead_var_interp[data_follower_key_timepoint] = np.nan
-                    lead_var_interp = lead_var_interp.reindex(
-                        sorted(lead_var_interp.columns), axis=1
-                    )
-                    lead_var_interp = IamDataFrame(
-                        lead_var_interp.interpolate(method="index", axis=1)
-                    )
-                    lead_var_val_in_key_timepoint = get_values_in_key_timepoint(
-                        lead_var_interp
-                    )
-
-            lead_var_val_in_key_timepoint = lead_var_val_in_key_timepoint.timeseries()
-            if not lead_var_val_in_key_timepoint.shape[1] == 1:  # pragma: no cover
-                raise AssertionError(
-                    "How did filtering for a single timepoint result in more than "
-                    "one column?"
+            lead_var_timeseries = get_values_at_key_timepoints(lead_var, key_timepoints_filter_lead)\
+                .timeseries().dropna()
+            iamf_lead_timeseries = get_values_at_key_timepoints(iamdf_lead, key_timepoints_filter_iamdf)\
+                .timeseries().dropna()
+            if lead_var_timeseries.empty or iamf_lead_timeseries.empty:
+                error_msg = (
+                    "No time series overlap between the original and unfilled data."
                 )
+                raise ValueError(error_msg)
+            closest_index = []
+            output_ts_list = []
+            for row in range(lead_var_timeseries.shape[1]):
+                closest_index.append(select_closest(iamf_lead_timeseries, lead_var_timeseries.iloc[row]))
+                # Filter to find the matching follow data for the same model, scenario and region
+                tmp = iamdf_follower.filter(closest_index[row][0:3])
+                # Update the model and scenario to match the elements of the input.
+                tmp['model'] = lead_var_timeseries.index[row][0]
+                tmp['scenario'] = lead_var_timeseries.index[row][1]
+                output_ts_list.append(tmp)
 
-            lead_var_val_in_key_timepoint = lead_var_val_in_key_timepoint.iloc[:, 0]
-
-            scaling = data_follower_key_year_val / lead_var_val_in_key_timepoint
-            output_ts = (lead_var.timeseries().T * scaling).T.reset_index()
-
-            output_ts["variable"] = variable_follower
-            output_ts["unit"] = data_follower_unit
-
-            return IamDataFrame(output_ts)
+            return pyam.concat(output_ts_list)
 
         return filler
 
-    def _get_iamdf_follower(self, variable_follower, variable_leaders):
+    def _check_iamdf_follower_and_lead(self, variable_follower, variable_leaders):
         if len(variable_leaders) > 1:
             raise ValueError(
                 "For `DatabaseCruncherRMSClosest`, ``variable_leaders`` should only "
@@ -188,22 +170,18 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
             )
             raise ValueError(error_msg)
 
+    def _get_iamdf_section(self, variables):
         # filter warning about empty data frame as we handle it ourselves
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            iamdf_follower = self._db.filter(variable=variable_follower)
+            iamdf_section = self._db.filter(variable=variables)
 
-        data_follower = iamdf_follower.data
-        if data_follower.empty:
+        data_section = iamdf_section.data
+        if data_section.empty:
             error_msg = "No data for `variable_follower` ({}) in database".format(
-                variable_follower
+                variables
             )
             raise ValueError(error_msg)
 
-        if data_follower.shape[0] != 1:
-            error_msg = "More than one data point for `variable_follower` ({}) in database".format(
-                variable_follower
-            )
-            raise ValueError(error_msg)
+        return iamdf_section
 
-        return iamdf_follower
