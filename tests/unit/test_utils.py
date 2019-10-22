@@ -1,5 +1,6 @@
 import re
 
+import pandas as pd
 import pytest
 
 from silicone.utils import _get_unit_of_variable
