@@ -176,7 +176,6 @@ def plot_emissions(seaborn_df, x_gas, y_gas, x_units, y_units):
 
 
 def plot_multiple_models(legend_fraction, seaborn_df, x_gas, y_gas, x_units, y_units):
-    fig = plt.figure(figsize=(16, 12))
     ax = plt.subplot(111)
     all_models = list(seaborn_df["model"].unique())
     markers = itertools.cycle(["s", "o", "v", "<", ">", ","])

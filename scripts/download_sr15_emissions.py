@@ -1,5 +1,4 @@
 import argparse
-from os.path import splitext
 
 import pyam
 
