@@ -7,6 +7,7 @@ from base import _DataBaseCruncherTester
 from pyam import concat
 
 from silicone.database_crunchers import DatabaseCruncherRMSClosest
+from silicone.database_crunchers.rms_closest import _select_closest
 
 
 class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
@@ -157,3 +158,37 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         error_msg = "No time series overlap between the original and unfilled data."
         with pytest.raises(ValueError, match=error_msg):
             filler(test_downscale_df)
+
+
+# other select closest tests to write before making public:
+#   - what happens if indexes don't align
+def test_select_closest():
+    target = pd.Series([1, 2, 3])
+    possible_answers = pd.DataFrame(
+        [[1, 1, 1], [1, 2, 3.5], [1, 2, 3.5], [1, 2, 4]],
+        index=pd.MultiIndex.from_arrays(
+            [("blue", "red", "green", "yellow"), (1.5, 1.6, 2, 0.4)],
+            names=("colour", "height"),
+        )
+    )
+
+    closest_meta = _select_closest(possible_answers, target)
+    assert closest_meta["colour"] == "red"
+    assert closest_meta["height"] == 1.6
+
+
+def test_select_closest_multi_dimensional_target_error():
+    df = pd.DataFrame([1, 1])
+    with pytest.raises(ValueError, match="Target array is multidimensional"):
+        _select_closest(df, df)
+
+
+def test_select_closest_wrong_shape_error():
+    to_search = pd.DataFrame([[1, 1, 1], [1, 2, 3.5], [1, 2, 3.5], [1, 2, 4]])
+    target = pd.Series([1, 1])
+
+    with pytest.raises(
+        ValueError,
+        match="Target array does not match the size of the searchable arrays",
+    ):
+        _select_closest(to_search, target)
