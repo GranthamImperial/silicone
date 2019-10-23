@@ -8,7 +8,6 @@ import pyam
 from .base import _DatabaseCruncher
 
 # TODO: add `interpolate` to filler
-# TODO: test wrong units
 
 class DatabaseCruncherRMSClosest(_DatabaseCruncher):
     """
@@ -61,7 +60,7 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
             There is no data for ``variable_leaders`` or ``variable_follower`` in the
             database.
         """
-        self._check_iamdf_follower_and_lead(variable_follower, variable_leaders)
+        self._check_iamdf_lead(variable_leaders)
         iamdf_follower = self._get_iamdf_section(variable_follower)
         iamdf_lead = self._db.filter(variable=variable_leaders)
 
@@ -93,7 +92,8 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
             Raises
             ------
             ValueError
-                The lead timeseries units are not the expected ones (TODO: test this).
+                If there are any inconsistencies between the timeseries, units or expectations of the program and the
+                in_amdf, compared to the database passed to the cruncher, one of many errors are thrown.
             """
             lead_var = in_iamdf.filter(variable=variable_leaders)
 
@@ -129,20 +129,15 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
                 # filter warning about empty data frame as we handle it ourselves
                 to_return = idf.filter(**time_filter)
                 if to_return.data.empty:
-                    raise ValueError("No time series overlap between the original and unfilled data.")
+                    raise ValueError("No time series overlap between the original and unfilled data")
                 return to_return
 
             lead_var_timeseries = get_values_at_key_timepoints(
                 lead_var, key_timepoints_filter_lead
-            ).timeseries().dropna()
+            ).timeseries()
             iamdf_lead_timeseries = get_values_at_key_timepoints(
                 iamdf_lead, key_timepoints_filter_iamdf
-            ).timeseries().dropna()
-
-            if lead_var_timeseries.empty or iamdf_lead_timeseries.empty:
-                raise ValueError(
-                    "No time series overlap between the original and unfilled data."
-                )
+            ).timeseries()
 
             output_ts_list = []
             for label, row in lead_var_timeseries.iterrows():
@@ -166,7 +161,7 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
 
         return filler
 
-    def _check_iamdf_follower_and_lead(self, variable_follower, variable_leaders):
+    def _check_iamdf_lead(self, variable_leaders):
         if len(variable_leaders) > 1:
             raise ValueError(
                 "For `DatabaseCruncherRMSClosest`, ``variable_leaders`` should only "

@@ -86,7 +86,7 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         filler = tcruncher.derive_relationship(
             "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
         )
-        error_msg = "No time series overlap between the original and unfilled data."
+        error_msg = "No time series overlap between the original and unfilled data"
         with pytest.raises(ValueError, match=error_msg):
             filler(test_downscale_df)
 
@@ -187,7 +187,7 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
             test_downscale_df.filter(year=2015, keep=False), test_db
         )
 
-        error_msg = "No time series overlap between the original and unfilled data."
+        error_msg = "No time series overlap between the original and unfilled data"
         with pytest.raises(ValueError, match=error_msg):
             filler(test_downscale_df)
 
