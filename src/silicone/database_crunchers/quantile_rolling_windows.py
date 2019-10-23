@@ -173,7 +173,6 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
             xs = xs[sort_order]
             if max(xs) == min(xs):
                 # We must prevent singularity behaviour if all the points are at the same x value.
-                # TODO: throw a warning here that we're overwriting decay_length
                 window_centers = np.array([xs[0]] * nwindows)
                 decay_length = 1
             else:
