@@ -7,4 +7,4 @@ emissions detail based on a 'lead' emissions timeseries.
 """
 
 from .lead_gas import DatabaseCruncherLeadGas  # noqa: F401
-from .RMS_closest import DatabaseCruncherRMSClosest
+from .rms_closest import DatabaseCruncherRMSClosest  # noqa: F401
