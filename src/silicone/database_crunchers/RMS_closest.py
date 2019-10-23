@@ -63,10 +63,8 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
         self._check_iamdf_follower_and_lead(variable_follower, variable_leaders)
         iamdf_follower = self._get_iamdf_section(variable_follower)
         iamdf_lead = self._get_iamdf_section(variable_leaders)
-        data_follower = iamdf_follower.data
 
-        data_follower_key_year_val = data_follower["value"].values.squeeze()
-        data_follower_unit = data_follower["unit"].values[0]
+        leader_unit = iamdf_lead.data["unit"].values[0]
 
         data_follower_time_col = iamdf_follower.time_col
 
@@ -81,7 +79,7 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
 
             interpolate : bool
                 If the key year for filling is not in ``in_iamdf``, should a value be
-                interpolated?
+                interpolated? This feature is currently not supported.
 
             Returns
             -------
@@ -91,27 +89,23 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
             Raises
             ------
             ValueError
-                The key year for filling is not in ``in_iamdf`` and ``interpolate is
-                False``.
+
             """
             lead_var = in_iamdf.filter(variable=variable_leaders)
 
-            # for other crunchers, unit check would look like this (doesn't actually
-            # matter for this cruncher)
             # when we do unit conversion we should add OpenSCM as a dependency as it
             # has all the emissions units inbuilt
-            """
+
             var_units = lead_var.variables(True)
             if var_units.shape[0] != 1:
                 raise ValueError("More than one unit detected for input timeseries")
             if (
-                var_units.set_index("variable").loc[variable_leaders[0]]["unit"]
-                != "expected_unit"
+                var_units['unit'][0] != leader_unit
             ):
                 raise ValueError(
                     "Units of lead variable is meant to be `expected_unit`, found `other_unit`"
                 )
-            """
+
             if data_follower_time_col != in_iamdf.time_col:
                 raise ValueError(
                     "`in_iamdf` time column must be the same as the time column used "

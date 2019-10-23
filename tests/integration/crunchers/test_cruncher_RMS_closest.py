@@ -38,6 +38,15 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         columns=["model", "scenario", "region", "variable", "unit", 2012, 2015, 2050],
     )
 
+    bad_units = pd.DataFrame(
+        [
+            ["model_b", "scen_b", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.001, 2, 3],
+            ["model_b", "scen_c", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.1, 2.2, 2.8],
+            ["model_b", "scen_b", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1, 2, 3],
+            ["model_b", "scen_c", "World", "Emissions|HFC|C5F12", "Gt C5F12/yr", 1.1, 2.2, 2.8],
+        ]
+    )
+
     def test_relationship_bad_data(self, bad_df, test_downscale_df):
         tcruncher = self.tclass(bad_df)
 
