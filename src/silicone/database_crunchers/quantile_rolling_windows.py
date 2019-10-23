@@ -12,7 +12,7 @@ from ..utils import _get_unit_of_variable
 from .base import _DatabaseCruncher
 
 
-class DatabaseCruncherRollingWindows(_DatabaseCruncher):
+class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
     """
     Database cruncher which uses the 'rolling windows' technique.
 
@@ -191,7 +191,7 @@ class DatabaseCruncherRollingWindows(_DatabaseCruncher):
 
         def filler(in_iamdf, interpolate=False):
             """
-            Filler function derived from :obj:`DatabaseCruncherRollingWindows`.
+            Filler function derived from :obj:`DatabaseCruncherQuantileRollingWindows`.
 
             Parameters
             ----------

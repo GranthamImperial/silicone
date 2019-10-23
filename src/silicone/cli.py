@@ -2,7 +2,7 @@
 import click
 import pyam
 
-from .plotting import plot_emission_correlations
+from .plotting import _plot_emission_correlations_cruncher_quantile_rolling_windows
 
 
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
@@ -57,7 +57,7 @@ from .plotting import plot_emission_correlations
     show_default=True,
     help="In the model-coloured version, how much does the figure need to be reduced by to leave room for the legend?",
 )
-def plot_emission_correlations_cli(
+def plot_emission_correlations_cruncher_quantile_rolling_windows_cli(
     emissions_data,
     output_dir,
     years,
@@ -78,7 +78,7 @@ def plot_emission_correlations_cli(
 
     emissions_data = pyam.IamDataFrame(emissions_data)
 
-    plot_emission_correlations(
+    _plot_emission_correlations_cruncher_quantile_rolling_windows(
         emissions_data,
         output_dir,
         years,
