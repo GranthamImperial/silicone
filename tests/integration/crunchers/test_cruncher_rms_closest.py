@@ -20,12 +20,12 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
     )
     larger_df = pd.DataFrame(
         [
-            ["model_b", "scen_b", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.001, 2, 3],
-            ["model_b", "scen_c", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.1, 2.2, 2.8],
-            ["model_b", "scen_d", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.2, 2.3, 2.8],
-            ["model_b", "scen_b", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1, 2, 3],
-            ["model_b", "scen_c", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1.1, 2.2, 2.8],
-            ["model_b", "scen_d", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1.2, 2.3, 2.8],
+            ["model_c", "scen_b", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.001, 2, 3],
+            ["model_c", "scen_c", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.1, 2.2, 2.8],
+            ["model_c", "scen_d", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.2, 2.3, 2.8],
+            ["model_c", "scen_b", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1, 2, 3],
+            ["model_c", "scen_c", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1.1, 2.2, 2.8],
+            ["model_c", "scen_d", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1.2, 2.3, 2.8],
         ],
         columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2050],
     )
@@ -40,10 +40,10 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
 
     bad_units = pd.DataFrame(
         [
-            ["model_b", "scen_b", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.001, 2, 3],
-            ["model_b", "scen_c", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.1, 2.2, 2.8],
-            ["model_b", "scen_b", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1, 2, 3],
-            ["model_b", "scen_c", "World", "Emissions|HFC|C5F12", "Gt C5F12/yr", 1.1, 2.2, 2.8],
+            ["model_c", "scen_b", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.001, 2, 3],
+            ["model_c", "scen_c", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.1, 2.2, 2.8],
+            ["model_c", "scen_b", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1, 2, 3],
+            ["model_c", "scen_c", "World", "Emissions|HFC|C5F12", "Gt C5F12/yr", 1.1, 2.2, 2.8],
         ]
     )
 
@@ -63,7 +63,14 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
             "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
         )
         res = filler(test_downscale_df)
-        print(res)
+        np.testing.assert_allclose(
+            res.filter(model="model_b", scenario="scen_b").timeseries().values.squeeze(),
+            [1, 2, 3]
+        )
+        np.testing.assert_allclose(
+            res.filter(model="model_b", scenario="scen_c").timeseries().values.squeeze(),
+            [1.1, 2.2, 2.8]
+        )
 
 
     def test_derive_relationship(self, test_db):
@@ -71,7 +78,7 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         res = tcruncher.derive_relationship(
             "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
         )
-        assert isinstance(res, object)
+        assert callable(res)
 
     def test_derive_relationship_error_multiple_lead_vars(self, test_db):
         tcruncher = self.tclass(test_db)
@@ -119,8 +126,8 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         scen_b_df = test_db.filter(variable="Emissions|HFC|C5F12")
         scen_c_df = test_db.filter(variable="Emissions|HFC|C5F12")
         scen_b_df['model'] = 'model_b'
-        scen_c_df['model'] = 'model_b'
         scen_b_df['scenario'] = 'scen_b'
+        scen_c_df['model'] = 'model_b'
         scen_c_df['scenario'] = 'scen_c'
         exp = concat([scen_b_df, scen_c_df])
 
@@ -143,7 +150,9 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
             "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
         )
 
-        test_downscale_df = self._adjust_time_style_to_match(test_downscale_df.filter(year=2015, keep=False), test_db)
+        test_downscale_df = self._adjust_time_style_to_match(
+            test_downscale_df.filter(year=2015, keep=False), test_db
+        )
 
         error_msg = "No time series overlap between the original and unfilled data."
         with pytest.raises(ValueError, match=error_msg):

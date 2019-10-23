@@ -1,27 +1,35 @@
 """
-Module for the database cruncher which uses the 'lead gas' technique.
+Module for the database cruncher which uses the 'closest RMS' technique.
 """
 import warnings
 
 import pyam
-from silicone.utils import select_closest
 
 from .base import _DatabaseCruncher
 
+# TODO: add `interpolate` to filler
+# TODO: test wrong units
 
 class DatabaseCruncherRMSClosest(_DatabaseCruncher):
     """
-    Database cruncher which finds the root mean squared closest path and returns its values.
+    Database cruncher which uses the 'closest RMS' technkque.
 
-    This cruncher derives the relationship between two variables by finding the time-averaged root mean squared (L2)
-    nearest path in the test database and reporting back the follower data for this trend.
-    Paths that do not contain the entirity of the timeseries will not be investigated.
-    The analysis requires a precise match of times between the database used to derive the relationship and the one
-    used to infill it.
+    This cruncher derives the relationship between two variables by finding the
+    scenario which has the closest lead gas timeseries in the database.  The follower
+    gas timeseries is then simply copied from the closest scenario.
 
+    Here, 'closest' is defined as the smallest time-averaged root mean squared (L2)
+    difference.
+
+    .. math::
+        RMS = \\left ( \\frac{1}{n} \\sum_{t=0}^n (E_l(t) - E_l^{d}(t))^2 \\right )^{1/2}
+
+    where :math:`n` is the total number of timesteps in the lead gas' timeseries,
+    :math:`E_l(t)` is the lead gas emissions timeseries and :math:`E_l^d(t)` is a lead
+    gas emissions timeseries in the database.
     """
 
-    def derive_relationship(self, variable_follower, variable_leaders, **kwargs):
+    def derive_relationship(self, variable_follower, variable_leaders):
         """
         Derive the relationship between two variables from the database.
 
@@ -33,11 +41,7 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
 
         variable_leaders : list[str]
             The variable we want to use in order to infer timeseries of
-            ``variable_follower`` (e.g. ``["CO2"]``).
-
-        **kwargs
-            Keyword arguments used by this class to derive the relationship between
-            ``variable_follower`` and ``variable_leaders``.
+            ``variable_follower`` (e.g. ``["Emissions|CO2"]``).
 
         Returns
         -------
@@ -56,15 +60,14 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
         ValueError
             There is no data for ``variable_leaders`` or ``variable_follower`` in the
             database.
-
-        ValueError
-            There is more than one value for ``variable_follower`` in the database.
         """
         self._check_iamdf_follower_and_lead(variable_follower, variable_leaders)
         iamdf_follower = self._get_iamdf_section(variable_follower)
-        iamdf_lead = self._get_iamdf_section(variable_leaders)
+        iamdf_lead = self._db.filter(variable=variable_leaders)
 
-        leader_unit = iamdf_lead.data["unit"].values[0]
+        leader_unit = iamdf_lead["unit"].unique()
+        assert len(leader_unit) == 1  # TODO: use functionality in #13
+        leader_unit = leader_unit[0]
 
         data_follower_time_col = iamdf_follower.time_col
 
@@ -78,8 +81,9 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
                 Input data to fill data in
 
             interpolate : bool
-                If the key year for filling is not in ``in_iamdf``, should a value be
-                interpolated? This feature is currently not supported.
+                If the lead timeseries years don't match those in the database, should
+                we interpolate the database timeseries or simply discard them? TODO:
+                test this.
 
             Returns
             -------
@@ -89,18 +93,20 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
             Raises
             ------
             ValueError
-
+                The lead timeseries units are not the expected ones (TODO: test this).
             """
             lead_var = in_iamdf.filter(variable=variable_leaders)
 
             # when we do unit conversion we should add OpenSCM as a dependency as it
             # has all the emissions units inbuilt
 
-            var_units = lead_var.variables(True)
-            if var_units.shape[0] != 1:
+            var_units = lead_var["unit"].unique()
+            if len(var_units) != 1:
                 raise ValueError("More than one unit detected for input timeseries")
+
+            var_units = var_units[0]
             if (
-                var_units['unit'][0] != leader_unit
+                var_units != leader_unit
             ):
                 raise ValueError(
                     "Units of lead variable is meant to be `expected_unit`, found `other_unit`"
@@ -115,10 +121,10 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
                 )
 
             key_timepoints_filter_iamdf = {
-                data_follower_time_col: lead_var[data_follower_time_col]
+                data_follower_time_col: list(set(lead_var[data_follower_time_col]))
             }
             key_timepoints_filter_lead = {
-                data_follower_time_col: iamdf_lead[data_follower_time_col]
+                data_follower_time_col: list(set(iamdf_lead[data_follower_time_col]))
             }
 
             def get_values_at_key_timepoints(idf, time_filter):
@@ -131,21 +137,34 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
                except KeyError as e:
                    raise ValueError("No time series overlap between the original and unfilled data.")
 
-            lead_var_timeseries = get_values_at_key_timepoints(lead_var, key_timepoints_filter_lead)\
-                .timeseries().dropna()
-            iamf_lead_timeseries = get_values_at_key_timepoints(iamdf_lead, key_timepoints_filter_iamdf)\
-                .timeseries().dropna()
-            if lead_var_timeseries.empty or iamf_lead_timeseries.empty:
-                raise ValueError("No time series overlap between the original and unfilled data.")
-            closest_index = []
+            lead_var_timeseries = get_values_at_key_timepoints(
+                lead_var, key_timepoints_filter_lead
+            ).timeseries().dropna()
+            iamdf_lead_timeseries = get_values_at_key_timepoints(
+                iamdf_lead, key_timepoints_filter_iamdf
+            ).timeseries().dropna()
+
+            if lead_var_timeseries.empty or iamdf_lead_timeseries.empty:
+                raise ValueError(
+                    "No time series overlap between the original and unfilled data."
+                )
+
             output_ts_list = []
-            for row in range(lead_var_timeseries.shape[0]):
-                closest_index.append(select_closest(iamf_lead_timeseries, lead_var_timeseries.iloc[row]))
-                # Filter to find the matching follow data for the same model, scenario and region
-                tmp = iamdf_follower.filter(model=closest_index[row][0], scenario=closest_index[row][1])
+            for label, row in lead_var_timeseries.iterrows():
+                closest_ts = _select_closest(
+                    iamdf_lead_timeseries,
+                    row
+                )
+
+                # Filter to find the matching follow data for the same model, scenario
+                # and region
+                tmp = iamdf_follower.filter(
+                    model=closest_ts["model"], scenario=closest_ts["scenario"]
+                ).data
+
                 # Update the model and scenario to match the elements of the input.
-                tmp['model'] = lead_var_timeseries.index[row][0]
-                tmp['scenario'] = lead_var_timeseries.index[row][1]
+                tmp['model'] = label[lead_var_timeseries.index.names.index("model")]
+                tmp['scenario'] = label[lead_var_timeseries.index.names.index("scenario")]
                 output_ts_list.append(tmp)
 
             return pyam.concat(output_ts_list)
@@ -180,3 +199,40 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
 
         return iamdf_section
 
+def _select_closest(to_search_df, target_series):
+    """
+    Find row in ``to_search_df`` that is closest to the target array.
+
+    Here, 'closest' is in the root-mean squared sense. In the event that multiple rows
+    are equally close, returns first row.
+
+    Parameters
+    ----------
+    to_search_df : :obj:`pd.DataFrame`
+        The rows of this dataframe are the candidate closest vectors
+
+    target_series : :obj:`pd.Series`
+        The vector to which we want to be close
+
+    Returns
+    -------
+    dict
+        Metadata of the closest row.
+    """
+    if len(target_series.shape) != 1:
+        raise ValueError("Target array is multidimensional")
+
+    if target_series.shape[0] != to_search_df.shape[1]:
+        raise ValueError(
+            "Target array does not match the size of the searchable arrays"
+        )
+
+    closeness = []
+    for label, row in to_search_df.iterrows():
+        rms = (((target_series - row) ** 2).mean()) ** 0.5
+        closeness.append((label, rms))
+
+    # Find the minimum closeness and return the index of it
+    labels, rmss = list(zip(*closeness))
+    to_return = rmss.index(min(rmss))
+    return dict(zip(to_search_df.index.names, labels[to_return]))
