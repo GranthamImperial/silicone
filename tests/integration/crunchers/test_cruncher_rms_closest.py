@@ -39,14 +39,46 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         columns=["model", "scenario", "region", "variable", "unit", 2012, 2015, 2050],
     )
 
-    bad_units = pd.DataFrame(
+    bad_units_df = pd.DataFrame(
         [
-            ["model_c", "scen_b", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.001, 2, 3],
+            ["model_c", "scen_b", "World", "Emissions|HFC|C2F6", "Gt C2F6/yr", 1.001, 2, 3],
+            ["model_c", "scen_c", "World", "Emissions|HFC|C2F6", "Gt C2F6/yr", 1.1, 2.2, 2.8],
+            ["model_c", "scen_b", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1, 2, 3],
+            ["model_c", "scen_c", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1.1, 2.2, 2.8],
+        ],
+        columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2050]
+    )
+
+    multiple_units_df = pd.DataFrame(
+        [
+            ["model_c", "scen_b", "World", "Emissions|HFC|C2F6", "Gt C2F6/yr", 1.001, 2, 3],
             ["model_c", "scen_c", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.1, 2.2, 2.8],
             ["model_c", "scen_b", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1, 2, 3],
-            ["model_c", "scen_c", "World", "Emissions|HFC|C5F12", "Gt C5F12/yr", 1.1, 2.2, 2.8],
-        ]
+            ["model_c", "scen_c", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1.1, 2.2, 2.8],
+        ],
+        columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2050]
     )
+
+    def test_multiple_units_error(self, multiple_units_df, bad_units_df):
+        tcruncher = self.tclass(bad_units_df)
+
+        filler = tcruncher.derive_relationship(
+            "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
+        )
+        error_msg = "More than one unit detected for input timeseries"
+        with pytest.raises(ValueError, match=error_msg):
+            filler(multiple_units_df)
+
+    def test_units_error(self, bad_units_df, test_downscale_df):
+        tcruncher = self.tclass(bad_units_df)
+
+        filler = tcruncher.derive_relationship(
+            "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
+        )
+        error_msg = "Units of lead variable is meant to be {}, found {}".format(bad_units_df.data.unit[0],
+                                                                    test_downscale_df.data.unit[0])
+        with pytest.raises(ValueError, match=error_msg):
+            filler(test_downscale_df)
 
     def test_relationship_bad_data(self, bad_df, test_downscale_df):
         tcruncher = self.tclass(bad_df)
