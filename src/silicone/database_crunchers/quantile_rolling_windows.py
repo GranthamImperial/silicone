@@ -16,15 +16,22 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
     """
     Database cruncher which uses the 'rolling windows' technique.
 
-    This cruncher derives the relationship between two variables by performing quantile calculations between the follower timeseries and the lead timeseries. These calculations are performed at each timestep in the timeseries, independent of the other timesteps.
+    This cruncher derives the relationship between two variables by performing
+    quantile calculations between the follower timeseries and the lead timeseries.
+    These calculations are performed at each timestep in the timeseries, independent
+    of the other timesteps.
 
-    For each timestep, the lead timeseries axis is divided into multiple evenly spaced windows (to date this is only tested on 1:1 relationships but may work with more than one lead timeseries). In each window, every data point in the database is included. However, the data points receive a weight given by
+    For each timestep, the lead timeseries axis is divided into multiple evenly spaced
+    windows (to date this is only tested on 1:1 relationships but may work with more
+    than one lead timeseries). In each window, every data point in the database is
+    included. However, the data points receive a weight given by
 
     .. math::
 
         w(x, x_{\\text{window}}) = \\frac{1}{1 + (d_n)^2}
 
-    where :math:`w` is the weight and :math:`d_n` is the normalised distance between the centre of the window and the data point's position on the lead timeseries axis.
+    where :math:`w` is the weight and :math:`d_n` is the normalised distance between
+    the centre of the window and the data point's position on the lead timeseries axis.
 
     :math:`d_n` is calculated as
 
@@ -32,11 +39,26 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
 
         d_n = \\frac{x - x_{\\text{window}}}{f \\times (\\frac{b}{2})}
 
-    where :math:`x` is the position of the data point on the lead timeseries axis, :math:`x_{\\text{window}}` is the position of the centre of the window on the lead timeseries axis, :math:`b` is the distance between window centres and :math:`f` is a decay factor which controls how much less points away from :math:`x_{\\text{window}}` are weighted. If :math:`f=1` then a point which is halfway between window centres receives a weighting of :math:`1/2`. Lowering the value of :math:`f` cause points further from the window centre to receive less weight.
+    where :math:`x` is the position of the data point on the lead timeseries axis,
+    :math:`x_{\\text{window}}` is the position of the centre of the window on the lead
+    timeseries axis, :math:`b` is the distance between window centres and :math:`f` is
+    a decay factor which controls how much less points away from :math:`x_{\\
+    text{window}}` are weighted. If :math:`f=1` then a point which is halfway between
+    window centres receives a weighting of :math:`1/2`. Lowering the value of
+    :math:`f` cause points further from the window centre to receive less weight.
 
-    With these weightings, the desired quantile of the data is then calculated. This calculation is done by sorting the data, and then choosing the first data point from the database which sits above or equal to the given quantile, with each data point's contribution to the quantile calculation being weighted by its weight. As a result, this cruncher limits itself to using data within the distribution and will not make any assumptions about the shape of the distribution.
+    With these weightings, the desired quantile of the data is then calculated. This
+    calculation is done by sorting the data, and then choosing the first data point
+    from the database which sits above or equal to the given quantile, with each data
+    point's contribution to the quantile calculation being weighted by its weight. As
+    a result, this cruncher limits itself to using data within the distribution and
+    will not make any assumptions about the shape of the distribution.
 
-    By varying the quantile, this cruncher can provide ranges of the relationship between different variables. For example, it can provide the 90th percentile (i.e. high end) of the relationship between e.g. ``Emissions|CH4`` and ``Emissions|CO2`` or the 50th percentile (i.e. median) or any other arbitrary percentile/quantile choice.
+    By varying the quantile, this cruncher can provide ranges of the relationship
+    between different variables. For example, it can provide the 90th percentile (i.e.
+    high end) of the relationship between e.g. ``Emissions|CH4`` and ``Emissions|CO2``
+    or the 50th percentile (i.e. median) or any other arbitrary percentile/quantile
+    choice.
     """
 
     def derive_relationship(
