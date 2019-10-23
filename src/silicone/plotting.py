@@ -103,7 +103,6 @@ def _plot_emission_correlations_cruncher_quantile_rolling_windows(
                         nwindows=quantile_boxes,
                         decay_length_factor=quantile_decay_factor,
                     )
-
                     filled_points = filler(tmp_df).timeseries().values.squeeze()
                     quant_df.loc[quantile, :] = filled_points
                     plt.plot(
@@ -188,10 +187,9 @@ def _plot_multiple_models(legend_fraction, seaborn_df, x_gas, y_gas, x_units, y_
 def _get_plot_x_pts(df, x_emissions, no_x_pts):
     x_max = df[x_emissions].max()
     x_range = x_max - df[x_emissions].min()
-    x_range = x_range if not np.equal(x_range, 0) else np.abs(0.1 * x_max)
     x_pts = np.linspace(
-        df[x_emissions].min() - 0.1 * x_range,
-        df[x_emissions].max() + 0.1 * x_range,
+        df[x_emissions].min() + 0.01 * x_range,
+        df[x_emissions].max() - 0.01 * x_range,
         no_x_pts,
     )
 
