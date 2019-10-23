@@ -146,9 +146,8 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
         wide_db = self._db.filter(
             variable=[variable_follower] + variable_leaders
         ).pivot_table(index=idx, columns=columns, aggfunc="sum")
-        # TODO: add proper test for this, which makes sure we don't have empty strings
-        # floating around
-        # wide_db = wide_db.applymap(lambda x: np.nan if isinstance(x, str) else x)
+        # make sure we don't have empty strings floating around (pyam bug?)
+        wide_db = wide_db.applymap(lambda x: np.nan if isinstance(x, str) else x)
         wide_db = wide_db.dropna(axis=0)
 
         derived_relationships = {}
