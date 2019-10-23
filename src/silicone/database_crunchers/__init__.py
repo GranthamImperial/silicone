@@ -8,4 +8,6 @@ timeseries.
 """
 
 from .lead_gas import DatabaseCruncherLeadGas  # noqa: F401
-from .rolling_window_quantiles import DatabaseCruncherRollingWindows  # noqa: F401
+from .quantile_rolling_windows import (  # noqa: F401
+    DatabaseCruncherQuantileRollingWindows,
+)

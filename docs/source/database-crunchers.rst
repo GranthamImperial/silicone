@@ -14,9 +14,9 @@ Lead gas cruncher API
     :members:
 
 
-Rolling windows cruncher API
-============================
+Quantile rolling windows cruncher API
+=====================================
 
-.. automodule:: silicone.database_crunchers.rolling_window_quantiles
+.. automodule:: silicone.database_crunchers.quantile_rolling_windows
     :members:
 

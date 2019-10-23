@@ -6,7 +6,7 @@ import pytest
 from base import _DataBaseCruncherTester
 from pyam import IamDataFrame
 
-from silicone.database_crunchers import DatabaseCruncherRollingWindows
+from silicone.database_crunchers import DatabaseCruncherQuantileRollingWindows
 
 _ma = "model_a"
 _mb = "model_b"
@@ -26,7 +26,7 @@ _msrvu = ["model", "scenario", "region", "variable", "unit"]
 
 
 class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
-    tclass = DatabaseCruncherRollingWindows
+    tclass = DatabaseCruncherQuantileRollingWindows
     tdb = pd.DataFrame(
         [
             [_ma, _sa, "World", _eco2, _gtc, 1, 2, 3, 4],

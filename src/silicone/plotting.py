@@ -7,10 +7,10 @@ import numpy as np
 import pandas as pd
 from pyam import IamDataFrame
 
-from .database_crunchers import DatabaseCruncherRollingWindows
+from .database_crunchers import DatabaseCruncherQuantileRollingWindows
 
 
-def plot_emission_correlations(
+def _plot_emission_correlations_cruncher_quantile_rolling_windows(
     emms_df,
     output_dir,
     years,
@@ -20,17 +20,15 @@ def plot_emission_correlations(
     model_colours,
     legend_fraction,
 ):
+    """
+
+    """
+    # TODO: split this function into smaller bits
     if quantiles is not None:
-        cruncher = DatabaseCruncherRollingWindows(
+        cruncher = DatabaseCruncherQuantileRollingWindows(
             emms_df.filter(region="World", level=0, variable="Emissions|*")
         )
 
-    # re-write to something like
-    # loop over years
-    # filter the data
-    # derive the relationship
-    # plot based on the filler, needs a new function, plot filler
-    # plot raw data too
     for year_of_interest in years:
         # Obtain the list of gases to examine
         df_gases = (
@@ -73,24 +71,17 @@ def plot_emission_correlations(
 
             # Plot the results
             if model_colours:
-                plot_multiple_models(
+                _plot_multiple_models(
                     legend_fraction, seaborn_df, x_gas, y_gas, x_units, y_units
                 )
             # if all plots are the same colour, we don't have to do all this work
             else:
-                plot_emissions(seaborn_df, x_gas, y_gas, x_units, y_units)
+                _plot_emissions(seaborn_df, x_gas, y_gas, x_units, y_units)
 
             # Optionally calculate and plot quantiles
             if quantiles is not None:
-                x_max = seaborn_df[x_gas].max()
-                x_range = x_max - seaborn_df[x_gas].min()
-                x_range = x_range if not np.equal(x_range, 0) else np.abs(0.1 * x_max)
                 no_x_pts = 101
-                x_pts = np.linspace(
-                    seaborn_df[x_gas].min() - 0.1 * x_range,
-                    seaborn_df[x_gas].max() + 0.1 * x_range,
-                    no_x_pts,
-                )
+                x_pts = _get_plot_x_pts(seaborn_df, x_gas, no_x_pts)
 
                 tmp_df = (
                     cruncher._db.filter(variable=x_gas, year=year_of_interest)
@@ -103,7 +94,7 @@ def plot_emission_correlations(
                 tmp_df["scenario"] = [str(i) for i in range(no_x_pts)]
                 tmp_df = IamDataFrame(tmp_df)
 
-                smooth_quant_df = pd.DataFrame(columns=x_pts, index=quantiles)
+                quant_df = pd.DataFrame(columns=x_pts, index=quantiles)
                 for quantile in quantiles:
                     filler = cruncher.derive_relationship(
                         y_gas,
@@ -114,7 +105,7 @@ def plot_emission_correlations(
                     )
 
                     filled_points = filler(tmp_df).timeseries().values.squeeze()
-                    smooth_quant_df.loc[quantile, :] = filled_points
+                    quant_df.loc[quantile, :] = filled_points
                     plt.plot(
                         x_pts,
                         filled_points,
@@ -125,7 +116,7 @@ def plot_emission_correlations(
                     plt.legend()
 
                 if output_dir is not None:
-                    smooth_quant_df.to_csv(
+                    quant_df.to_csv(
                         os.path.join(
                             output_dir,
                             "{}_{}_{}.csv".format(
@@ -153,8 +144,6 @@ def plot_emission_correlations(
             ]
             print("Finished {} vs {} in {}".format(x_gas, y_gas, year_of_interest))
 
-        print(correlations_df)
-        print(rank_corr_df)
         if output_dir is not None:
             correlations_df.to_csv(
                 os.path.join(
@@ -168,14 +157,14 @@ def plot_emission_correlations(
             )
 
 
-def plot_emissions(seaborn_df, x_gas, y_gas, x_units, y_units):
+def _plot_emissions(seaborn_df, x_gas, y_gas, x_units, y_units):
     colours_for_plot = "black"
     plt.scatter(x=x_gas, y=y_gas, label=colours_for_plot, data=seaborn_df, alpha=0.5)
     plt.xlabel("Emissions of {} ({})".format(x_gas[10:], x_units))
     plt.ylabel("Emissions of {} ({})".format(y_gas[10:], y_units))
 
 
-def plot_multiple_models(legend_fraction, seaborn_df, x_gas, y_gas, x_units, y_units):
+def _plot_multiple_models(legend_fraction, seaborn_df, x_gas, y_gas, x_units, y_units):
     ax = plt.subplot(111)
     all_models = list(seaborn_df["model"].unique())
     markers = itertools.cycle(["s", "o", "v", "<", ">", ","])
@@ -194,3 +183,16 @@ def plot_multiple_models(legend_fraction, seaborn_df, x_gas, y_gas, x_units, y_u
     ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
     plt.xlabel("Emissions of {} ({})".format(x_gas[10:], x_units))
     plt.ylabel("Emissions of {} ({})".format(y_gas[10:], y_units))
+
+
+def _get_plot_x_pts(df, x_emissions, no_x_pts):
+    x_max = df[x_emissions].max()
+    x_range = x_max - df[x_emissions].min()
+    x_range = x_range if not np.equal(x_range, 0) else np.abs(0.1 * x_max)
+    x_pts = np.linspace(
+        df[x_emissions].min() - 0.1 * x_range,
+        df[x_emissions].max() + 0.1 * x_range,
+        no_x_pts,
+    )
+
+    return x_pts
