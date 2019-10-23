@@ -197,16 +197,10 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
                     ys[cumsum_weights >= quantile]
                 )
 
-            fill_value = (
-                "extrapolate"
-                if not (db_time_table == db_time_table.iloc[0, 0]).all().all()
-                else db_time_table.iloc[0, 0]
-            )
             derived_relationships[db_time] = scipy.interpolate.interp1d(
                 db_time_table.columns.values.squeeze(),
                 db_time_table.loc[(db_time, quantile), :].values.squeeze(),
-                bounds_error=False,  # TODO: decide whether to do this...
-                fill_value=fill_value,
+                bounds_error=True,
             )
 
         def filler(in_iamdf, interpolate=False):
