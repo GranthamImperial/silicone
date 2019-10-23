@@ -1,6 +1,7 @@
 import datetime as dt
 import re
 
+import numpy as np
 import pandas as pd
 import pytest
 from base import _DataBaseCruncherTester
@@ -55,6 +56,17 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
     def test_derive_relationship(self, test_db):
         tcruncher = self.tclass(test_db)
         res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CH4"])
+        assert callable(res)
+
+    def test_derive_relationship_with_nans(self):
+        tdb = self.tdb.copy()
+        tdb.loc[
+            (tdb["variable"] == _eco2) & (tdb["model"] == _ma),
+            2050
+        ] = np.nan
+        tcruncher = self.tclass(IamDataFrame(tdb))
+        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CH4"])
+        # just make sure that this runs through and no error is raised
         assert callable(res)
 
     def test_derive_relationship_same_gas(self, test_db, test_downscale_df):
