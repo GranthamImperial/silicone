@@ -32,6 +32,16 @@ def bad_df(request):
     return IamDataFrame(request.cls.bad_df)
 
 
+@pytest.fixture(scope="function")
+def bad_units_df(request):
+    return IamDataFrame(request.cls.bad_units_df)
+
+
+@pytest.fixture(scope="function")
+def multiple_units_df(request):
+    return IamDataFrame(request.cls.multiple_units_df)
+
+
 mg_ascen = ["MSG-GLB", "a_scen"]
 mg_ascen_2 = ["MSG-GLB", "a_scen_2"]
 CHECK_AGG_DF = pd.DataFrame(

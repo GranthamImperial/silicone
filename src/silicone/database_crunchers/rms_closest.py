@@ -105,11 +105,9 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
                 raise ValueError("More than one unit detected for input timeseries")
 
             var_units = var_units[0]
-            if (
-                var_units != leader_unit
-            ):
+            if var_units != leader_unit:
                 raise ValueError(
-                    "Units of lead variable is meant to be `expected_unit`, found `other_unit`"
+                    "Units of lead variable is meant to be {}, found {}".format(leader_unit, var_units)
                 )
 
             if data_follower_time_col != in_iamdf.time_col:
@@ -129,13 +127,10 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
 
             def get_values_at_key_timepoints(idf, time_filter):
                 # filter warning about empty data frame as we handle it ourselves
-               try:
-                    to_return = idf.filter(**time_filter)
-                    if to_return.data.empty:
-                        raise ValueError("No time series overlap between the original and unfilled data.")
-                    return to_return
-               except KeyError as e:
-                   raise ValueError("No time series overlap between the original and unfilled data.")
+                to_return = idf.filter(**time_filter)
+                if to_return.data.empty:
+                    raise ValueError("No time series overlap between the original and unfilled data.")
+                return to_return
 
             lead_var_timeseries = get_values_at_key_timepoints(
                 lead_var, key_timepoints_filter_lead
