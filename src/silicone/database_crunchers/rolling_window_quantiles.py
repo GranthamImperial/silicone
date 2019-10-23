@@ -97,6 +97,10 @@ class DatabaseCruncherRollingWindows(_DatabaseCruncher):
         ValueError
             ``decay_length_factor`` is 0.
         """
+        warnings.warn(
+            "`derive_relationship` is not fully tested for "
+            "{}, use with caution".format(self.__class__)
+        )
         self._check_follower_and_leader_in_db(variable_follower, variable_leaders)
 
         if not (0 <= quantile <= 1):
@@ -209,7 +213,6 @@ class DatabaseCruncherRollingWindows(_DatabaseCruncher):
                 The key db_times for filling are not in ``in_iamdf`` and ``interpolate is
                 False``.
             """
-            lead_var = in_iamdf.filter(variable=variable_leaders)
             if db_time_col != in_iamdf.time_col:
                 raise ValueError(
                     "`in_iamdf` time column must be the same as the time column used "
@@ -220,13 +223,9 @@ class DatabaseCruncherRollingWindows(_DatabaseCruncher):
 
             if var_units != data_leader_unit:
                 raise ValueError(
-                    "Units of lead variable is meant to be `data_leader_unit`, found `other_unit`"
-                )
-
-            if db_time_col != in_iamdf.time_col:
-                raise ValueError(
-                    "`in_iamdf` time column must be the same as the time column used "
-                    "to generate this filler function (`{}`)".format(db_time_col)
+                    "Units of lead variable is meant to be `{}`, found `{}`".format(
+                        data_leader_unit, var_units
+                    )
                 )
 
             # check whether we have all the required timepoints or not
@@ -235,10 +234,13 @@ class DatabaseCruncherRollingWindows(_DatabaseCruncher):
             )
 
             if not have_all_timepoints:
-                raise NotImplementedError
                 if not interpolate:
-                    pass
-                    # raise error if not all required timepoints, otherwise carry on
+                    raise ValueError(
+                        "Not all required timepoints are present in the IamDataFrame "
+                        "to downscale, we require `{}`".format(
+                            in_iamdf.timeseries().columns.tolist()
+                        )
+                    )
                 else:
                     raise NotImplementedError
                     # interpolate onto required grid

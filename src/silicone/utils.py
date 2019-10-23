@@ -2,6 +2,7 @@
 Utils contains a number of helpful functions that don't belong elsewhere.
 """
 
+
 # TODO: put this in pyam
 def _get_unit_of_variable(df, variable, multiple_units="raise"):
     """

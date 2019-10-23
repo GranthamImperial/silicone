@@ -54,6 +54,8 @@ def test_plot_emission_correlations(check_aggregate_df, tmpdir, caplog):
             ],
         )
 
+    assert not result.exit_code  # exit_code should be zero
+
     quantiles_files = os.listdir(output_dir)
     assert quantiles_files[1].startswith("CO2_")
 
@@ -105,6 +107,8 @@ def test_plot_emission_correlations_no_quantiles_or_model_colours(
             ],
         )
 
+    assert not result.exit_code  # exit_code should be zero
+
     png_files, csv_files = _get_png_and_csv_files(output_dir)
     assert len(csv_files) == 2
     assert len(png_files) == 4
@@ -140,6 +144,8 @@ def test_plot_emission_correlations_no_output(check_aggregate_df, tmpdir, caplog
                 legend_fraction,
             ],
         )
+
+    assert not result.exit_code  # exit_code should be zero
 
     png_files, csv_files = _get_png_and_csv_files(output_dir)
     assert len(csv_files) == 0
