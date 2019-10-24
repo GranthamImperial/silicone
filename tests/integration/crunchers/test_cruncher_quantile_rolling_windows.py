@@ -60,10 +60,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
 
     def test_derive_relationship_with_nans(self):
         tdb = self.tdb.copy()
-        tdb.loc[
-            (tdb["variable"] == _eco2) & (tdb["model"] == _ma),
-            2050
-        ] = np.nan
+        tdb.loc[(tdb["variable"] == _eco2) & (tdb["model"] == _ma), 2050] = np.nan
         tcruncher = self.tclass(IamDataFrame(tdb))
         res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CH4"])
         # just make sure that this runs through and no error is raised
