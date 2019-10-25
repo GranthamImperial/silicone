@@ -68,7 +68,7 @@ def _plot_emission_correlations_cruncher_quantile_rolling_windows(
                 )
             # if all plots are the same colour, we don't have to do all this work
             else:
-                _plot_emissions(seaborn_df, x_gas, y_gas, x_units, y_units)
+                _plot_emissions(legend_fraction, seaborn_df, x_gas, y_gas, x_units, y_units)
 
             # Optionally calculate and plot quantiles
             if quantiles is not None:
@@ -79,10 +79,10 @@ def _plot_emission_correlations_cruncher_quantile_rolling_windows(
                     quantile_boxes,
                     quantile_decay_factor,
                 )
-                quant_df.plot(ax=plt.gca())
+                plt.plot(quant_df.index, quant_df)
 
                 if not model_colours:
-                    plt.legend()
+                    plt.legend(quant_df.keys(), loc="center left", bbox_to_anchor=(1, 0.5))
 
                 if output_dir is not None:
                     quant_df.to_csv(
@@ -126,8 +126,11 @@ def _plot_emission_correlations_cruncher_quantile_rolling_windows(
             )
 
 
-def _plot_emissions(seaborn_df, x_gas, y_gas, x_units, y_units):
+def _plot_emissions(legend_fraction, seaborn_df, x_gas, y_gas, x_units, y_units):
+    ax = plt.subplot(111)
     colours_for_plot = "black"
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * legend_fraction, box.height])
     plt.scatter(x=x_gas, y=y_gas, color=colours_for_plot, data=seaborn_df, alpha=0.5)
     plt.xlabel("Emissions of {} ({})".format(x_gas[10:], x_units))
     plt.ylabel("Emissions of {} ({})".format(y_gas[10:], y_units))
