@@ -69,7 +69,7 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
 
         data_follower_time_col = iamdf_follower.time_col
 
-        def filler(in_iamdf, interpolate=False):
+        def filler(in_iamdf):
             """
             Filler function derived from :obj:`DatabaseCruncherRMSClosest`.
 
@@ -77,11 +77,6 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
             ----------
             in_iamdf : :obj:`pyam.IamDataFrame`
                 Input data to fill data in
-
-            interpolate : bool
-                If the lead timeseries years don't match those in the database, should
-                we interpolate the database timeseries or simply discard them? TODO:
-                test this.
 
             Returns
             -------
