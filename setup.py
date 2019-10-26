@@ -47,7 +47,13 @@ REQUIREMENTS_INSTALL = [
     "click",
 ]
 REQUIREMENTS_NOTEBOOKS = ["matplotlib", "notebook", "seaborn", "statsmodels"]
-REQUIREMENTS_TESTS = ["codecov", "nbval", "pytest>=4.0,<5.0", "pytest-cov"]
+REQUIREMENTS_TESTS = [
+    "codecov",
+    "nbval",
+    "pytest>=4.0,<5.0",
+    "pytest-console-scripts",
+    "pytest-cov",
+]
 REQUIREMENTS_DOCS = [
     "sphinx>=1.4,<2.1",
     "sphinx_rtd_theme",
@@ -56,17 +62,7 @@ REQUIREMENTS_DOCS = [
 ]
 REQUIREMENTS_DEPLOY = ["setuptools>=38.6.0", "twine>=1.11.0", "wheel>=0.31.0"]
 REQUIREMENTS_DEV = (
-    [
-        "black",
-        "bandit",
-        "coverage",
-        "flake8",
-        "isort",
-        "mypy",
-        "pydocstyle",
-        "pylint",
-        "pytest-console-scripts",
-    ]
+    ["black", "bandit", "coverage", "flake8", "isort", "mypy", "pydocstyle", "pylint"]
     + REQUIREMENTS_NOTEBOOKS
     + REQUIREMENTS_TESTS
     + REQUIREMENTS_DOCS
