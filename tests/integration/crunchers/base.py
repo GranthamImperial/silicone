@@ -68,4 +68,4 @@ class _DataBaseCruncherTester(metaclass=ABCMeta):
             "to generate this filler function (`{}`)".format(test_db.time_col)
         )
         with pytest.raises(ValueError, match=error_msg):
-            filler(test_downscale_df, interpolate=True)
+            filler(test_downscale_df)
