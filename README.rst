@@ -17,6 +17,7 @@ Silicone
 | Latest activity | |Contributors| | |Last Commit| | |Commits Since Last Release| |
 +-----------------+----------------+---------------+------------------------------+
 
+.. sec-begin-long-description
 .. sec-begin-index
 
 Silicone is a Python package which can be used to automatically fill in detail in emissions scenarios.
@@ -32,6 +33,7 @@ License
 Silicone is free software under a BSD 3-Clause License, see `LICENSE <https://github.com/znicholls/silicone/blob/master/LICENSE>`_.
 
 .. sec-end-license
+.. sec-end-long-description
 
 .. sec-begin-installation
 
