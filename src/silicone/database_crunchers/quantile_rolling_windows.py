@@ -250,16 +250,12 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
             )
 
             if not have_all_timepoints:
-                if not interpolate:
-                    raise ValueError(
-                        "Not all required timepoints are present in the IamDataFrame "
-                        "to downscale, we require `{}`".format(
-                            in_iamdf.timeseries().columns.tolist()
-                        )
+                raise ValueError(
+                    "Not all required timepoints are present in the IamDataFrame "
+                    "to downscale, we require `{}`".format(
+                        in_iamdf.timeseries().columns.tolist()
                     )
-                else:
-                    raise NotImplementedError
-                    # interpolate onto required grid
+                )
 
             # do infilling here
             infilled_ts = in_iamdf.filter(variable=variable_leaders).timeseries()
@@ -269,10 +265,6 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
             infilled_ts = infilled_ts.reset_index()
             infilled_ts["variable"] = variable_follower
             infilled_ts["unit"] = data_follower_unit
-
-            if not have_all_timepoints:
-                # interpolate back onto input grid here
-                raise NotImplementedError
 
             return IamDataFrame(infilled_ts)
 

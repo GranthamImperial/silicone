@@ -28,6 +28,7 @@ _msrvu = ["model", "scenario", "region", "variable", "unit"]
 
 class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
     tclass = DatabaseCruncherQuantileRollingWindows
+    # The units in this dataframe are intentionally illogical
     tdb = pd.DataFrame(
         [
             [_ma, _sa, "World", _eco2, _gtc, 1, 2, 3, 4],
@@ -38,7 +39,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
             [_ma, _sb, "World", _ech4, _mtch4, 100, 200, 250, 300],
             [_mb, _sa, "World", _ech4, _mtch4, 220, 260, 250, 230],
             [_mb, _sb, "World", _ech4, _mtch4, 50, 200, 500, 800],
-            [_ma, _sa, "World", _ec5f12, _ktc5f12, 3.14, 4, 5, 6],
+            [_ma, _sa, "World", _ec5f12, _mtch4, 3.14, 4, 5, 6],
             [_ma, _sa, "World", _ec2f6, _ktc2f6, 1.2, 1.5, 1, 0.5],
         ],
         columns=_msrvu + [2010, 2030, 2050, 2070],
@@ -75,6 +76,13 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CH4"])
         # just make sure that this runs through and no error is raised
         assert callable(res)
+
+    def test_derive_relationship_with_multicolumns(self):
+        tdb = self.tdb.copy()
+        tcruncher = self.tclass(IamDataFrame(tdb))
+        error_msg = re.escape("Having more than one `variable_leaders` is not yet implemented")
+        with pytest.raises(NotImplementedError,  match=error_msg):
+            tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CH4", "Emissions|HFC|C5F12"])
 
     def test_analytic_relationship_holds(self, simple_df):
         tcruncher = self.tclass(simple_df)
