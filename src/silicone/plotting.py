@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 
-def _plot_emission_correlations_cruncher_quantile_rolling_windows(
+def _plot_emission_correlations_quantile_rolling_windows(
     emms_df,
     output_dir,
     years,

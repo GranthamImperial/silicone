@@ -4,7 +4,7 @@ import pandas as pd
 from click.testing import CliRunner
 
 from silicone.cli import (
-    plot_emission_correlations_cruncher_quantile_rolling_windows_cli,
+    plot_emission_correlations_quantile_rolling_windows_cli,
 )
 
 
@@ -37,7 +37,7 @@ def test_plot_emission_correlations(check_aggregate_df, tmpdir, caplog):
     # caplog can capture any logging calls (if we add any in future)
     with caplog.at_level("DEBUG"):
         result = runner.invoke(
-            plot_emission_correlations_cruncher_quantile_rolling_windows_cli,
+            plot_emission_correlations_quantile_rolling_windows_cli,
             [
                 input_file,
                 "--output-dir",
@@ -93,7 +93,7 @@ def test_plot_emission_correlations_no_quantiles_or_model_colours(
     # caplog can capture any logging calls (if we add any in future)
     with caplog.at_level("DEBUG"):
         result = runner.invoke(
-            plot_emission_correlations_cruncher_quantile_rolling_windows_cli,
+            plot_emission_correlations_quantile_rolling_windows_cli,
             [
                 input_file,
                 "--output-dir",
@@ -133,7 +133,7 @@ def test_plot_emission_correlations_no_output(check_aggregate_df, tmpdir, caplog
     # caplog can capture any logging calls (if we add any in future)
     with caplog.at_level("DEBUG"):
         result = runner.invoke(
-            plot_emission_correlations_cruncher_quantile_rolling_windows_cli,
+            plot_emission_correlations_quantile_rolling_windows_cli,
             [
                 input_file,
                 "--years",
@@ -173,7 +173,7 @@ def test_plot_emission_correlations_no_co2_emms(check_aggregate_df, tmpdir, capl
     # caplog can capture any logging calls (if we add any in future)
     with caplog.at_level("DEBUG"):
         result = runner.invoke(
-            plot_emission_correlations_cruncher_quantile_rolling_windows_cli,
+            plot_emission_correlations_quantile_rolling_windows_cli,
             [
                 input_file,
                 "--output-dir",
