@@ -4,7 +4,9 @@ import re
 import numpy as np
 import pandas as pd
 import pytest
+import scipy.interpolate
 from base import _DataBaseCruncherTester
+import silicone.stats_utils
 from pyam import IamDataFrame
 
 from silicone.database_crunchers import DatabaseCruncherQuantileRollingWindows
@@ -15,6 +17,8 @@ _mc = "model_c"
 _sa = "scen_a"
 _sb = "scen_b"
 _sc = "scen_c"
+_sd = "scen_d"
+_se = "scen_e"
 _eco2 = "Emissions|CO2"
 _gtc = "Gt C/yr"
 _ech4 = "Emissions|CH4"
@@ -28,7 +32,7 @@ _msrvu = ["model", "scenario", "region", "variable", "unit"]
 
 class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
     tclass = DatabaseCruncherQuantileRollingWindows
-    # The units in this dataframe are intentionally illogical
+    # The units in this dataframe are intentionally illogical for C5F12
     tdb = pd.DataFrame(
         [
             [_ma, _sa, "World", _eco2, _gtc, 1, 2, 3, 4],
@@ -44,6 +48,30 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         ],
         columns=_msrvu + [2010, 2030, 2050, 2070],
     )
+    large_db = pd.DataFrame(
+        [
+            [_ma, _sa, "World", _eco2, _gtc, 1],
+            [_ma, _sb, "World", _eco2, _gtc, 5],
+            [_mb, _sc, "World", _eco2, _gtc, 0.5],
+            [_mb, _sd, "World", _eco2, _gtc, 3.5],
+            [_mb, _se, "World", _eco2, _gtc, 0.5],
+            [_ma, _sa, "World", _ech4, _mtch4, 100],
+            [_ma, _sb, "World", _ech4, _mtch4, 170],
+            [_mb, _sc, "World", _ech4, _mtch4, 220],
+            [_mb, _sd, "World", _ech4, _mtch4, 50],
+            [_mb, _se, "World", _ech4, _mtch4, 150],
+        ],
+        columns=_msrvu + [2010]
+    )
+
+    small_db = pd.DataFrame(
+        [
+            [_mb, _sa, "World", _eco2, _gtc, 1.2],
+            [_ma, _sb, "World", _eco2, _gtc, 2.3],
+        ],
+        columns=_msrvu + [2010]
+    )
+
     tdownscale_df = pd.DataFrame(
         [
             [_mc, _sa, "World", _eco2, _gtc, 1, 2, 3, 4],
@@ -102,13 +130,34 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         assert all(expect_11.filter(year=2030)['value'] == 1000)
         assert all(expect_11.filter(year=2050)['value'] == 5000)
 
-        # Similarly quantiles below 1/6 are 0 for .
+        # Similarly quantiles below 1/6 are 0 for the second case.
         res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CH4"], quantile=0.165, nwindows=1)
         expect_00 = res(simple_df)
         assert expect_00.filter(scenario='scen_a', year=2010)['value'].iloc[0] == 0
         assert expect_00.filter(scenario='scen_b', year=2010)['value'].iloc[0] == 0
         assert all(expect_00.filter(year=2030)['value'] == 1000)
         assert all(expect_00.filter(year=2050)['value'] == 5000)
+
+    def test_numerical_relationship(self):
+        # Calculate the values using the cruncher for a fairly detailed dataset
+        large_db = IamDataFrame(self.large_db.copy())
+        tcruncher = self.tclass(large_db)
+        res = tcruncher.derive_relationship("Emissions|CH4", ["Emissions|CO2"])
+        assert callable(res)
+        to_find = IamDataFrame(self.small_db.copy())
+        crunched = res(to_find)
+
+        # Calculate the same values numerically
+        xs = large_db.filter(variable="Emissions|CO2")['value'].values
+        ys = large_db.filter(variable="Emissions|CH4")['value'].values
+        quantile_expected = silicone.stats_utils.rolling_window_find_quantiles(xs, ys, [0.5])
+        interpolate_fn = scipy.interpolate.interp1d(np.array(quantile_expected.index), quantile_expected.values.squeeze())
+        xs_to_interp = to_find.filter(variable="Emissions|CO2")['value'].values
+
+        expected = interpolate_fn(xs_to_interp)
+
+        assert all(crunched['value'].values == expected)
+
 
     def test_derive_relationship_same_gas(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db)
@@ -121,18 +170,6 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         ] == "`derive_relationship` is not fully tested for {}, use with caution".format(
             self.tclass
         )
-
-        # the test should look like this in future, maybe?
-        """
-        obs = res(test_downscale_df)
-        # going to need a plotter before we can work out what is meant to actually
-        # happen here...
-        pd.testing.assert_frame_equal(
-            obs.timeseries(),
-            test_downscale_df.filter(variable="Emissions|CO2").timeseries(),
-            check_like=True,
-        )
-        """
 
     def test_derive_relationship_error_no_info_leader(self, test_db):
         # test that crunching fails if there's no data about the lead gas in the
