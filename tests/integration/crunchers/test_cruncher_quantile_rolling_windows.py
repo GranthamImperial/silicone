@@ -53,6 +53,16 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         columns=_msrvu + [2010, 2030, 2050, 2070],
     )
 
+    simple_df = pd.DataFrame(
+        [
+            [_mc, _sa, "World", _eco2, _gtc, 0, 1000, 5000],
+            [_mc, _sb, "World", _eco2, _gtc, 1, 1000, 5000],
+            [_mc, _sa, "World", _ech4, _mtch4, 0, 300, 500],
+            [_mc, _sb, "World", _ech4, _mtch4, 1, 300, 500],
+        ],
+        columns=_msrvu + [2010, 2030, 2050],
+    )
+
     def test_derive_relationship(self, test_db):
         tcruncher = self.tclass(test_db)
         res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CH4"])
@@ -65,6 +75,32 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CH4"])
         # just make sure that this runs through and no error is raised
         assert callable(res)
+
+    def test_analytic_relationship_holds(self, simple_df):
+        tcruncher = self.tclass(simple_df)
+        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CH4"], quantile=0.833, nwindows=1)
+        expect_01 = res(simple_df)
+        assert expect_01.filter(scenario='scen_a', year=2010)['value'].iloc[0] == 0
+        assert expect_01.filter(scenario='scen_b', year=2010)['value'].iloc[0] == 1
+        assert all(expect_01.filter(year=2030)['value'] == 1000)
+        assert all(expect_01.filter(year=2050)['value'] == 5000)
+
+        # Due to weighting the points (0, 1) at 1:5, if the mathematics is working out as expected,
+        # quantiles above 5/6 will return 1 for the first case.
+        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CH4"], quantile=0.834, nwindows=1)
+        expect_11 = res(simple_df)
+        assert expect_11.filter(scenario='scen_a', year=2010)['value'].iloc[0] == 1
+        assert expect_11.filter(scenario='scen_b', year=2010)['value'].iloc[0] == 1
+        assert all(expect_11.filter(year=2030)['value'] == 1000)
+        assert all(expect_11.filter(year=2050)['value'] == 5000)
+
+        # Similarly quantiles below 1/6 are 0 for .
+        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CH4"], quantile=0.165, nwindows=1)
+        expect_00 = res(simple_df)
+        assert expect_00.filter(scenario='scen_a', year=2010)['value'].iloc[0] == 0
+        assert expect_00.filter(scenario='scen_b', year=2010)['value'].iloc[0] == 0
+        assert all(expect_00.filter(year=2030)['value'] == 1000)
+        assert all(expect_00.filter(year=2050)['value'] == 5000)
 
     def test_derive_relationship_same_gas(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db)

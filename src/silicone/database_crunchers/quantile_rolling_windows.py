@@ -164,7 +164,7 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
                 xs = np.array([xs])
                 ys = np.array([ys])
 
-            step = (max(xs) - min(xs)) / (nwindows + 1)
+            step = (max(xs) - min(xs)) / nwindows
             decay_length = step / 2 * decay_length_factor
 
             sort_order = np.argsort(ys)
@@ -172,36 +172,38 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
             xs = xs[sort_order]
             if max(xs) == min(xs):
                 # We must prevent singularity behaviour if all the points are at the same x value.
-                window_centers = np.array([xs[0]] * nwindows)
-                decay_length = 1
+                cumsum_weights = np.array([(1+x)/len(ys) for x in range(len(ys))])
+
+                derived_relationships[db_time] = lambda unused_variable, ys=ys, cumsum_weights=cumsum_weights,\
+                                                        quantile=quantile: min(ys[cumsum_weights >= quantile])
             else:
                 # We want to include the max x point, but not any point above it.
                 # The 0.99 factor prevents rounding error inclusion.
                 window_centers = np.arange(min(xs), max(xs) + step * 0.99, step)
 
-            db_time_table = pd.DataFrame(
-                index=pd.MultiIndex.from_arrays(
-                    ([db_time], [quantile]), names=["db_time", "quantile"]
-                ),
-                columns=window_centers,
-            )
-            db_time_table.columns.name = "window_centers"
-
-            for window_center in window_centers:
-                weights = 1.0 / (1.0 + ((xs - window_center) / decay_length) ** 2)
-                weights /= sum(weights)
-                # We want to calculate the weights at the midpoint of step corresponding
-                # to the y-value.
-                cumsum_weights = np.cumsum(weights)
-                db_time_table.loc[(db_time, quantile), window_center] = min(
-                    ys[cumsum_weights >= quantile]
+                db_time_table = pd.DataFrame(
+                    index=pd.MultiIndex.from_arrays(
+                        ([db_time], [quantile]), names=["db_time", "quantile"]
+                    ),
+                    columns=window_centers,
                 )
+                db_time_table.columns.name = "window_centers"
 
-            derived_relationships[db_time] = scipy.interpolate.interp1d(
-                db_time_table.columns.values.squeeze(),
-                db_time_table.loc[(db_time, quantile), :].values.squeeze(),
-                bounds_error=True,
-            )
+                for window_center in window_centers:
+                    weights = 1.0 / (1.0 + ((xs - window_center) / decay_length) ** 2)
+                    weights /= sum(weights)
+                    # We want to calculate the weights at the midpoint of step corresponding
+                    # to the y-value.
+                    cumsum_weights = np.cumsum(weights)
+                    db_time_table.loc[(db_time, quantile), window_center] = min(
+                        ys[cumsum_weights >= quantile]
+                    )
+
+                derived_relationships[db_time] = scipy.interpolate.interp1d(
+                    db_time_table.columns.values.squeeze(),
+                    db_time_table.loc[(db_time, quantile), :].values.squeeze(),
+                    bounds_error=False,
+                )
 
         def filler(in_iamdf, interpolate=False):
             """
