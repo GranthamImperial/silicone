@@ -4,6 +4,7 @@ Stats contains a number of helpful functions that perform statistics operations 
 import numpy as np
 import pandas as pd
 
+
 def rolling_window_find_quantiles(xs, ys, quantiles, nboxes=10, decay_length_factor=1):
     assert xs.size == ys.size
     if xs.size == 1:

@@ -3,9 +3,7 @@ import os.path
 import pandas as pd
 from click.testing import CliRunner
 
-from silicone.cli import (
-    plot_emission_correlations_quantile_rolling_windows_cli,
-)
+from silicone.cli import plot_emission_correlations_quantile_rolling_windows_cli
 
 
 def _make_input_file(df, dpath):

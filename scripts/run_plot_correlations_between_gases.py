@@ -1,4 +1,5 @@
 from download_sr15_emissions import download_or_load_sr15
+
 import silicone.plotting
 
 # This script shows how to use the investigatory script, _plot_emission_correlations_quantile_rolling_windows.
@@ -7,7 +8,7 @@ import silicone.plotting
 # ________________________________________________________
 
 years_of_interest = [2030, 2050, 2100]
-save_results = '../Output/'
+save_results = "../Output/"
 # if non-null, also plot these quantiles.
 plot_quantiles = [0.0001, 0.05, 0.17, 0.33, 0.5, 0.67, 0.83, 0.95, 0.9999]
 # if non-null, save data on the quantiles too
@@ -25,6 +26,13 @@ legend_fraction = 0.65
 SR15_SCENARIOS = "./sr15_scenarios.csv"
 sr15_data = download_or_load_sr15(SR15_SCENARIOS)
 
-silicone.plotting._plot_emission_correlations_quantile_rolling_windows(sr15_data, save_results,
-        years_of_interest, plot_quantiles, quantile_boxes, quantile_decay_factor,
-        model_colours, legend_fraction)
+silicone.plotting._plot_emission_correlations_quantile_rolling_windows(
+    sr15_data,
+    save_results,
+    years_of_interest,
+    plot_quantiles,
+    quantile_boxes,
+    quantile_decay_factor,
+    model_colours,
+    legend_fraction,
+)
