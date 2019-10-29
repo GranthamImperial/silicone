@@ -1,6 +1,6 @@
 import numpy as np
 
-import silicone.stats_utils as stats
+import silicone.stats as stats
 
 
 def test_rolling_window_find_quantiles():

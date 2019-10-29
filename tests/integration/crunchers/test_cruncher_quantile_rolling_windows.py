@@ -8,7 +8,7 @@ import scipy.interpolate
 from base import _DataBaseCruncherTester
 from pyam import IamDataFrame
 
-import silicone.stats_utils
+import silicone.stats
 from silicone.database_crunchers import DatabaseCruncherQuantileRollingWindows
 
 _ma = "model_a"
@@ -157,7 +157,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         # Calculate the same values numerically
         xs = large_db.filter(variable="Emissions|CO2")["value"].values
         ys = large_db.filter(variable="Emissions|CH4")["value"].values
-        quantile_expected = silicone.stats_utils.rolling_window_find_quantiles(
+        quantile_expected = silicone.stats.rolling_window_find_quantiles(
             xs, ys, [0.5]
         )
         interpolate_fn = scipy.interpolate.interp1d(
