@@ -6,7 +6,8 @@ import silicone.plotting
 # It saves plots of the relationship between carbon dioxide and other emissions to the '../Output' folder,
 # along with CSV files indicating statistics of correlation coefficients.
 # ________________________________________________________
-
+# We must indicate the main gas of interest
+x_gas = "Emissions|CO2"
 years_of_interest = [2030, 2050, 2100]
 save_results = "../Output/"
 # if non-null, also plot these quantiles.
@@ -35,4 +36,5 @@ silicone.plotting._plot_emission_correlations_quantile_rolling_windows(
     quantile_decay_factor,
     model_colours,
     legend_fraction,
+    x_gas,
 )

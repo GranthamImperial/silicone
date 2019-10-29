@@ -67,7 +67,7 @@ def plot_emission_correlations_quantile_rolling_windows_cli(
     model_colours,
     legend_fraction,
 ):
-    r"""
+    """
     Plot correlations between emisssions timeseries in ``emissions_data``.
 
     ``emissions_data`` is the file from which to load the emissions timeseries.

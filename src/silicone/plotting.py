@@ -17,7 +17,8 @@ def _plot_emission_correlations_quantile_rolling_windows(
     quantile_boxes,
     quantile_decay_factor,
     model_colours,
-    legend_fraction,
+    legend_fraction=0.65,
+    x_gas="Emissions|CO2",
 ):
     """
 
@@ -31,9 +32,6 @@ def _plot_emission_correlations_quantile_rolling_windows(
             .variables(True)
             .set_index("variable")
         )
-
-        # We currently assume all correlations are with CO2
-        x_gas = "Emissions|CO2"
 
         if x_gas not in df_gases.index:
             raise ValueError("No {} data".format(x_gas))
