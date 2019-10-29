@@ -157,9 +157,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         # Calculate the same values numerically
         xs = large_db.filter(variable="Emissions|CO2")["value"].values
         ys = large_db.filter(variable="Emissions|CH4")["value"].values
-        quantile_expected = silicone.stats.rolling_window_find_quantiles(
-            xs, ys, [0.5]
-        )
+        quantile_expected = silicone.stats.rolling_window_find_quantiles(xs, ys, [0.5])
         interpolate_fn = scipy.interpolate.interp1d(
             np.array(quantile_expected.index), quantile_expected.values.squeeze()
         )

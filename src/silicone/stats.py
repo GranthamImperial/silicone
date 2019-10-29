@@ -5,7 +5,9 @@ import numpy as np
 import pandas as pd
 
 
-def rolling_window_find_quantiles(xs, ys, quantiles, nwindows=10, decay_length_factor=1):
+def rolling_window_find_quantiles(
+    xs, ys, quantiles, nwindows=10, decay_length_factor=1
+):
     """
     Perform quantile analysis in the y-direction for x-weighted data.
 
