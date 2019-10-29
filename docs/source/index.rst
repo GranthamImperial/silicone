@@ -29,6 +29,7 @@ Silicone
     cli
     database-crunchers
     utils
+    stats
 
 .. toctree::
     :maxdepth: 2

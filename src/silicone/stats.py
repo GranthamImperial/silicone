@@ -1,15 +1,47 @@
 """
-Stats contains a number of helpful functions that perform statistics operations for use in several areas.
+Silicone's custom statistical operations.
 """
 import numpy as np
 import pandas as pd
 
 
-def rolling_window_find_quantiles(xs, ys, quantiles, nboxes=10, decay_length_factor=1):
+def rolling_window_find_quantiles(xs, ys, quantiles, nwindows=10, decay_length_factor=1):
+    """
+    Perform quantile analysis over a number of different windows.
+
+    This is a custom implementation which is a bit like a quantile regression, but not
+    quite the same. TODO: describe method fully here
+
+    Parameters
+    ----------
+    xs : np.ndarray, :obj:`pd.Series`
+        The x values to use in the regression
+
+    ys : np.ndarray, :obj:`pd.Series`
+        The y values to use in the regression
+
+    quantiles : list-like
+        The quantiles to find in each window
+
+    nwindows : int
+        The number of windows to use
+
+    decay_length_factor : float
+        Parameter which controls how strongly points away from the window's centre
+        should be weighted compared to points at the centre. Larger values give points
+        further away increasingly less weight, smaller values give points further away
+        increasingly more weight.
+
+    Returns
+    -------
+    :obj:`pd.DataFrame`
+        Quantile values at the window centres.
+    """
+
     assert xs.size == ys.size
     if xs.size == 1:
-        return pd.DataFrame(index=[xs[0]] * nboxes, columns=quantiles, data=ys[0])
-    step = (max(xs) - min(xs)) / (nboxes + 1)
+        return pd.DataFrame(index=[xs[0]] * nwindows, columns=quantiles, data=ys[0])
+    step = (max(xs) - min(xs)) / (nwindows + 1)
     decay_length = step / 2 * decay_length_factor
     # We re-form the arrays in case they were pandas series with integer labels that would mess up the sorting.
     xs = np.array(xs)

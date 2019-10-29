@@ -29,3 +29,7 @@ def test_rolling_window_find_quantiles():
         np.array([1, 1]), np.array([1, 1]), desired_quantiles, 9, 2 * 9
     )
     assert all(quantiles.iloc[0, :] == [1, 1, 1])
+
+
+def test_rolling_window_quantiles():
+    assert False, "expand tests here and use parametrise"
