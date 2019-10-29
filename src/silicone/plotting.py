@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-import silicone.stats_utils
+from .stats import rolling_window_find_quantiles
 
 
 def _plot_emission_correlations_quantile_rolling_windows(
@@ -76,7 +76,7 @@ def _plot_emission_correlations_quantile_rolling_windows(
 
             # Optionally calculate and plot quantiles
             if quantiles is not None:
-                quant_df = silicone.stats_utils.rolling_window_find_quantiles(
+                quant_df = rolling_window_find_quantiles(
                     seaborn_df[x_gas],
                     seaborn_df[y_gas],
                     quantiles,
