@@ -3,10 +3,12 @@ import os
 
 import pyam
 
+
 def download_or_load_sr15(filename):
     if not os.path.isfile(filename):
         get_sr15_scenarios(filename)
     return pyam.IamDataFrame(filename)
+
 
 def get_sr15_scenarios(output_file):
     conn = pyam.iiasa.Connection("iamc15")

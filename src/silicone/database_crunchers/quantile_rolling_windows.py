@@ -172,10 +172,13 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
             xs = xs[sort_order]
             if max(xs) == min(xs):
                 # We must prevent singularity behaviour if all the points are at the same x value.
-                cumsum_weights = np.array([(1+x)/len(ys) for x in range(len(ys))])
+                cumsum_weights = np.array([(1 + x) / len(ys) for x in range(len(ys))])
 
-                derived_relationships[db_time] = lambda unused_variable, ys=ys, cumsum_weights=cumsum_weights,\
-                                                        quantile=quantile: min(ys[cumsum_weights >= quantile])
+                derived_relationships[
+                    db_time
+                ] = lambda unused_variable, ys=ys, cumsum_weights=cumsum_weights, quantile=quantile: min(
+                    ys[cumsum_weights >= quantile]
+                )
             else:
                 # We want to include the max x point, but not any point above it.
                 # The 0.99 factor prevents rounding error inclusion.

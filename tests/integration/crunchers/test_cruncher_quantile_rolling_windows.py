@@ -6,9 +6,9 @@ import pandas as pd
 import pytest
 import scipy.interpolate
 from base import _DataBaseCruncherTester
-import silicone.stats_utils
 from pyam import IamDataFrame
 
+import silicone.stats_utils
 from silicone.database_crunchers import DatabaseCruncherQuantileRollingWindows
 
 _ma = "model_a"
@@ -61,15 +61,12 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
             [_mb, _sd, "World", _ech4, _mtch4, 50],
             [_mb, _se, "World", _ech4, _mtch4, 150],
         ],
-        columns=_msrvu + [2010]
+        columns=_msrvu + [2010],
     )
 
     small_db = pd.DataFrame(
-        [
-            [_mb, _sa, "World", _eco2, _gtc, 1.2],
-            [_ma, _sb, "World", _eco2, _gtc, 2.3],
-        ],
-        columns=_msrvu + [2010]
+        [[_mb, _sa, "World", _eco2, _gtc, 1.2], [_ma, _sb, "World", _eco2, _gtc, 2.3]],
+        columns=_msrvu + [2010],
     )
 
     tdownscale_df = pd.DataFrame(
@@ -108,35 +105,45 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
     def test_derive_relationship_with_multicolumns(self):
         tdb = self.tdb.copy()
         tcruncher = self.tclass(IamDataFrame(tdb))
-        error_msg = re.escape("Having more than one `variable_leaders` is not yet implemented")
-        with pytest.raises(NotImplementedError,  match=error_msg):
-            tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CH4", "Emissions|HFC|C5F12"])
+        error_msg = re.escape(
+            "Having more than one `variable_leaders` is not yet implemented"
+        )
+        with pytest.raises(NotImplementedError, match=error_msg):
+            tcruncher.derive_relationship(
+                "Emissions|CO2", ["Emissions|CH4", "Emissions|HFC|C5F12"]
+            )
 
     def test_analytic_relationship_holds(self, simple_df):
         tcruncher = self.tclass(simple_df)
-        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CH4"], quantile=0.833, nwindows=1)
+        res = tcruncher.derive_relationship(
+            "Emissions|CO2", ["Emissions|CH4"], quantile=0.833, nwindows=1
+        )
         expect_01 = res(simple_df)
-        assert expect_01.filter(scenario='scen_a', year=2010)['value'].iloc[0] == 0
-        assert expect_01.filter(scenario='scen_b', year=2010)['value'].iloc[0] == 1
-        assert all(expect_01.filter(year=2030)['value'] == 1000)
-        assert all(expect_01.filter(year=2050)['value'] == 5000)
+        assert expect_01.filter(scenario="scen_a", year=2010)["value"].iloc[0] == 0
+        assert expect_01.filter(scenario="scen_b", year=2010)["value"].iloc[0] == 1
+        assert all(expect_01.filter(year=2030)["value"] == 1000)
+        assert all(expect_01.filter(year=2050)["value"] == 5000)
 
         # Due to weighting the points (0, 1) at 1:5, if the mathematics is working out as expected,
         # quantiles above 5/6 will return 1 for the first case.
-        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CH4"], quantile=0.834, nwindows=1)
+        res = tcruncher.derive_relationship(
+            "Emissions|CO2", ["Emissions|CH4"], quantile=0.834, nwindows=1
+        )
         expect_11 = res(simple_df)
-        assert expect_11.filter(scenario='scen_a', year=2010)['value'].iloc[0] == 1
-        assert expect_11.filter(scenario='scen_b', year=2010)['value'].iloc[0] == 1
-        assert all(expect_11.filter(year=2030)['value'] == 1000)
-        assert all(expect_11.filter(year=2050)['value'] == 5000)
+        assert expect_11.filter(scenario="scen_a", year=2010)["value"].iloc[0] == 1
+        assert expect_11.filter(scenario="scen_b", year=2010)["value"].iloc[0] == 1
+        assert all(expect_11.filter(year=2030)["value"] == 1000)
+        assert all(expect_11.filter(year=2050)["value"] == 5000)
 
         # Similarly quantiles below 1/6 are 0 for the second case.
-        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CH4"], quantile=0.165, nwindows=1)
+        res = tcruncher.derive_relationship(
+            "Emissions|CO2", ["Emissions|CH4"], quantile=0.165, nwindows=1
+        )
         expect_00 = res(simple_df)
-        assert expect_00.filter(scenario='scen_a', year=2010)['value'].iloc[0] == 0
-        assert expect_00.filter(scenario='scen_b', year=2010)['value'].iloc[0] == 0
-        assert all(expect_00.filter(year=2030)['value'] == 1000)
-        assert all(expect_00.filter(year=2050)['value'] == 5000)
+        assert expect_00.filter(scenario="scen_a", year=2010)["value"].iloc[0] == 0
+        assert expect_00.filter(scenario="scen_b", year=2010)["value"].iloc[0] == 0
+        assert all(expect_00.filter(year=2030)["value"] == 1000)
+        assert all(expect_00.filter(year=2050)["value"] == 5000)
 
     def test_numerical_relationship(self):
         # Calculate the values using the cruncher for a fairly detailed dataset
@@ -148,16 +155,19 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         crunched = res(to_find)
 
         # Calculate the same values numerically
-        xs = large_db.filter(variable="Emissions|CO2")['value'].values
-        ys = large_db.filter(variable="Emissions|CH4")['value'].values
-        quantile_expected = silicone.stats_utils.rolling_window_find_quantiles(xs, ys, [0.5])
-        interpolate_fn = scipy.interpolate.interp1d(np.array(quantile_expected.index), quantile_expected.values.squeeze())
-        xs_to_interp = to_find.filter(variable="Emissions|CO2")['value'].values
+        xs = large_db.filter(variable="Emissions|CO2")["value"].values
+        ys = large_db.filter(variable="Emissions|CH4")["value"].values
+        quantile_expected = silicone.stats_utils.rolling_window_find_quantiles(
+            xs, ys, [0.5]
+        )
+        interpolate_fn = scipy.interpolate.interp1d(
+            np.array(quantile_expected.index), quantile_expected.values.squeeze()
+        )
+        xs_to_interp = to_find.filter(variable="Emissions|CO2")["value"].values
 
         expected = interpolate_fn(xs_to_interp)
 
-        assert all(crunched['value'].values == expected)
-
+        assert all(crunched["value"].values == expected)
 
     def test_derive_relationship_same_gas(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db)
