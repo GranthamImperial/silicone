@@ -119,10 +119,6 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
         ValueError
             ``decay_length_factor`` is 0.
         """
-        warnings.warn(
-            "`derive_relationship` is not fully tested for "
-            "{}, use with caution".format(self.__class__)
-        )
         self._check_follower_and_leader_in_db(variable_follower, variable_leaders)
 
         if not (0 <= quantile <= 1):
