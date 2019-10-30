@@ -113,7 +113,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
                 "Emissions|CO2", ["Emissions|CH4", "Emissions|HFC|C5F12"]
             )
 
-    def test_analytic_relationship_holds(self, simple_df):
+    def test_relationship_usage(self, simple_df):
         tcruncher = self.tclass(simple_df)
         res = tcruncher.derive_relationship(
             "Emissions|CO2", ["Emissions|CH4"], quantile=0.833, nwindows=1
@@ -124,8 +124,8 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         assert all(expect_01.filter(year=2030)["value"] == 1000)
         assert all(expect_01.filter(year=2050)["value"] == 5000)
 
-        # Due to weighting the points (0, 1) at 1:5, if the mathematics is working out as expected,
-        # quantiles above 5/6 will return 1 for the first case.
+        # Due to weighting the points (0, 1) at 1:5, if the mathematics is working out
+        # as expected, quantiles above 5/6 will return 1 for the first case.
         res = tcruncher.derive_relationship(
             "Emissions|CO2", ["Emissions|CH4"], quantile=0.834, nwindows=1
         )
@@ -168,15 +168,16 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         assert all(crunched["value"].values == expected)
 
     def test_derive_relationship_same_gas(self, test_db, test_downscale_df):
+        # Given only a single data series, we recreate the original pattern
         tcruncher = self.tclass(test_db)
-        with pytest.warns(UserWarning) as record:
-            tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CO2"])
-
-        assert len(record) == 1
-        assert record[0].message.args[
-            0
-        ] == "`derive_relationship` is not fully tested for {}, use with caution".format(
-            self.tclass
+        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CO2"])
+        crunched = res(test_db)
+        assert all(
+            abs(
+                crunched["value"].reset_index()
+                - test_db.filter(variable="Emissions|CO2")["value"].reset_index()
+            )
+            < 1e15
         )
 
     def test_derive_relationship_error_no_info_leader(self, test_db):
@@ -292,105 +293,3 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         )
         with pytest.raises(ValueError, match=error_msg):
             filler(test_downscale_df)
-
-    def test_relationship_usage(self, test_db, test_downscale_df):
-        tcruncher = self.tclass(test_db)
-
-        with pytest.warns(UserWarning) as record:
-            tcruncher.derive_relationship("Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"])
-
-        assert len(record) == 1
-        assert record[0].message.args[
-            0
-        ] == "`derive_relationship` is not fully tested for {}, use with caution".format(
-            self.tclass
-        )
-
-        # the test should look like this in future, maybe?
-        """
-        test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db)
-        res = filler(test_downscale_df)
-
-        lead_iamdf = test_downscale_df.filter(variable="Emissions|HFC|C2F6")
-        lead_val_2015 = lead_iamdf.filter(year=2015).timeseries().values.squeeze()
-
-        exp = (lead_iamdf.timeseries().T * 3.14 / lead_val_2015).T
-        exp = exp.reset_index()
-        exp["variable"] = "Emissions|HFC|C5F12"
-        exp["unit"] = "kt C5F12/yr"
-        exp = IamDataFrame(exp)
-
-        pd.testing.assert_frame_equal(
-            res.timeseries(), exp.timeseries(), check_like=True
-        )
-
-        # comes back on input timepoints
-        np.testing.assert_array_equal(
-            res.timeseries().columns.values.squeeze(),
-            test_downscale_df.timeseries().columns.values.squeeze(),
-        )
-        """
-
-    @pytest.mark.parametrize("interpolate", [True, False])
-    def test_relationship_usage_interpolation(
-        self, test_db, test_downscale_df, interpolate
-    ):
-        tcruncher = self.tclass(test_db)
-
-        with pytest.warns(UserWarning) as record:
-            tcruncher.derive_relationship("Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"])
-
-        assert len(record) == 1
-        assert record[0].message.args[
-            0
-        ] == "`derive_relationship` is not fully tested for {}, use with caution".format(
-            self.tclass
-        )
-
-        # the test should look like this in future, maybe?
-        """
-        test_downscale_df = self._adjust_time_style_to_match(
-            test_downscale_df.filter(year=2015, keep=False), test_db
-        )
-
-        required_timepoint = test_db.filter(year=2015).data[test_db.time_col].iloc[0]
-        if not interpolate:
-            if isinstance(required_timepoint, pd.Timestamp):
-                required_timepoint = required_timepoint.to_pydatetime()
-            error_msg = re.escape(
-                "Required downscaling timepoint ({}) is not in the data for the "
-                "lead gas (Emissions|HFC|C2F6)".format(required_timepoint)
-            )
-            with pytest.raises(ValueError, match=error_msg):
-                filler(test_downscale_df, interpolate=interpolate)
-            return
-
-        res = filler(test_downscale_df, interpolate=interpolate)
-
-        lead_iamdf = test_downscale_df.filter(
-            variable="Emissions|HFC|C2F6", region="World", unit="kt C2F6/yr"
-        )
-        exp = lead_iamdf.timeseries()
-
-        # will have to make this more intelligent for time handling
-        lead_df = lead_iamdf.timeseries()
-        lead_df[required_timepoint] = np.nan
-        lead_df = lead_df.reindex(sorted(lead_df.columns), axis=1)
-        lead_df = lead_df.interpolate(method="index", axis=1)
-        lead_val_2015 = lead_df[required_timepoint]
-
-        exp = (exp.T * 3.14 / lead_val_2015).T.reset_index()
-        exp["variable"] = "Emissions|HFC|C5F12"
-        exp["unit"] = "kt C5F12/yr"
-        exp = IamDataFrame(exp)
-
-        pd.testing.assert_frame_equal(
-            res.timeseries(), exp.timeseries(), check_like=True
-        )
-
-        # comes back on input timepoints
-        np.testing.assert_array_equal(
-            res.timeseries().columns.values.squeeze(),
-            test_downscale_df.timeseries().columns.values.squeeze(),
-        )
-        """
