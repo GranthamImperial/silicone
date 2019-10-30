@@ -28,6 +28,7 @@ Silicone
 
     cli
     database-crunchers
+    stats
     utils
 
 .. toctree::

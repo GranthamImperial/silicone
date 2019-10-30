@@ -19,8 +19,9 @@ def rolling_window_find_quantiles(
     (which effectively gives 0 weight to min and max values)
 
     The weighting of a point at :math:`x` for a window centered at :math:`x_0` is:
-    .. math:
-        w = \\frac{1}{1+((x-x_0)/(box_length*decay_length_factor))^2}.
+
+    .. math::
+        w = \\frac{1}{1 + \\left (\\frac{x - x_0} {\\text{box_length} \\times \\text{decay_length_factor}} \\right )^2}
 
     Parameters
     ----------
@@ -39,7 +40,7 @@ def rolling_window_find_quantiles(
     decay_length_factor : float
         gives the distance over which the weighting of the values falls to 1/4,
         relative to half the distance between boxes. Defaults to 1. Formula is
-        w = 1/(1+(distance/(box_length*decay_length_factor))^2).
+        :math:`w = \\left ( 1 + \\left( \\frac{\\text{distance}}{\\text{box_length} \\times \\text{decay_length_factor}} \\right)^2 \\right)^{-1}`.
 
     Returns
     -------

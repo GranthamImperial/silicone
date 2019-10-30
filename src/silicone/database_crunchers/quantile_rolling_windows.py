@@ -1,8 +1,6 @@
 """
 Module for the database cruncher which uses the 'rolling windows' technique.
 """
-import warnings
-
 import numpy as np
 import pandas as pd
 import scipy.interpolate
