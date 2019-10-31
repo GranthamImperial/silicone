@@ -11,7 +11,7 @@ def rolling_window_find_quantiles(
     """
     Perform quantile analysis in the y-direction for x-weighted data.
 
-    Divides the x-axis into nboxes of equal length and weights data by how close they
+    Divides the x-axis into nwindows of equal length and weights data by how close they
     are to the center of these boxes. Then returns the quantiles of this weighted data.
     Quantiles are defined so that the value returned are always equal to a y-value in
     the data - there is no interpolation. Extremal points are given their full
