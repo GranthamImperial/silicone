@@ -33,12 +33,12 @@ def _plot_emission_correlations_quantile_rolling_windows(
             .set_index("variable")
         )
 
-        if x_gas not in df_gases.index:
+        if x_gas not in emms_df.variables().values:
             raise ValueError("No {} data".format(x_gas))
 
         # Check that the list has only one entry for each gas
         assert not any(df_gases.index.duplicated()), "Index contains duplicated entries"
-        x_units = df_gases.loc[x_gas, "unit"]
+        x_units = emms_df.filter(variable=x_gas)['unit'].iloc[0]
 
         # Initialise the tables to hold all parameters between runs
         correlations_df = pd.DataFrame(index=df_gases.index, columns=[x_gas])

@@ -7,7 +7,7 @@ import silicone.plotting
 # along with CSV files indicating statistics of correlation coefficients.
 # ________________________________________________________
 # We must indicate the main gas of interest
-x_gas = "Emissions|CO2"
+x_gas = "Price|Carbon"
 years_of_interest = [2030, 2050, 2100]
 save_results = "../Output/"
 # if non-null, also plot these quantiles.
@@ -24,7 +24,7 @@ model_colours = True
 legend_fraction = 0.65
 # ________________________________________________________
 # where do we get the data from?
-SR15_SCENARIOS = "./sr15_scenarios.csv"
+SR15_SCENARIOS = "./sr15_scenarios_more_regions.csv"
 sr15_data = download_or_load_sr15(SR15_SCENARIOS)
 
 silicone.plotting._plot_emission_correlations_quantile_rolling_windows(
