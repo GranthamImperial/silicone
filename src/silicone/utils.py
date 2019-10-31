@@ -37,13 +37,16 @@ def _get_unit_of_variable(df, variable, multiple_units="raise"):
 
 def _interpolate_to_grid(df, timegrid):
     """
-       Get the unit of a variable in ``self._db``
+       Ensure that the IamDataFrame has values at all times required.
+       If not, interpolate values to those times
 
        Parameters
        ----------
     df : :obj:`pyam.IamDataFrame`
-                Input data to fill data in
+        Input data to fill in
 
     timegrid : list-like
+        List of times at which we want values
 
     """
+
