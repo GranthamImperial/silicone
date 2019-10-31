@@ -167,6 +167,24 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
 
         assert all(crunched["value"].values == expected)
 
+    def test_extreme_values_relationship(self):
+        # Calculate the values using the cruncher for a fairly detailed dataset
+        large_db = IamDataFrame(self.large_db.copy())
+        tcruncher = self.tclass(large_db)
+        res = tcruncher.derive_relationship("Emissions|CH4", ["Emissions|CO2"])
+        assert callable(res)
+        crunched = res(large_db)
+
+        modify_extreme_db = large_db.filter(variable="Emissions|CO2").copy()
+        ind = modify_extreme_db["value"].idxmax
+        modify_extreme_db["value"].loc[ind] += 10
+        extreme_crunched = res(modify_extreme_db)
+        assert all(crunched["value"] == extreme_crunched["value"])
+        ind = modify_extreme_db["value"].idxmin
+        modify_extreme_db["value"].loc[ind] -= 10
+        extreme_crunched = res(modify_extreme_db)
+        assert all(crunched["value"] == extreme_crunched["value"])
+
     def test_derive_relationship_same_gas(self, test_db, test_downscale_df):
         # Given only a single data series, we recreate the original pattern
         tcruncher = self.tclass(test_db)

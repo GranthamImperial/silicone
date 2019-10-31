@@ -33,3 +33,17 @@ def _get_unit_of_variable(df, variable, multiple_units="raise"):
         return units
 
     return units
+
+
+def _interpolate_to_grid(df, timegrid):
+    """
+       Get the unit of a variable in ``self._db``
+
+       Parameters
+       ----------
+    df : :obj:`pyam.IamDataFrame`
+                Input data to fill data in
+
+    timegrid : list-like
+
+    """

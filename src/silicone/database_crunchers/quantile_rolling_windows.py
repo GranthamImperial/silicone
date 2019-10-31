@@ -200,6 +200,10 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
                     db_time_table.columns.values.squeeze(),
                     db_time_table.loc[(db_time, quantile), :].values.squeeze(),
                     bounds_error=False,
+                    fill_value=(
+                        db_time_table.loc[(db_time, quantile)].iloc[0],
+                        db_time_table.loc[(db_time, quantile)].iloc[-1],
+                    ),
                 )
 
         def filler(in_iamdf):
