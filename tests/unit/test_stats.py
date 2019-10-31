@@ -31,7 +31,7 @@ def test_rolling_window_find_quantiles():
     assert all(quantiles.iloc[0, :] == [1, 1, 1])
 
 
-def test_rolling_window_find_quantiles():
+def test_rolling_window_find_quantiles_same_points():
     # If all the x-values are the same, this should just be our interpretation of
     # quantiles at all points
     xs = np.array([1] * 11)
