@@ -288,8 +288,13 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db)
 
         error_msg = re.escape(
-            "Not all required timepoints are present in the IamDataFrame to "
-            "downscale, we require `{}`".format(test_db.timeseries().columns.tolist())
+            "Not all required timepoints are present in the database we "
+            "crunched, we crunched \n\t`{}`\nbut you passed in \n\t{}".format(
+                list(
+                    test_db.filter(year=2030, keep=False).timeseries().columns.tolist()
+                ),
+                test_db.timeseries().columns.tolist(),
+            )
         )
         with pytest.raises(ValueError, match=error_msg):
             filler(test_downscale_df)
