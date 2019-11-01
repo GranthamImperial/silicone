@@ -23,7 +23,9 @@ type_of_cruncher = silicone.database_crunchers.DatabaseCruncherQuantileRollingWi
 leader = ["CEDS+|9+ Sectors|Emissions|CO2|Unharmonized"]
 # Leave required variables empty to fill with all possible values, otherwise
 # write the variables you wish to fill in here.
-required_variables = []
+required_variables = ["CEDS+|9+ Sectors|Emissions|CH4|Unharmonized",
+    "CEDS+|9+ Sectors|Emissions|CO2|Aggregate - Agriculture and LUC|Unharmonized",
+    ]
 
 # Place to save the infilled data as a csv
 save_file = "../Output/Infilling/infilled_data.csv"
@@ -48,7 +50,8 @@ if not required_variables:
         req for req in required_variables if req not in to_fill.variables().values
     ]
 else:
-    assert all(required_variables in df.variables()), "Missing variables requested"
+    assert all(x in df.variables().values for x in required_variables), \
+        "Missing variables requested"
 
 cruncher = type_of_cruncher(df)
 for req_var in required_variables:
