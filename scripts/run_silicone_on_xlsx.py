@@ -1,4 +1,3 @@
-import pandas as pd
 import pyam
 import silicone.database_crunchers
 
@@ -8,26 +7,32 @@ This script illustrates how to use silicone to augment the data fed into it by x
 """
 # ___________________________Input options____________________________________
 # Where is the file stored for data used to fill in the sheet?
-input_data_xlsx = \
+input_data_xlsx = (
     "../Input/MESSAGE-GLOBIOM_SSP1-19-SPA1-AR6_unharmonized Full-Med-Min sets(293).xlsx"
+)
 # Which sheet in the file should be read?
 sheet_for_input = "Medium"
-to_fill_xlsx = \
+to_fill_xlsx = (
     "../Input/MESSAGE-GLOBIOM_SSP1-19-SPA1-AR6_unharmonized Full-Med-Min sets(293).xlsx"
+)
 # Which sheet in the file should be read?
 sheet_to_fill = "Min"
 # Here we specify the type of cruncher
 type_of_cruncher = silicone.database_crunchers.DatabaseCruncherQuantileRollingWindows
 # Leader is a single data class for the moment, but presented as a list.
 leader = ["CEDS+|9+ Sectors|Emissions|CO2|Unharmonized"]
+# Leave required variables empty to fill with all possible values, otherwise
+# write the variables you wish to fill in here.
+required_variables = []
 
 # Place to save the infilled data as a csv
 save_file = "../Output/Infilling/infilled_data.csv"
 # ____________________________end options____________________________________
 
 df = pyam.IamDataFrame(input_data_xlsx, sheet_name=sheet_for_input)
-to_fill = pyam.IamDataFrame(to_fill_xlsx, sheet_name=sheet_to_fill)
-
+# This original version exists only to check that no values are overwritten
+to_fill_orig = pyam.IamDataFrame(to_fill_xlsx, sheet_name=sheet_to_fill)
+to_fill = to_fill_orig.copy()
 # Interpolate values in the input data if necessary
 times_wanted = set(df[df.time_col])
 # Currently the interpolate function seems broken? It isn't needed for our data set.
@@ -37,20 +42,23 @@ times_wanted = set(df[df.time_col])
 
 assert not df.data.isnull().any().any()
 assert not to_fill.data.isnull().any().any()
-
-required_variables = df.variables()
-required_variables = [req for req in required_variables if req not in to_fill
-    .variables().values]
+if not required_variables:
+    required_variables = df.variables()
+    required_variables = [
+        req for req in required_variables if req not in to_fill.variables().values
+    ]
+else:
+    assert all(required_variables in df.variables()), "Missing variables requested"
 
 cruncher = type_of_cruncher(df)
 for req_var in required_variables:
     filler = cruncher.derive_relationship(req_var, leader)
     interpolated = filler(to_fill)
-    # TODO: metadata joining is currently broken so this goes nowhere
+    # TODO: metadata joining is not variable-dependent so this is unhelpful.
     interpolated.set_meta(True, "interpolated")
     to_fill = to_fill.append(interpolated)
 
-# Some checks that we have fulfilled requirements
+# Check we have added all the required data
 for _, (model, scenario) in to_fill[["model", "scenario"]].drop_duplicates().iterrows():
     msdf = to_fill.filter(model=model, scenario=scenario)
     msdf_variables = msdf["variable"].tolist()
@@ -63,4 +71,12 @@ for _, (model, scenario) in to_fill[["model", "scenario"]].drop_duplicates().ite
 
 to_fill.to_csv(save_file)
 
-
+# Check no data overwritten - this could potentially fail if
+assert pyam.compare(
+    to_fill.filter(
+        model=to_fill_orig.models(),
+        scenario=to_fill_orig.scenarios(),
+        variable=to_fill_orig.variables(),
+    ),
+    to_fill_orig,
+).empty
