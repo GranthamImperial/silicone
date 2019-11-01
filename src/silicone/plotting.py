@@ -19,6 +19,7 @@ def _plot_emission_correlations_quantile_rolling_windows(
     model_colours,
     legend_fraction=0.65,
     x_gas="Emissions|CO2",
+    region = "World"
 ):
     """
 
@@ -27,7 +28,7 @@ def _plot_emission_correlations_quantile_rolling_windows(
     for year_of_interest in years:
         # Obtain the list of gases to examine
         df_gases = (
-            emms_df.filter(region="World", year=year_of_interest, level=1)
+            emms_df.filter(region=region, year=year_of_interest, level=1)
             .filter(variable="Emissions|*")
             .variables(True)
             .set_index("variable")
@@ -51,7 +52,7 @@ def _plot_emission_correlations_quantile_rolling_windows(
 
             # Create the dataframe to plot
             seaborn_df = emms_df.filter(
-                variable=[y_gas, x_gas], region="World", year=year_of_interest
+                variable=[y_gas, x_gas], region=region, year=year_of_interest
             ).pivot_table(
                 ["year", "model", "scenario", "region"], ["variable"], aggfunc="mean"
             )
@@ -93,8 +94,8 @@ def _plot_emission_correlations_quantile_rolling_windows(
                         os.path.join(
                             output_dir,
                             "{}_{}_{}.csv".format(
-                                x_gas.replace("Emissions|", ""),
-                                y_gas.replace("Emissions|", ""),
+                                x_gas.split('|')[-1],
+                                y_gas.split('|')[-1],
                                 year_of_interest,
                             ),
                         )
@@ -105,7 +106,7 @@ def _plot_emission_correlations_quantile_rolling_windows(
                 plt.savefig(
                     os.path.join(
                         output_dir,
-                        "{}_{}_{}.png".format(x_gas[10:], y_gas[10:], year_of_interest),
+                        "{}_{}_{}.png".format(x_gas.split('|')[-1], y_gas.split('|')[-1], year_of_interest),
                     )
                 )
 
@@ -136,8 +137,8 @@ def _plot_emissions(legend_fraction, seaborn_df, x_gas, y_gas, x_units, y_units)
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * legend_fraction, box.height])
     plt.scatter(x=x_gas, y=y_gas, color=colours_for_plot, data=seaborn_df, alpha=0.5)
-    plt.xlabel("Emissions of {} ({})".format(x_gas[10:], x_units))
-    plt.ylabel("Emissions of {} ({})".format(y_gas[10:], y_units))
+    plt.xlabel("Emissions of {} ({})".format(x_gas.split('|')[-1], x_units))
+    plt.ylabel("Emissions of {} ({})".format(y_gas.split('|')[-1], y_units))
 
 
 def _plot_multiple_models(legend_fraction, seaborn_df, x_gas, y_gas, x_units, y_units):
@@ -157,5 +158,5 @@ def _plot_multiple_models(legend_fraction, seaborn_df, x_gas, y_gas, x_units, y_
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * legend_fraction, box.height])
     ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-    plt.xlabel("Emissions of {} ({})".format(x_gas[10:], x_units))
-    plt.ylabel("Emissions of {} ({})".format(y_gas[10:], y_units))
+    plt.xlabel("Emissions of {} ({})".format(x_gas.split('|')[-1], x_units))
+    plt.ylabel("Emissions of {} ({})".format(y_gas.split('|')[-1], y_units))
