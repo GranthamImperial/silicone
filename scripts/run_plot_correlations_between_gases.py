@@ -9,13 +9,13 @@ import silicone.plotting
 # We must indicate the main gas of interest
 x_gas = "Price|Carbon"
 years_of_interest = [2030, 2050, 2100]
-save_results = "../Output/"
+save_results = "../Output/CarbonPrice"
 # if non-null, also plot these quantiles.
-plot_quantiles = [0.0001, 0.05, 0.17, 0.33, 0.5, 0.67, 0.83, 0.95, 0.9999]
+plot_quantiles = [0.05, 0.33, 0.5, 0.67, 0.95]
 # if non-null, save data on the quantiles too
-quantiles_savename = "../output-examples"
+quantiles_savename = None
 # How many boxes are used to fit the quantiles?
-quantile_boxes = 10
+quantile_boxes = 20
 # Should we extend the quantile boxes by an additional factor?
 quantile_decay_factor = 0.7
 # Color different models different colours?
