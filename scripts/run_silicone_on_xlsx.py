@@ -48,7 +48,7 @@ for req_var in required_variables:
     interpolated = filler(to_fill)
     # TODO: metadata joining is currently broken so this goes nowhere
     interpolated.set_meta(True, "interpolated")
-    to_fill.append(interpolated)
+    to_fill = to_fill.append(interpolated)
 
 # Some checks that we have fulfilled requirements
 for _, (model, scenario) in to_fill[["model", "scenario"]].drop_duplicates().iterrows():
@@ -58,8 +58,8 @@ for _, (model, scenario) in to_fill[["model", "scenario"]].drop_duplicates().ite
         msvdf = msdf.filter(variable=v)
         msvdf_data = msvdf.data
         assert not msvdf_data.isnull().any().any()
-        assert not msvdf_data.isempty
-        assert all([y in msvdf_data["year"] for y in times_wanted])
+        assert not msvdf_data.empty
+        assert all([y in msvdf_data["year"].values for y in times_wanted])
 
 to_fill.to_csv(save_file)
 
