@@ -132,3 +132,42 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             res.timeseries().columns.values.squeeze(),
             test_downscale_df.timeseries().columns.values.squeeze(),
         )
+
+    def test_multiple_units_breaks_infillee(self, test_db, test_downscale_df):
+        tcruncher = self.tclass(test_db)
+
+        filler = tcruncher.derive_relationship(
+            "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
+        )
+
+        test_downscale_df = self._adjust_time_style_to_match(
+            test_downscale_df, test_db
+        ).filter(year=[2010, 2015])
+        test_downscale_df["unit"].iloc[0] = "bad units"
+        with pytest.raises(
+                AssertionError,
+                match="There are multiple units for the variable to infill."
+        ):
+            res = filler(test_downscale_df)
+
+    def test_multiple_units_breaks_infiller_follower(self, test_db, test_downscale_df):
+        test_db["unit"].iloc[2] = "bad units"
+        with pytest.raises(
+                ValueError,
+                match="There are multiple/no units in follower data"
+        ):
+            tcruncher = self.tclass(test_db)
+            filler = tcruncher.derive_relationship(
+                "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
+            )
+
+    def test_multiple_units_breaks_infiller_leader(self, test_db, test_downscale_df):
+        test_db["unit"].iloc[0] = "bad units"
+        with pytest.raises(
+                ValueError,
+                match="There are multiple/no units for the leader data."
+        ):
+            tcruncher = self.tclass(test_db)
+            filler = tcruncher.derive_relationship(
+                "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
+            )
