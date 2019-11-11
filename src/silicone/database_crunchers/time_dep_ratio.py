@@ -65,16 +65,18 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
             There is no data for ``variable_leaders`` or ``variable_follower`` in the
             database.
         """
-        iamdf_follower = self._get_iamdf_follower(variable_follower, variable_leaders)
-        data_follower = iamdf_follower.data
+        iamdf_follower, data_follower = self._get_iamdf_followers(
+            variable_follower, variable_leaders
+        )
 
-        data_follower_unit = data_follower["unit"].values.unique
+        data_follower_unit = np.unique(iamdf_follower.data["unit"].values)
         if data_follower_unit.size == 1:
             data_follower_unit = data_follower_unit[0]
         else:
-            raise ValueError("Multiple units in follower data")
+            raise ValueError("Multiple/ no units in follower data")
         data_follower_time_col = iamdf_follower.time_col
-
+        iamdf_leader = self._db.filter(variable=variable_leaders[0])
+        data_leader = iamdf_leader.timeseries()
 
         def filler(in_iamdf, interpolate=False):
             """
@@ -110,21 +112,22 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
                     )
                 )
             times_needed = set(in_iamdf.data[in_iamdf.time_col])
-            if any(times_needed not in iamdf_follower[
-                data_follower_time_col
-            ]):
-                error_msg = (
-                    "Not all required timepoints are in the data for the lead gas ({})"
-                    .format(
-                        variable_leaders[0]
-                    )
+            if any(
+                [
+                    k not in set(iamdf_follower[data_follower_time_col])
+                    for k in times_needed
+                ]
+            ):
+                error_msg = "Not all required timepoints are in the data for the lead gas ({})".format(
+                    variable_leaders[0]
                 )
                 raise ValueError(error_msg)
+            output_ts = lead_var.timeseries()
 
-            scaling = in_iamdf.filter(variable=variable_leaders)["value"] / \
-                data_follower.filter(variable=variable_leaders, year=times_needed)["value"]
-            output_ts = (lead_var.timeseries().T * scaling).T.reset_index()
-
+            for year in times_needed:
+                scaling = data_follower[year][0] / data_leader[year][0]
+                output_ts[year] = output_ts[year] * scaling
+            output_ts.reset_index(inplace=True)
             output_ts["variable"] = variable_follower
             output_ts["unit"] = data_follower_unit
 
@@ -132,21 +135,16 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
 
         return filler
 
-    def _get_iamdf_follower(self, variable_follower, variable_leaders):
+    def _get_iamdf_followers(self, variable_follower, variable_leaders):
         if len(variable_leaders) > 1:
             raise ValueError(
-                "For `DatabaseCruncherLeadGas`, ``variable_leaders`` should only "
+                "For `DatabaseCruncherTimeDepRatio`, ``variable_leaders`` should only "
                 "contain one variable"
             )
 
         self._check_follower_and_leader_in_db(variable_follower, variable_leaders)
 
         iamdf_follower = self._db.filter(variable=variable_follower)
-        data_follower = iamdf_follower.data
-        if data_follower.shape[0] != 1:
-            error_msg = "More than one data point for `variable_follower` ({}) in database".format(
-                variable_follower
-            )
-            raise ValueError(error_msg)
+        data_follower = iamdf_follower.timeseries()
 
-        return iamdf_follower
+        return iamdf_follower, data_follower
