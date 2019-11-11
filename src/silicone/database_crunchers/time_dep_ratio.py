@@ -73,10 +73,12 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
         if data_follower_unit.size == 1:
             data_follower_unit = data_follower_unit[0]
         else:
-            raise ValueError("Multiple/ no units in follower data")
+            raise ValueError("There are multiple/no units in follower data")
         data_follower_time_col = iamdf_follower.time_col
         iamdf_leader = self._db.filter(variable=variable_leaders[0])
         data_leader = iamdf_leader.timeseries()
+        if iamdf_leader["unit"].nunique() != 1:
+            raise ValueError("There are multiple/no units for the leader data.")
 
         def filler(in_iamdf, interpolate=False):
             """
@@ -103,7 +105,8 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
                 False``.
             """
             lead_var = in_iamdf.filter(variable=variable_leaders)
-
+            assert lead_var["unit"].nunique() == 1, \
+                "There are multiple units for the variable to infill."
             if data_follower_time_col != in_iamdf.time_col:
                 raise ValueError(
                     "`in_iamdf` time column must be the same as the time column used "
@@ -118,7 +121,8 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
                     for k in times_needed
                 ]
             ):
-                error_msg = "Not all required timepoints are in the data for the lead gas ({})".format(
+                error_msg = "Not all required timepoints are in the data for " \
+                            "the lead gas ({})".format(
                     variable_leaders[0]
                 )
                 raise ValueError(error_msg)
