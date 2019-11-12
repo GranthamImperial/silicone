@@ -82,11 +82,18 @@ def rolling_window_find_quantiles(
 def geometric_mean(x):
     """
     Calculates the geometric mean of the input numbers.
+    This is equal to the product of the input to the root of the number of values
 
-    This is equal to the product of the numbers to the root of the number of values
+    Parameters
+    ----------
+    xs : iterable
+        The values to calculate the geometric mean of.
+
+    Returns
+    -------
+        float
+        The geometric mean of the input
     """
     # Perform calculation in the log domain to reduce risk of overflow errors
     logx = np.log(x)
     return np.exp(logx.sum() / len(logx))
-
-

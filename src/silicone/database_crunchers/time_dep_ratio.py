@@ -111,8 +111,9 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
                 False``.
             """
             lead_var = in_iamdf.filter(variable=variable_leaders)
-            assert lead_var["unit"].nunique() == 1, \
-                "There are multiple units for the variable to infill."
+            assert (
+                lead_var["unit"].nunique() == 1
+            ), "There are multiple units for the variable to infill."
             if data_follower_time_col != in_iamdf.time_col:
                 raise ValueError(
                     "`in_iamdf` time column must be the same as the time column used "
@@ -127,9 +128,9 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
                     for k in times_needed
                 ]
             ):
-                error_msg = "Not all required timepoints are in the data for " \
-                            "the lead gas ({})".format(
-                    variable_leaders[0]
+                error_msg = (
+                    "Not all required timepoints are in the data for "
+                    "the lead gas ({})".format(variable_leaders[0])
                 )
                 raise ValueError(error_msg)
             output_ts = lead_var.timeseries()
