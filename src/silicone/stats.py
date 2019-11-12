@@ -77,3 +77,16 @@ def rolling_window_find_quantiles(
                 ys[cumsum_weights >= quantiles[i_quantile]]
             )
     return quantmatrix
+
+
+def geometric_mean(x):
+    """
+    Calculates the geometric mean of the input numbers.
+
+    This is equal to the product of the numbers to the root of the number of values
+    """
+    # Perform calculation in the log domain to reduce risk of overflow errors
+    logx = np.log(x)
+    return np.exp(logx.sum() / len(logx))
+
+

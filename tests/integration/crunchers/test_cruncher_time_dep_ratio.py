@@ -9,7 +9,7 @@ from pyam import IamDataFrame
 from silicone.database_crunchers import DatabaseCruncherTimeDepRatio
 
 _msa = ["model_a", "scen_a"]
-
+_msb = ["model_a", "scen_b"]
 
 class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
     tclass = DatabaseCruncherTimeDepRatio
@@ -20,6 +20,17 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         ],
         columns=["model", "scenario", "region", "variable", "unit", 2010, 2015],
     )
+    irregular_msa = ["model_b", "scen_a"]
+    unequal_df = pd.DataFrame(
+            [
+                _msa + ["World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1, 3],
+                _msa + ["World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1, 3],
+                irregular_msa + ["World", "Emissions|HFC|C2F6", "kt C2F6/yr", 0.5, 1.5],
+                _msb + ["World", "Emissions|HFC|C5F12", "kt C5F12/yr", 9, 3],
+                _msb + ["World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1, 3],
+            ],
+            columns=["model", "scenario", "region", "variable", "unit", 2010, 2015],
+        )
     tdownscale_df = pd.DataFrame(
         [
             [
@@ -100,6 +111,44 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         )
         with pytest.raises(ValueError, match=error_msg):
             res = filler(test_downscale_df)
+
+    def test_relationship_usage_multiple_bad_data(self, unequal_df, test_downscale_df):
+        tcruncher = self.tclass(unequal_df)
+        error_msg = "The follower and leader data have different sizes"
+        with pytest.raises(ValueError, match=error_msg):
+            filler = tcruncher.derive_relationship(
+                "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
+            )
+
+    def test_relationship_usage_multiple_data(self, unequal_df, test_downscale_df):
+        equal_df = unequal_df.filter(model="model_a")
+        tcruncher = self.tclass(equal_df)
+        test_downscale_df = self._adjust_time_style_to_match(
+            test_downscale_df, equal_df
+        ).filter(year=[2010, 2015])
+        filler = tcruncher.derive_relationship(
+            "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
+        )
+        res = filler(test_downscale_df)
+
+        lead_iamdf = test_downscale_df.filter(variable="Emissions|HFC|C2F6")
+
+        exp = lead_iamdf.timeseries()
+        exp[exp.columns[0]] = exp[exp.columns[0]] * 3
+        exp = exp.reset_index()
+        exp["variable"] = "Emissions|HFC|C5F12"
+        exp["unit"] = "kt C5F12/yr"
+        exp = IamDataFrame(exp)
+
+        pd.testing.assert_frame_equal(
+            res.timeseries(), exp.timeseries(), check_like=True
+        )
+
+        # comes back on input timepoints
+        np.testing.assert_array_equal(
+            res.timeseries().columns.values.squeeze(),
+            test_downscale_df.timeseries().columns.values.squeeze(),
+        )
 
     def test_relationship_usage(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db)

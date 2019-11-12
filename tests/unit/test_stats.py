@@ -45,3 +45,16 @@ def test_rolling_window_find_quantiles_same_points():
         calculated_quantiles.append(min(ys[cumsum_weights >= quant]))
 
     assert all(quantiles.values.squeeze() == calculated_quantiles)
+
+def test_geometric_mean():
+    x_array = [1, 1, 2, 4, 4]
+    res = stats.geometric_mean(x_array)
+    expected = (2*4*4)**(1/5)
+    assert abs(res - expected) < 1e-15
+    res2 = stats.geometric_mean(np.array(x_array))
+    assert res2 == res
+
+def test_geometric_mean_breaks():
+    x_array = [1, 1, 2, 4, np.nan]
+    res = stats.geometric_mean(x_array)
+    assert np.isnan(res)

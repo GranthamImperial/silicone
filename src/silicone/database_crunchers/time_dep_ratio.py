@@ -4,6 +4,7 @@ Module for the database cruncher which uses the 'time-dependent ratio' technique
 import warnings
 
 import numpy as np
+import silicone.stats
 from pyam import IamDataFrame
 
 from .base import _DatabaseCruncher
@@ -16,7 +17,8 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
     This cruncher derives the relationship between two variables by simply assuming
     that the follower timeseries is equal to the lead timeseries multiplied by a
     time-dependent scaling factor. The scaling factor is the ratio of the
-    follower variable to the lead variable.
+    follower variable to the lead variable. If the database contains many such pairs,
+    the scaling factor is the geometric mean of the individual ratios.
 
     Once the relationship is derived, the 'filler' function will infill following:
 
@@ -26,10 +28,11 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
     where :math:`E_f(t)` is emissions of the follower variable and :math:`E_l(t)` is
     emissions of the lead variable.
 
-    :math:`s` is the scaling factor, calculated as
+    :math:`s` is the scaling factor, calculated as the geometric mean of the ratio of
+    the follower to the leader in the cruncher in the database.
 
     .. math::
-        s(t) = \\frac{ E_f(t) }{ E_l(t) }
+        s(t) = geo_mean(\\frac{ E_f(t) }{ E_l(t) })
 
     """
 
@@ -79,6 +82,9 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
         data_leader = iamdf_leader.timeseries()
         if iamdf_leader["unit"].nunique() != 1:
             raise ValueError("There are multiple/no units for the leader data.")
+        if data_follower.size != data_leader.size:
+            error_msg = "The follower and leader data have different sizes"
+            raise ValueError(error_msg)
 
         def filler(in_iamdf, interpolate=False):
             """
@@ -129,7 +135,11 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
             output_ts = lead_var.timeseries()
 
             for year in times_needed:
-                scaling = data_follower[year][0] / data_leader[year][0]
+                # Due to the mathematics of the geometric mean, it is not necessary
+                # to ensure the the follower and leader scenarios line up.
+                scaling = silicone.stats.geometric_mean(
+                    data_follower[year].values / data_leader[year].values
+                )
                 output_ts[year] = output_ts[year] * scaling
             output_ts.reset_index(inplace=True)
             output_ts["variable"] = variable_follower
