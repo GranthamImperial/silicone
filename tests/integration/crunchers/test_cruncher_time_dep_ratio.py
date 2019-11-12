@@ -11,6 +11,7 @@ from silicone.database_crunchers import DatabaseCruncherTimeDepRatio
 _msa = ["model_a", "scen_a"]
 _msb = ["model_a", "scen_b"]
 
+
 class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
     tclass = DatabaseCruncherTimeDepRatio
     tdb = pd.DataFrame(
@@ -22,15 +23,15 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
     )
     irregular_msa = ["model_b", "scen_a"]
     unequal_df = pd.DataFrame(
-            [
-                _msa + ["World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1, 3],
-                _msa + ["World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1, 3],
-                irregular_msa + ["World", "Emissions|HFC|C2F6", "kt C2F6/yr", 0.5, 1.5],
-                _msb + ["World", "Emissions|HFC|C5F12", "kt C5F12/yr", 9, 3],
-                _msb + ["World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1, 3],
-            ],
-            columns=["model", "scenario", "region", "variable", "unit", 2010, 2015],
-        )
+        [
+            _msa + ["World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1, 3],
+            _msa + ["World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1, 3],
+            irregular_msa + ["World", "Emissions|HFC|C2F6", "kt C2F6/yr", 0.5, 1.5],
+            _msb + ["World", "Emissions|HFC|C5F12", "kt C5F12/yr", 9, 3],
+            _msb + ["World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1, 3],
+        ],
+        columns=["model", "scenario", "region", "variable", "unit", 2010, 2015],
+    )
     tdownscale_df = pd.DataFrame(
         [
             [
@@ -194,16 +195,14 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         ).filter(year=[2010, 2015])
         test_downscale_df["unit"].iloc[0] = "bad units"
         with pytest.raises(
-                AssertionError,
-                match="There are multiple units for the variable to infill."
+            AssertionError, match="There are multiple units for the variable to infill."
         ):
             res = filler(test_downscale_df)
 
     def test_multiple_units_breaks_infiller_follower(self, test_db, test_downscale_df):
         test_db["unit"].iloc[2] = "bad units"
         with pytest.raises(
-                ValueError,
-                match="There are multiple/no units in follower data"
+            ValueError, match="There are multiple/no units in follower data"
         ):
             tcruncher = self.tclass(test_db)
             filler = tcruncher.derive_relationship(
@@ -213,8 +212,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
     def test_multiple_units_breaks_infiller_leader(self, test_db, test_downscale_df):
         test_db["unit"].iloc[0] = "bad units"
         with pytest.raises(
-                ValueError,
-                match="There are multiple/no units for the leader data."
+            ValueError, match="There are multiple/no units for the leader data."
         ):
             tcruncher = self.tclass(test_db)
             filler = tcruncher.derive_relationship(
