@@ -135,7 +135,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         lead_iamdf = test_downscale_df.filter(variable="Emissions|HFC|C2F6")
 
         exp = lead_iamdf.timeseries()
-        exp[exp.columns[0]] = exp[exp.columns[0]] * 3
+        exp[exp.columns[0]] = exp[exp.columns[0]] * 5
         exp = exp.reset_index()
         exp["variable"] = "Emissions|HFC|C5F12"
         exp["unit"] = "kt C5F12/yr"
@@ -150,6 +150,19 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             res.timeseries().columns.values.squeeze(),
             test_downscale_df.timeseries().columns.values.squeeze(),
         )
+
+    def test_relationship_usage_nans(self, unequal_df, test_downscale_df):
+        equal_df = unequal_df.filter(model="model_a")
+        equal_df.data["value"].iloc[0] = np.nan
+        tcruncher = self.tclass(equal_df)
+        test_downscale_df = self._adjust_time_style_to_match(
+            test_downscale_df, equal_df
+        ).filter(year=[2010, 2015])
+        filler = tcruncher.derive_relationship(
+            "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
+        )
+        res = filler(test_downscale_df)
+        assert all(res.data["year"] == 2015)
 
     def test_relationship_usage(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db)

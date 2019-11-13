@@ -18,7 +18,7 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
     that the follower timeseries is equal to the lead timeseries multiplied by a
     time-dependent scaling factor. The scaling factor is the ratio of the
     follower variable to the lead variable. If the database contains many such pairs,
-    the scaling factor is the geometric mean of the individual ratios.
+    the scaling factor is the ratio between the means of the values.
 
     Once the relationship is derived, the 'filler' function will infill following:
 
@@ -28,11 +28,11 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
     where :math:`E_f(t)` is emissions of the follower variable and :math:`E_l(t)` is
     emissions of the lead variable.
 
-    :math:`s` is the scaling factor, calculated as the geometric mean of the ratio of
-    the follower to the leader in the cruncher in the database.
+    :math:`s` is the scaling factor, calculated as the ratio of the means of the
+    the follower and the leader in the cruncher in the database.
 
     .. math::
-        s(t) = geo_mean(\\frac{ E_f(t) }{ E_l(t) })
+        s(t) = \\frac{mean( E_f(t) )}{mean( E_l(t) )})
 
     """
 
@@ -97,7 +97,7 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
 
             interpolate : bool
                 If the key year for filling is not in ``in_iamdf``, should a value be
-                interpolated?
+                interpolated? This is currently unprogrammed.
 
             Returns
             -------
@@ -138,8 +138,10 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
             for year in times_needed:
                 # Due to the mathematics of the geometric mean, it is not necessary
                 # to ensure the the follower and leader scenarios line up.
-                scaling = silicone.stats.geometric_mean(
-                    data_follower[year].values / data_leader[year].values
+                # However we do require that the values are non-zero
+
+                scaling = np.mean(data_follower[year].values) / np.mean(
+                    data_leader[year].values
                 )
                 output_ts[year] = output_ts[year] * scaling
             output_ts.reset_index(inplace=True)
