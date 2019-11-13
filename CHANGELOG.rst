@@ -3,6 +3,7 @@ Changelog
 
 master
 ------
+- (`#21 <https://github.com/znicholls/silicone/pull/21>`_) Developed the time-dependent ratio cruncher
 - (`#20 <https://github.com/znicholls/silicone/pull/20>`_) Clean up the quantiles cruncher and test rigorously
 - (`#19 <https://github.com/znicholls/silicone/pull/19>`_) Add releasing docs plus command-line entry point tests
 - (`#14 <https://github.com/znicholls/silicone/pull/14>`_) Add root-mean square closest pathway cruncher
