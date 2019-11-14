@@ -1,10 +1,9 @@
 """
 Module for the database cruncher which uses the 'time-dependent ratio' technique.
 """
-import warnings
 
 import numpy as np
-import silicone.stats
+import pandas as pd
 from pyam import IamDataFrame
 
 from .base import _DatabaseCruncher
@@ -85,6 +84,13 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
         if data_follower.size != data_leader.size:
             error_msg = "The follower and leader data have different sizes"
             raise ValueError(error_msg)
+        # Calculate the ratios to use
+        all_times = np.unique(iamdf_leader.data[iamdf_leader.time_col])
+        scaling = pd.Series(index=all_times)
+        for year in all_times:
+            scaling[year] = np.mean(data_follower[year].values) / np.mean(
+                data_leader[year].values
+            )
 
         def filler(in_iamdf):
             """
@@ -95,25 +101,20 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
             in_iamdf : :obj:`pyam.IamDataFrame`
                 Input data to fill data in
 
-            interpolate : bool
-                If the key year for filling is not in ``in_iamdf``, should a value be
-                interpolated? This is currently unprogrammed.
-
             Returns
             -------
             :obj:`pyam.IamDataFrame`
-                Filled in data (without original source data)
+                Filled-in data (without original source data)
 
             Raises
             ------
             ValueError
-                The key year for filling is not in ``in_iamdf`` and ``interpolate is
-                False``.
+                The key year for filling is not in ``in_iamdf``.
             """
             lead_var = in_iamdf.filter(variable=variable_leaders)
             assert (
                 lead_var["unit"].nunique() == 1
-            ), "There are multiple units for the variable to infill."
+            ), "There are multiple units for the lead variable."
             if data_follower_time_col != in_iamdf.time_col:
                 raise ValueError(
                     "`in_iamdf` time column must be the same as the time column used "
@@ -136,14 +137,7 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
             output_ts = lead_var.timeseries()
 
             for year in times_needed:
-                # Due to the mathematics of the geometric mean, it is not necessary
-                # to ensure the the follower and leader scenarios line up.
-                # However we do require that the values are non-zero
-
-                scaling = np.mean(data_follower[year].values) / np.mean(
-                    data_leader[year].values
-                )
-                output_ts[year] = output_ts[year] * scaling
+                output_ts[year] = output_ts[year] * scaling[year]
             output_ts.reset_index(inplace=True)
             output_ts["variable"] = variable_follower
             output_ts["unit"] = data_follower_unit

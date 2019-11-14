@@ -135,6 +135,8 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         lead_iamdf = test_downscale_df.filter(variable="Emissions|HFC|C2F6")
 
         exp = lead_iamdf.timeseries()
+        # The follower values are 1 and 9 (average 5), the leader values are all 1
+        # hence we expect the input * 5 as output.
         exp[exp.columns[0]] = exp[exp.columns[0]] * 5
         exp = exp.reset_index()
         exp["variable"] = "Emissions|HFC|C5F12"
@@ -178,9 +180,10 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
 
         lead_iamdf = test_downscale_df.filter(variable="Emissions|HFC|C2F6")
 
+        # We have a ratio of (2/0.5) = 4 for 2010 and (3/1.5) = 2 for 2015
         exp = lead_iamdf.timeseries()
-        exp[exp.columns[0]] = [5, 4.8]
-        exp[exp.columns[1]] = [4, 4.6]
+        exp[exp.columns[0]] = exp[exp.columns[0]] * 4
+        exp[exp.columns[1]] = exp[exp.columns[1]] * 2
         exp = exp.reset_index()
         exp["variable"] = "Emissions|HFC|C5F12"
         exp["unit"] = "kt C5F12/yr"
@@ -208,7 +211,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         ).filter(year=[2010, 2015])
         test_downscale_df["unit"].iloc[0] = "bad units"
         with pytest.raises(
-            AssertionError, match="There are multiple units for the variable to infill."
+            AssertionError, match="There are multiple units for the lead variable."
         ):
             res = filler(test_downscale_df)
 
