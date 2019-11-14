@@ -28,7 +28,7 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
     where :math:`E_f(t)` is emissions of the follower variable and :math:`E_l(t)` is
     emissions of the lead variable.
 
-    :math:`s` is the scaling factor, calculated as the ratio of the means of the
+    :math:`s(t)` is the scaling factor, calculated as the ratio of the means of the
     the follower and the leader in the cruncher in the database.
 
     .. math::
