@@ -42,11 +42,10 @@ REQUIREMENTS_INSTALL = [
     "scipy",
     "pint",
     "python-dateutil",
-    "pyam-iamc>=0.2.0",
-    "pandas==0.24.2",
+    "pyam-iamc>=0.3.0",
     "click",
 ]
-REQUIREMENTS_NOTEBOOKS = ["matplotlib", "notebook", "seaborn", "statsmodels"]
+REQUIREMENTS_NOTEBOOKS = ["notebook", "seaborn", "statsmodels"]
 REQUIREMENTS_TESTS = [
     "codecov",
     "nbval",
