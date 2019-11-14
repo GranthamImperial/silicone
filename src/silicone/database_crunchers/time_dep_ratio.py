@@ -86,7 +86,7 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
             error_msg = "The follower and leader data have different sizes"
             raise ValueError(error_msg)
 
-        def filler(in_iamdf, interpolate=False):
+        def filler(in_iamdf):
             """
             Filler function derived from :obj:`DatabaseCruncherTimeDepRatio`.
 
