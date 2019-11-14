@@ -45,4 +45,3 @@ def test_rolling_window_find_quantiles_same_points():
         calculated_quantiles.append(min(ys[cumsum_weights >= quant]))
 
     assert all(quantiles.values.squeeze() == calculated_quantiles)
-
