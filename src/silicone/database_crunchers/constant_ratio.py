@@ -8,7 +8,6 @@ from pyam import IamDataFrame
 
 from .base import _DatabaseCruncher
 
-
 logger = logging.getLogger(__name__)
 
 
