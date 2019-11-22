@@ -1,10 +1,15 @@
 """
 Module for the database cruncher which uses the 'constant given ratio' technique.
 """
+import logging
+
 import pandas as pd
 from pyam import IamDataFrame
 
 from .base import _DatabaseCruncher
+
+
+logger = logging.getLogger(__name__)
 
 
 class DatabaseCruncherConstantRatio(_DatabaseCruncher):
@@ -34,7 +39,10 @@ class DatabaseCruncherConstantRatio(_DatabaseCruncher):
             actually use the database at all.
         """
         if db is not None:
-            raise NotImplementedError
+            logger.info(
+                "%s won't use any information from the database", self.__class__
+            )
+
         super().__init__(pd.DataFrame())
 
     def derive_relationship(self, variable_follower, variable_leaders, ratio, units):
