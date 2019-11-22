@@ -11,14 +11,18 @@ class DatabaseCruncherConstantRatio(_DatabaseCruncher):
     """
     Database cruncher which uses the 'constant given ratio' technique.
 
-    This cruncher requires a constant to be input. This is the ratio of the
-    follower variable to the lead variable, :math:`s`, where:
+    This cruncher does not require a database upon initialisation. Instead, it requires
+    a constant and a unit to be input when deriving relations. This constant is the
+    ratio of the follower variable to the lead variable, :math:`s`, where:
     .. math::
         E_f(t) = s * E_l(t)
 
-    where :math:`E_f(t)` is emissions of the follower variable and :math:`E_l(t)` is
+    for :math:`E_f(t)` the emissions of the follower variable and :math:`E_l(t)` the
     emissions of the lead variable.
     """
+
+    def __init__(self):
+        db = None
 
     def derive_relationship(self, variable_follower, variable_leaders, ratio, units):
         """
@@ -47,6 +51,11 @@ class DatabaseCruncherConstantRatio(_DatabaseCruncher):
             ``variable_leaders`` timeseries and returns timeseries for
             ``variable_follower`` based on the derived relationship between the two.
         """
+        if len(variable_leaders) > 1:
+            raise ValueError(
+                "For `DatabaseCruncherConstantRatio`, ``variable_leaders`` should only "
+                "contain one variable"
+            )
 
         def filler(in_iamdf):
             """
