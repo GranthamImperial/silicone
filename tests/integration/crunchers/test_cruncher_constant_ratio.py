@@ -1,3 +1,4 @@
+import logging
 import re
 
 import numpy as np
@@ -56,14 +57,27 @@ class TestDatabaseCruncherTimeDepRatio:
         columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2050],
     )
 
-    def test_derive_relationship(self, test_db):
+    def test_init_with_db(self, test_db, caplog):
+        with caplog.at_level(
+            logging.INFO, logger="silicone.database_crunchers.constant_ratio"
+        ):
+            self.tclass(test_db)
+
+        assert caplog.record_tuples == [(
+            "silicone.database_crunchers.constant_ratio",  # namespacing
+            logging.INFO,  # level
+            "`DatabaseCruncherConstantRatio` doesn't use any information from the "
+            "database",  # message
+        )]
+
+    def test_derive_relationship(self):
         tcruncher = self.tclass()
         res = tcruncher.derive_relationship(
             "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"], ratio=0.5, units="Some_unit"
         )
         assert callable(res)
 
-    def test_derive_relationship_error_multiple_lead_vars(self, test_db):
+    def test_derive_relationship_error_multiple_lead_vars(self):
         tcruncher = self.tclass()
         error_msg = re.escape(
             "For `DatabaseCruncherConstantRatio`, ``variable_leaders`` should only "
@@ -99,7 +113,7 @@ class TestDatabaseCruncherTimeDepRatio:
             test_downscale_df.timeseries().columns.values.squeeze(),
         )
 
-    def test_relationship_usage_set_0(self, test_db, test_downscale_df):
+    def test_relationship_usage_set_0(self, test_downscale_df):
         tcruncher = self.tclass()
 
         filler = tcruncher.derive_relationship(
@@ -126,7 +140,7 @@ class TestDatabaseCruncherTimeDepRatio:
             test_downscale_df.timeseries().columns.values.squeeze(),
         )
 
-    def test_multiple_units_breaks_infillee(self, test_db, test_downscale_df):
+    def test_multiple_units_breaks_infillee(self, test_downscale_df):
         tcruncher = self.tclass()
 
         filler = tcruncher.derive_relationship(
