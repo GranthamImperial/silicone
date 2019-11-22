@@ -1,7 +1,7 @@
 """
 Module for the database cruncher which uses the 'constant given ratio' technique.
 """
-
+import pandas as pd
 from pyam import IamDataFrame
 
 from .base import _DatabaseCruncher
@@ -22,6 +22,20 @@ class DatabaseCruncherConstantRatio(_DatabaseCruncher):
     where :math:`E_f(t)` is emissions of the follower variable and :math:`E_l(t)` is
     emissions of the lead variable.
     """
+
+    def __init__(self, db=None):
+        """
+        Initialise the database cruncher
+
+        Parameters
+        ----------
+        db : IamDataFrame
+            Supplied to ensure consistency with the base class. This cruncher doesn't
+            actually use the database at all.
+        """
+        if db is not None:
+            raise NotImplementedError
+        super().__init__(pd.DataFrame())
 
     def derive_relationship(self, variable_follower, variable_leaders, ratio, units):
         """
