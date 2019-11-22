@@ -12,17 +12,16 @@ class DatabaseCruncherConstantRatio(_DatabaseCruncher):
     Database cruncher which uses the 'constant given ratio' technique.
 
     This cruncher does not require a database upon initialisation. Instead, it requires
-    a constant and a unit to be input when deriving relations. This constant is the
-    ratio of the follower variable to the lead variable, :math:`s`, where:
+    a constant and a unit to be input when deriving relations. This constant,
+    :math:`s`, is the ratio of the follower variable to the lead variable i.e.:
+
     .. math::
+
         E_f(t) = s * E_l(t)
 
-    for :math:`E_f(t)` the emissions of the follower variable and :math:`E_l(t)` the
+    where :math:`E_f(t)` is emissions of the follower variable and :math:`E_l(t)` is
     emissions of the lead variable.
     """
-
-    def __init__(self):
-        db = None
 
     def derive_relationship(self, variable_follower, variable_leaders, ratio, units):
         """
