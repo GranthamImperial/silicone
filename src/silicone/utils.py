@@ -27,9 +27,9 @@ def _get_unit_of_variable(df, variable, multiple_units="raise"):
         ``multiple_units=="raise"`` and the filter results in more than one unit
     """
     units = df.filter(variable=variable).data["unit"].unique()
+    if len(units) == 0:
+        raise ValueError("No units are associated with this variable, {}".format(variable))
     if multiple_units == "raise":
         if len(units) > 1:
             raise AssertionError("`{}` has multiple units".format(variable))
-        return units
-
     return units

@@ -193,9 +193,27 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         assert all(crunched["value"] == extreme_crunched["value"])
 
     def test_derive_relationship_same_gas(self, test_db, test_downscale_df):
-        # Given only a single data series, we recreate the original pattern
+        # Given only a single data series, we cannot generate more data
         tcruncher = self.tclass(test_db)
-        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CO2"])
+        variable_follower = "Emissions|CO2"
+        error_msg = re.escape(
+            "We can't infill additional follower data from itself".format(
+                variable_follower
+            )
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            res = tcruncher.derive_relationship(variable_follower, [variable_follower])
+            crunched = res(test_db)
+
+    def test_derive_relationship_same_pattern(self, test_db, test_downscale_df):
+        # Given only a single data series, we cannot original pattern
+        test_db = test_db.filter(variable = "Emissions|CO2")
+        test_db_2 = test_db.copy()
+        test_db_2.data["variable"] = "Emissions|CH4"
+        test_db.append(test_db_2, inplace=True)
+        tcruncher = self.tclass(test_db)
+        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CH4"])
+
         crunched = res(test_db)
         assert all(
             abs(
@@ -269,7 +287,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
 
     def test_relationship_usage_wrong_unit(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db)
-        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CO2"])
+        res = tcruncher.derive_relationship("Emissions|CH4", ["Emissions|CO2"])
 
         exp_units = test_db.filter(variable="Emissions|CO2")["unit"].iloc[0]
 
@@ -288,7 +306,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
     def test_relationship_usage_wrong_time(self):
         tdb = IamDataFrame(self.tdb)
         tcruncher = self.tclass(tdb)
-        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CO2"])
+        res = tcruncher.derive_relationship("Emissions|CH4", ["Emissions|CO2"])
 
         test_downscale_df = IamDataFrame(self.tdb).timeseries()
         test_downscale_df.columns = test_downscale_df.columns.map(

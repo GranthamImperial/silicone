@@ -63,3 +63,9 @@ class _DatabaseCruncher(metaclass=ABCMeta):
                 variable_follower
             )
             raise ValueError(error_msg)
+
+        if variable_leaders == [variable_follower]:
+            error_msg = "We can't infill additional follower data from itself".format(
+                variable_follower
+            )
+            raise ValueError(error_msg)

@@ -35,3 +35,9 @@ def test_get_unit_of_variable_error(check_aggregate_df):
             check_aggregate_df, "Emissions|CH4", multiple_units="continue"
         )
     ) == sorted(["Mt CH4/yr", "Mt C/yr"])
+
+def test_no_units(check_aggregate_df):
+    silly_variable = "Emissions|silly"
+    err_msg = re.escape("No units are associated with this variable, {}".format(silly_variable))
+    with pytest.raises(ValueError, match=err_msg):
+        _get_unit_of_variable(check_aggregate_df, silly_variable)
