@@ -3,7 +3,7 @@ Changelog
 
 master
 ------
-- (`#29 <https://github.com/znicholls/silicone/pull/29>`_) Prevent asking for infilling with the same  follower and leader variable
+- (`#29 <https://github.com/znicholls/silicone/pull/29>`_) Prevent asking for infilling with the same follower and leader variable
 - (`#28 <https://github.com/znicholls/silicone/pull/28>`_) Developed the constant ratio cruncher
 - (`#21 <https://github.com/znicholls/silicone/pull/21>`_) Developed the time-dependent ratio cruncher
 - (`#20 <https://github.com/znicholls/silicone/pull/20>`_) Clean up the quantiles cruncher and test rigorously
