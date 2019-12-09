@@ -1,6 +1,8 @@
 """
 Module for the database cruncher which uses the 'rolling windows' technique.
 """
+import warnings
+
 import numpy as np
 import pandas as pd
 import scipy.interpolate
@@ -233,7 +235,15 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
                     "to generate this filler function (`{}`)".format(db_time_col)
                 )
 
-            var_units = _get_unit_of_variable(in_iamdf, variable_leaders)[0]
+            var_units = _get_unit_of_variable(in_iamdf, variable_leaders)
+            if not var_units:
+                warnings.warn(
+                    "There is no data for {} so it cannot be infilled".format(
+                        variable_leaders
+                    )
+                )
+                return
+            var_units = var_units[0]
 
             if var_units != data_leader_unit:
                 raise ValueError(
