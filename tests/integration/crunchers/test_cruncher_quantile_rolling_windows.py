@@ -217,6 +217,15 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         with pytest.raises(ValueError, match=error_msg):
             tcruncher.derive_relationship("Emissions|CH4", variable_leaders)
 
+    def test_crunch_error_no_info_leader(self, test_db):
+        # test that crunching fails if there's no data about the lead gas in the
+        # database
+        variable_leaders = ["Emissions|CO2"]
+        tcruncher = self.tclass(test_db)
+        res = tcruncher.derive_relationship("Emissions|CH4", variable_leaders)
+        not_a_result = res(test_db.filter(variable=variable_leaders, keep=False))
+        assert not not_a_result
+
     def test_derive_relationship_error_no_info_follower(self, test_db):
         # test that crunching fails if there's no data about the follower gas in the
         # database
