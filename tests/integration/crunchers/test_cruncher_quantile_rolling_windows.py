@@ -223,8 +223,13 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         variable_leaders = ["Emissions|CO2"]
         tcruncher = self.tclass(test_db)
         res = tcruncher.derive_relationship("Emissions|CH4", variable_leaders)
-        not_a_result = res(test_db.filter(variable=variable_leaders, keep=False))
-        assert not not_a_result
+        error_msg = re.escape(
+            "There is no data for {} so it cannot be infilled".format(
+                variable_leaders
+            )
+        )
+        with pytest.raises(Warning, match=error_msg):
+            res(test_db.filter(variable=variable_leaders, keep=False))
 
     def test_derive_relationship_error_no_info_follower(self, test_db):
         # test that crunching fails if there's no data about the follower gas in the
