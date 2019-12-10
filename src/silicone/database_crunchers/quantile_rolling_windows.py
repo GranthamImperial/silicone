@@ -236,7 +236,7 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
 
             var_units = _get_unit_of_variable(in_iamdf, variable_leaders)
             if var_units.size == 0:
-                raise Warning(
+                raise ValueError(
                     "There is no data for {} so it cannot be infilled".format(
                         variable_leaders
                     )

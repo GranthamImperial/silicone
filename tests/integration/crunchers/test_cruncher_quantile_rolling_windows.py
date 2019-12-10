@@ -228,7 +228,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
                 variable_leaders
             )
         )
-        with pytest.raises(Warning, match=error_msg):
+        with pytest.raises(ValueError, match=error_msg):
             res(test_db.filter(variable=variable_leaders, keep=False))
 
     def test_derive_relationship_error_no_info_follower(self, test_db):
