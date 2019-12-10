@@ -241,7 +241,6 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
                         variable_leaders
                     )
                 )
-                return
             var_units = var_units[0]
 
             if var_units != data_leader_unit:
