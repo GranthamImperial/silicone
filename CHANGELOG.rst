@@ -3,7 +3,7 @@ Changelog
 
 master
 ------
-- (`#32 <https://github.com/znicholls/silicone/pull/322>`_) Made asking to infill a case with no data give an explicit warning
+- (`#32 <https://github.com/znicholls/silicone/pull/322>`_) Raise `ValueError` when asking to infill a case with no data
 - (`#27 <https://github.com/znicholls/silicone/pull/27>`_) Developed the constant ratio cruncher
 - (`#21 <https://github.com/znicholls/silicone/pull/21>`_) Developed the time-dependent ratio cruncher
 - (`#20 <https://github.com/znicholls/silicone/pull/20>`_) Clean up the quantiles cruncher and test rigorously
