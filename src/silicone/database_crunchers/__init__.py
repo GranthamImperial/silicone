@@ -14,3 +14,4 @@ from .quantile_rolling_windows import (  # noqa: F401
 )
 from .rms_closest import DatabaseCruncherRMSClosest  # noqa: F401
 from .time_dep_ratio import DatabaseCruncherTimeDepRatio  # noqa: F401
+from .ssp_specific_relation import DatabaseCruncherSSPSpecificRelation  # noqa: F401
