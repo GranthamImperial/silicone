@@ -9,7 +9,7 @@ from base import _DataBaseCruncherTester
 from pyam import IamDataFrame
 
 import silicone.stats
-from silicone.database_crunchers import DatabaseCruncherQuantileRollingWindows
+from silicone.database_crunchers import DatabaseCruncherSSPSpecificRelation
 
 _ma = "model_a"
 _mb = "model_b"
@@ -30,8 +30,8 @@ _ktc2f6 = "kt C2F6/yr"
 _msrvu = ["model", "scenario", "region", "variable", "unit"]
 
 
-class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
-    tclass = DatabaseCruncherQuantileRollingWindows
+class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
+    tclass = DatabaseCruncherSSPSpecificRelation
     # The units in this dataframe are intentionally illogical for C5F12
     tdb = pd.DataFrame(
         [
@@ -91,14 +91,34 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
 
     def test_derive_relationship(self, test_db):
         tcruncher = self.tclass(test_db)
-        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CH4"])
+        res = tcruncher.derive_relationship(
+            "Emissions|CO2",
+            ["Emissions|CH4"],
+            required_scenario="scen_a"
+        )
         assert callable(res)
+
+
+    def test_derive_relationship_bad_ssp(self, test_db):
+        tcruncher = self.tclass(test_db)
+        error_msg = "There is no data of the appropriate type in the database." \
+            " There may be a typo in the SSP option."
+        with pytest.raises(ValueError, match=error_msg):
+            res = tcruncher.derive_relationship(
+                "Emissions|CO2",
+                ["Emissions|CH4"],
+                required_scenario="Unfindable string"
+            )
 
     def test_derive_relationship_with_nans(self):
         tdb = self.tdb.copy()
         tdb.loc[(tdb["variable"] == _eco2) & (tdb["model"] == _ma), 2050] = np.nan
         tcruncher = self.tclass(IamDataFrame(tdb))
-        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CH4"])
+        res = tcruncher.derive_relationship(
+            "Emissions|CO2",
+            ["Emissions|CH4"],
+            required_scenario="scen_a"
+        )
         # just make sure that this runs through and no error is raised
         assert callable(res)
 
@@ -110,24 +130,24 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         )
         with pytest.raises(NotImplementedError, match=error_msg):
             tcruncher.derive_relationship(
-                "Emissions|CO2", ["Emissions|CH4", "Emissions|HFC|C5F12"]
+                "Emissions|CO2", ["Emissions|CH4", "Emissions|HFC|C5F12"], required_scenario="scen_a"
             )
 
     def test_relationship_usage(self, simple_df):
         tcruncher = self.tclass(simple_df)
         res = tcruncher.derive_relationship(
-            "Emissions|CO2", ["Emissions|CH4"], quantile=0.833, nwindows=1
+            "Emissions|CO2", ["Emissions|CH4"], quantile=0.833, nwindows=1, required_scenario="scen_a"
         )
-        expect_01 = res(simple_df)
-        assert expect_01.filter(scenario="scen_a", year=2010)["value"].iloc[0] == 0
-        assert expect_01.filter(scenario="scen_b", year=2010)["value"].iloc[0] == 1
-        assert all(expect_01.filter(year=2030)["value"] == 1000)
-        assert all(expect_01.filter(year=2050)["value"] == 5000)
+        expect_00 = res(simple_df)
+        assert expect_00.filter(scenario="scen_a", year=2010)["value"].iloc[0] == 0
+        assert expect_00.filter(scenario="scen_b", year=2010)["value"].iloc[0] == 0
+        assert all(expect_00.filter(year=2030)["value"] == 1000)
+        assert all(expect_00.filter(year=2050)["value"] == 5000)
 
         # Due to weighting the points (0, 1) at 1:5, if the mathematics is working out
         # as expected, quantiles above 5/6 will return 1 for the first case.
         res = tcruncher.derive_relationship(
-            "Emissions|CO2", ["Emissions|CH4"], quantile=0.834, nwindows=1
+            "Emissions|CO2", ["Emissions|CH4"], quantile=0.834, nwindows=1, required_scenario=["scen_a", "scen_b"]
         )
         expect_11 = res(simple_df)
         assert expect_11.filter(scenario="scen_a", year=2010)["value"].iloc[0] == 1
@@ -137,7 +157,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
 
         # Similarly quantiles below 1/6 are 0 for the second case.
         res = tcruncher.derive_relationship(
-            "Emissions|CO2", ["Emissions|CH4"], quantile=0.165, nwindows=1
+            "Emissions|CO2", ["Emissions|CH4"], quantile=0.165, nwindows=1, required_scenario=["scen_a", "scen_b"]
         )
         expect_00 = res(simple_df)
         assert expect_00.filter(scenario="scen_a", year=2010)["value"].iloc[0] == 0
@@ -149,7 +169,11 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         # Calculate the values using the cruncher for a fairly detailed dataset
         large_db = IamDataFrame(self.large_db.copy())
         tcruncher = self.tclass(large_db)
-        res = tcruncher.derive_relationship("Emissions|CH4", ["Emissions|CO2"])
+        res = tcruncher.derive_relationship(
+            "Emissions|CH4",
+            ["Emissions|CO2"],
+            required_scenario="scen_a"
+        )
         assert callable(res)
         to_find = IamDataFrame(self.small_db.copy())
         crunched = res(to_find)
@@ -175,7 +199,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         # Calculate the values using the cruncher for a fairly detailed dataset
         large_db = IamDataFrame(self.large_db.copy())
         tcruncher = self.tclass(large_db)
-        res = tcruncher.derive_relationship("Emissions|CH4", ["Emissions|CO2"])
+        res = tcruncher.derive_relationship("Emissions|CH4", ["Emissions|CO2"], required_scenario="scen_a")
         assert callable(res)
         crunched = res(large_db)
 
@@ -195,7 +219,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
     def test_derive_relationship_same_gas(self, test_db, test_downscale_df):
         # Given only a single data series, we recreate the original pattern
         tcruncher = self.tclass(test_db)
-        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CO2"])
+        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CO2"], required_scenario="scen_a")
         crunched = res(test_db)
         assert all(
             abs(
@@ -215,14 +239,14 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
             "No data for `variable_leaders` ({}) in database".format(variable_leaders)
         )
         with pytest.raises(ValueError, match=error_msg):
-            tcruncher.derive_relationship("Emissions|CH4", variable_leaders)
+            tcruncher.derive_relationship("Emissions|CH4", variable_leaders, required_scenario="scen_a")
 
     def test_crunch_error_no_info_leader(self, test_db):
         # test that crunching fails if there's no data about the lead gas in the
         # database
         variable_leaders = ["Emissions|CO2"]
         tcruncher = self.tclass(test_db)
-        res = tcruncher.derive_relationship("Emissions|CH4", variable_leaders)
+        res = tcruncher.derive_relationship("Emissions|CH4", variable_leaders, required_scenario="scen_a")
         error_msg = re.escape(
             "There is no data for {} so it cannot be infilled".format(
                 variable_leaders
@@ -241,7 +265,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
             "No data for `variable_follower` ({}) in database".format(variable_follower)
         )
         with pytest.raises(ValueError, match=error_msg):
-            tcruncher.derive_relationship(variable_follower, ["Emissions|CO2"])
+            tcruncher.derive_relationship(variable_follower, ["Emissions|CO2"], required_scenario="scen_a")
 
     @pytest.mark.parametrize("quantile", (-0.1, 1.1, 10))
     def test_derive_relationship_error_quantile_out_of_bounds(self, test_db, quantile):
@@ -252,7 +276,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
 
         with pytest.raises(ValueError, match=error_msg):
             tcruncher.derive_relationship(
-                "Emissions|CH4", ["Emissions|CO2"], quantile=quantile
+                "Emissions|CH4", ["Emissions|CO2"], quantile=quantile, required_scenario="scen_a"
             )
 
     @pytest.mark.parametrize("nwindows", (1.1, 3.1, 101.2))
@@ -264,7 +288,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
 
         with pytest.raises(ValueError, match=error_msg):
             tcruncher.derive_relationship(
-                "Emissions|CH4", ["Emissions|CO2"], nwindows=nwindows
+                "Emissions|CH4", ["Emissions|CO2"], nwindows=nwindows, required_scenario="scen_a"
             )
 
     @pytest.mark.parametrize("decay_length_factor", (0,))
@@ -279,11 +303,12 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
                 "Emissions|CH4",
                 ["Emissions|CO2"],
                 decay_length_factor=decay_length_factor,
+                required_scenario="scen_a"
             )
 
     def test_relationship_usage_wrong_unit(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db)
-        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CO2"])
+        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CO2"], required_scenario="scen_a")
 
         exp_units = test_db.filter(variable="Emissions|CO2")["unit"].iloc[0]
 
@@ -302,7 +327,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
     def test_relationship_usage_wrong_time(self):
         tdb = IamDataFrame(self.tdb)
         tcruncher = self.tclass(tdb)
-        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CO2"])
+        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CO2"], required_scenario="scen_a")
 
         test_downscale_df = IamDataFrame(self.tdb).timeseries()
         test_downscale_df.columns = test_downscale_df.columns.map(
@@ -322,7 +347,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
     ):
         tcruncher = self.tclass(test_db.filter(year=2030, keep=False))
 
-        filler = tcruncher.derive_relationship("Emissions|CH4", ["Emissions|CO2"])
+        filler = tcruncher.derive_relationship("Emissions|CH4", ["Emissions|CO2"], required_scenario="scen_a")
 
         test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db)
 
