@@ -1,6 +1,5 @@
 """
-Module for the database cruncher which finds the rolling windows quantile in the data
-for a subset of scenarios
+Module for the database cruncher which makes a linear interpolator from a subset of scenarios
 """
 
 import numpy as np
@@ -15,20 +14,53 @@ from . import DatabaseCruncherQuantileRollingWindows
 
 class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
     """
-    Database cruncher which pre-filters to only use data from specific scenarios.
-    Uses the 'rolling windows' technique.
+    Database cruncher which pre-filters to only use data from specific scenarios, then
+    makes a linear interpolator to return values from that set of scenarios. Uses mean
+    values in the case of repeated leader values and returns the outermost values for
+    x-values beyond those found in the input data.
 
-    The nature of the cruncher itself can be found in the 'rolling windows' cruncher
-    documentation.
     """
+
+
+    def _make_interpolator(self, variable_follower, variable_leaders, wide_db, time_col):
+        derived_relationships = {}
+        for db_time, dbtdf in wide_db.groupby(time_col):
+            xs = dbtdf[variable_leaders].values.squeeze()
+            ys = dbtdf[variable_follower].values.squeeze()
+            if xs.shape != ys.shape:
+                raise NotImplementedError(
+                    "Having more than one `variable_leaders` is not yet implemented"
+                )
+            if not xs.shape:
+                # 0D-array, so we can return a single value
+                xs = np.array([xs])
+                ys = np.array([ys])
+            # Ensure that any duplicates are replaced by their average value
+            xs_pandas = pd.Series(xs)
+            for x_dup in xs_pandas[xs_pandas.duplicated()]:
+                inds = np.asarray(xs == x_dup).nonzero()
+                ys[inds[0]] = ys[inds].mean()
+                xs = np.delete(xs, inds[1:])
+                ys = np.delete(ys, inds[1:])
+            if xs.shape == (1,):
+                # If there is only one point, we must duplicate the data for interpolate
+                xs = np.append(xs, xs)
+                ys = np.append(ys, ys)
+            derived_relationships[db_time] = scipy.interpolate.interp1d(
+                xs,
+                ys,
+                bounds_error=False,
+                fill_value=(
+                    max(ys),
+                    min(ys)
+                ),
+            )
+        return derived_relationships
 
     def derive_relationship(
         self,
         variable_follower,
         variable_leaders,
-        quantile=0.5,
-        nwindows=10,
-        decay_length_factor=1,
         required_scenario="*"
     ):
         """
@@ -43,19 +75,6 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
         variable_leaders : list[str]
             The variable(s) we want to use in order to infer timeseries of
             ``variable_follower`` (e.g. ``["Emissions|CO2"]``).
-
-        quantile : float
-            The quantile to return in each window.
-
-        nboxes : int
-            The number of windows to use when calculating the relationship between the
-            follower and lead gases.
-
-        decay_length_factor : float
-            Parameter which controls how strongly points away from the window's centre
-            should be weighted compared to points at the centre. Larger values give
-            points further away increasingly less weight, smaller values give points
-            further away increasingly more weight.
 
         required_scenario : str or list[str]
             The string which all accepted scenarios are required to match. This may have
@@ -73,27 +92,95 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
         Raises
         ------
         ValueError
-            There is no data for ``variable_leaders`` or ``variable_follower`` in the
-            database.
-
-        ValueError
-            ``quantile`` is not between 0 and 1.
-
-        ValueError
-            ``nwindows`` is not equivalent to an integer.
-
-        ValueError
-            ``decay_length_factor`` is 0.
+            There is no data of the appropriate type in the database.
+             There may be a typo in the SSP option.
         """
-        use_db = self._db.filter(scenario=required_scenario)
+        if len(variable_leaders) != 1:
+            raise NotImplementedError(
+                "Having more than one `variable_leaders` is not yet implemented"
+            )
+        use_db = self._db.filter(
+            scenario=required_scenario,
+            variable=[variable_leaders[0], variable_follower]
+        )
         if use_db.data.empty:
             raise ValueError("There is no data of the appropriate type in the database."
                              " There may be a typo in the SSP option.")
-        rolling_windows_cruncher = DatabaseCruncherQuantileRollingWindows(use_db)
-        return rolling_windows_cruncher.derive_relationship(
-            variable_follower,
-            variable_leaders,
-            quantile=quantile,
-            nwindows=nwindows,
-            decay_length_factor=decay_length_factor,
-        )
+        leader_units = _get_unit_of_variable(use_db, variable_leaders)
+        follower_units = _get_unit_of_variable(use_db, variable_follower)
+        if len(leader_units) == 0:
+            raise ValueError("No data for `variable_leaders` ({}) in database".format(variable_leaders))
+        if len(follower_units) == 0:
+            raise ValueError("No data for `variable_follower` ({}) in database".format(
+                variable_follower))
+        leader_units = leader_units[0]
+        use_db_time_col = use_db.time_col
+        columns = "variable"
+        idx = list(set(use_db.data.columns) - {columns, "value", "unit"})
+        use_db = use_db.pivot_table(index=idx, columns=columns, aggfunc="sum")
+        # make sure we don't have empty strings floating around (pyam bug?)
+        use_db = use_db.applymap(lambda x: np.nan if isinstance(x, str) else x)
+        use_db = use_db.dropna(axis=0)
+        interpolators = self._make_interpolator(variable_follower, variable_leaders, use_db, use_db_time_col)
+
+        def filler(in_iamdf):
+            """
+            Filler function derived from :obj:`DatabaseCruncherSSPSpecificRelation`.
+
+            Parameters
+            ----------
+            in_iamdf : :obj:`pyam.IamDataFrame`
+                Input data to fill data in
+
+            Returns
+            -------
+            :obj:`pyam.IamDataFrame`
+                Filled in data (without original source data)
+
+            Raises
+            ------
+            ValueError
+                The key db_times for filling are not in ``in_iamdf``.
+            """
+            if use_db_time_col != in_iamdf.time_col:
+                raise ValueError(
+                    "`in_iamdf` time column must be the same as the time column used "
+                    "to generate this filler function (`{}`)".format(use_db_time_col)
+                )
+
+            var_units = _get_unit_of_variable(in_iamdf, variable_leaders)
+            if var_units.size == 0:
+                raise ValueError(
+                    "There is no data for {} so it cannot be infilled".format(
+                        variable_leaders
+                    )
+                )
+            var_units = var_units[0]
+            lead_var = in_iamdf.filter(variable=variable_leaders)
+            assert (
+                    lead_var["unit"].nunique() == 1
+            ), "There are multiple units for the lead variable."
+            if var_units != leader_units:
+                raise ValueError(
+                    "Units of lead variable is meant to be `{}`, found `{}`".format(
+                        leader_units, var_units
+                    )
+                )
+            times_needed = set(in_iamdf.data[in_iamdf.time_col])
+            if any(x not in interpolators.keys() for x in times_needed):
+                raise ValueError(
+                    "Not all required timepoints are present in the database we "\
+                    "crunched, we crunched \n\t`{}`\nbut you passed in \n\t{}".format(
+                        list(interpolators.keys()),
+                        in_iamdf.timeseries().columns.tolist(),
+                    )
+                )
+            output_ts = lead_var.timeseries()
+            for time in times_needed:
+                output_ts[time] = interpolators[time](output_ts[time])
+            output_ts.reset_index(inplace=True)
+            output_ts["variable"] = variable_follower
+            output_ts["unit"] = follower_units[0]
+            return IamDataFrame(output_ts)
+
+        return filler
