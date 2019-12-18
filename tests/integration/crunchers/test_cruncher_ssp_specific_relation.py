@@ -136,7 +136,7 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
     def test_relationship_usage(self, simple_df):
         tcruncher = self.tclass(simple_df)
         res = tcruncher.derive_relationship(
-            "Emissions|CO2", ["Emissions|CH4"], quantile=0.833, nwindows=1, required_scenario="scen_a"
+            "Emissions|CO2", ["Emissions|CH4"],required_scenario="scen_a"
         )
         expect_00 = res(simple_df)
         assert expect_00.filter(scenario="scen_a", year=2010)["value"].iloc[0] == 0
@@ -144,26 +144,15 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
         assert all(expect_00.filter(year=2030)["value"] == 1000)
         assert all(expect_00.filter(year=2050)["value"] == 5000)
 
-        # Due to weighting the points (0, 1) at 1:5, if the mathematics is working out
-        # as expected, quantiles above 5/6 will return 1 for the first case.
+        # If we include data from scen_b, we then get a slightly different answer
         res = tcruncher.derive_relationship(
-            "Emissions|CO2", ["Emissions|CH4"], quantile=0.834, nwindows=1, required_scenario=["scen_a", "scen_b"]
+            "Emissions|CO2", ["Emissions|CH4"], required_scenario=["scen_a", "scen_b"]
         )
-        expect_11 = res(simple_df)
-        assert expect_11.filter(scenario="scen_a", year=2010)["value"].iloc[0] == 1
-        assert expect_11.filter(scenario="scen_b", year=2010)["value"].iloc[0] == 1
-        assert all(expect_11.filter(year=2030)["value"] == 1000)
-        assert all(expect_11.filter(year=2050)["value"] == 5000)
-
-        # Similarly quantiles below 1/6 are 0 for the second case.
-        res = tcruncher.derive_relationship(
-            "Emissions|CO2", ["Emissions|CH4"], quantile=0.165, nwindows=1, required_scenario=["scen_a", "scen_b"]
-        )
-        expect_00 = res(simple_df)
-        assert expect_00.filter(scenario="scen_a", year=2010)["value"].iloc[0] == 0
-        assert expect_00.filter(scenario="scen_b", year=2010)["value"].iloc[0] == 0
-        assert all(expect_00.filter(year=2030)["value"] == 1000)
-        assert all(expect_00.filter(year=2050)["value"] == 5000)
+        expect_01 = res(simple_df)
+        assert expect_01.filter(scenario="scen_a", year=2010)["value"].iloc[0] == 0
+        assert expect_01.filter(scenario="scen_b", year=2010)["value"].iloc[0] == 1
+        assert all(expect_01.filter(year=2030)["value"] == 1000)
+        assert all(expect_01.filter(year=2050)["value"] == 5000)
 
     def test_numerical_relationship(self):
         # Calculate the values using the cruncher for a fairly detailed dataset
@@ -266,45 +255,6 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
         )
         with pytest.raises(ValueError, match=error_msg):
             tcruncher.derive_relationship(variable_follower, ["Emissions|CO2"], required_scenario="scen_a")
-
-    @pytest.mark.parametrize("quantile", (-0.1, 1.1, 10))
-    def test_derive_relationship_error_quantile_out_of_bounds(self, test_db, quantile):
-        tcruncher = self.tclass(test_db)
-        error_msg = re.escape(
-            "Invalid quantile ({}), it must be in [0, 1]".format(quantile)
-        )
-
-        with pytest.raises(ValueError, match=error_msg):
-            tcruncher.derive_relationship(
-                "Emissions|CH4", ["Emissions|CO2"], quantile=quantile, required_scenario="scen_a"
-            )
-
-    @pytest.mark.parametrize("nwindows", (1.1, 3.1, 101.2))
-    def test_derive_relationship_nwindows_not_integer(self, test_db, nwindows):
-        tcruncher = self.tclass(test_db)
-        error_msg = re.escape(
-            "Invalid nwindows ({}), it must be an integer".format(nwindows)
-        )
-
-        with pytest.raises(ValueError, match=error_msg):
-            tcruncher.derive_relationship(
-                "Emissions|CH4", ["Emissions|CO2"], nwindows=nwindows, required_scenario="scen_a"
-            )
-
-    @pytest.mark.parametrize("decay_length_factor", (0,))
-    def test_derive_relationship_error_decay_length_factor_zero(
-        self, test_db, decay_length_factor
-    ):
-        tcruncher = self.tclass(test_db)
-        error_msg = re.escape("decay_length_factor must not be zero")
-
-        with pytest.raises(ValueError, match=error_msg):
-            tcruncher.derive_relationship(
-                "Emissions|CH4",
-                ["Emissions|CO2"],
-                decay_length_factor=decay_length_factor,
-                required_scenario="scen_a"
-            )
 
     def test_relationship_usage_wrong_unit(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db)
