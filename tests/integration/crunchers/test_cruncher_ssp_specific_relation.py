@@ -224,6 +224,24 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
             < 1e15
         )
 
+    def test__make_interpolator(self, test_db):
+        variable_leaders = "variable_leaders"
+        variable_follower = "variable_follower"
+        time_col = "years"
+        x_set = np.array([1, 1, 2, 3])
+        y_set = np.array([6, 4, 3, 2])
+        times = np.array([1, 1, 1, 1])
+        wide_db = pd.DataFrame({variable_leaders: x_set, variable_follower: y_set, time_col: times})
+
+        # Illustrate the expected relationship between the numbers above, mapping 1 to
+        # the average of 6 and 4, i.e. 5.
+        input = np.array([5, 4, 3, 2, 2.5, 1, 0])
+        expected_output = np.array([2, 2, 2, 3, 2.5, 5, 5])
+        cruncher = self.tclass(test_db)
+        interpolator = cruncher._make_interpolator(variable_follower, variable_leaders, wide_db, time_col)
+        output = interpolator[1](input)
+        assert all(abs(output - expected_output) < 1e-10)
+
     def test_derive_relationship_error_no_info_leader(self, test_db):
         # test that crunching fails if there's no data about the lead gas in the
         # database
