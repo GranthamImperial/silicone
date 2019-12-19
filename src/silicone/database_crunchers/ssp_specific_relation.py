@@ -38,10 +38,11 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
             # Ensure that any duplicates are replaced by their average value
             xs_pandas = pd.Series(xs)
             for x_dup in xs_pandas[xs_pandas.duplicated()]:
-                inds = np.asarray(xs == x_dup).nonzero()
+                inds = np.asarray(xs == x_dup).nonzero()[0]
                 ys[inds[0]] = ys[inds].mean()
                 xs = np.delete(xs, inds[1:])
                 ys = np.delete(ys, inds[1:])
+            xs, ys = map(np.array, zip(*sorted(zip(xs, ys))))
             if xs.shape == (1,):
                 # If there is only one point, we must duplicate the data for interpolate
                 xs = np.append(xs, xs)
@@ -51,9 +52,10 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
                 ys,
                 bounds_error=False,
                 fill_value=(
-                    max(ys),
-                    min(ys)
+                    ys[0],
+                    ys[-1]
                 ),
+                assume_sorted=True
             )
         return derived_relationships
 
@@ -78,7 +80,7 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
 
         required_scenario : str or list[str]
             The string which all accepted scenarios are required to match. This may have
-            *s to represent wild cards.
+            *s to represent wild cards. It defaults to accept all scenarios.
 
         Returns
         -------
