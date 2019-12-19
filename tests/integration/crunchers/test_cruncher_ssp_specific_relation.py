@@ -188,7 +188,7 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
         # Calculate the values using the cruncher for a fairly detailed dataset
         large_db = IamDataFrame(self.large_db.copy())
         tcruncher = self.tclass(large_db)
-        res = tcruncher.derive_relationship("Emissions|CH4", ["Emissions|CO2"], required_scenario="scen_a")
+        res = tcruncher.derive_relationship("Emissions|CH4", ["Emissions|CO2"])
         assert callable(res)
         crunched = res(large_db)
 
@@ -199,11 +199,17 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
         extreme_crunched = res(modify_extreme_db)
         # Check results are the same
         assert all(crunched["value"] == extreme_crunched["value"])
+        # Also check that the results are correct
+        assert crunched["value"][crunched["scenario"]=="scen_b"].iloc[0] == 170
+
         # Repeat with reducing the minimum value
         ind = modify_extreme_db["value"].idxmin
         modify_extreme_db["value"].loc[ind] -= 10
         extreme_crunched = res(modify_extreme_db)
         assert all(crunched["value"] == extreme_crunched["value"])
+        # There are two smallest points, so we expect to see them equal the mean of the
+        # input values for these points
+        assert crunched["value"][crunched["scenario"] == "scen_e"].iloc[0] == 185
 
     def test_derive_relationship_same_gas(self, test_db, test_downscale_df):
         # Given only a single data series, we recreate the original pattern
