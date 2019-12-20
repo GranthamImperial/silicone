@@ -242,6 +242,16 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
         output = interpolator[1](input)
         assert all(abs(output - expected_output) < 1e-10)
 
+    def test_find_matching_scenarios(self, test_db, simple_df):
+        variable_leaders = ["Emissions|CO2"]
+        variable_follower = "Emissions|CH4"
+        test_db = self._adjust_time_style_to_match(test_db, simple_df)
+        time_col = simple_df.time_col
+        timeseries_db = simple_df.timeseries()
+        cruncher = self.tclass(test_db)
+        scenarios = cruncher._find_matching_scenarios(timeseries_db, variable_follower, variable_leaders, time_col, ["scen_a", "scen_b"])
+        assert scenarios == "scen_a"
+
     def test_derive_relationship_error_no_info_leader(self, test_db):
         # test that crunching fails if there's no data about the lead gas in the
         # database
