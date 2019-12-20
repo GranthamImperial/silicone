@@ -9,7 +9,6 @@ from pyam import IamDataFrame
 
 from .base import _DatabaseCruncher
 from ..utils import _get_unit_of_variable
-from . import DatabaseCruncherQuantileRollingWindows
 
 
 class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
@@ -20,6 +19,54 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
     x-values beyond those found in the input data.
 
     """
+    def _find_matching_scenarios(
+            self,
+            to_compare_timeseries,
+            variable_follower,
+            variable_leaders,
+            time_col,
+            classify_scenarios=["SSP1*", "SSP2*", "SSP3*", "SSP4*", "SSP5*"]
+    ):
+        """
+        Groups scenarios into different classifications and uses those to work out which
+        group contains a trendline most similar to the data.
+
+        :param to_compare_timeseries
+        :param variable_follower:
+        :param variable_leaders:
+        :return: string
+        """
+        #assert all(x in to_compare_timeseries.columns for x in [variable_follower] + variable_leaders), \
+        #    "Not all required data is present in compared series"
+        assert all(x in self._db.variables().values for x in [variable_follower] + variable_leaders), \
+            "Not all required data is present in compared series"
+        times_needed = set(to_compare_timeseries.columns)
+        if any(x not in self._db.data[time_col].values for x in times_needed):
+            raise ValueError(
+                "Not all required timepoints are present in the database we " \
+                "crunched, we have \n\t`{}`\nbut you passed in \n\t{}".format(
+                    list(set(self._db.data[time_col])),
+                    list(set(to_compare_timeseries.columns)),
+                )
+            )
+
+        scenario_rating = {}
+        time_col = self._db.time_col
+        for scenario in classify_scenarios:
+            scenario_data = self._db.filter(
+                scenario=scenario,
+                variable=variable_leaders + [variable_follower]
+            )
+            wide_db = self._make_wide_db(scenario_data)
+            squared_dif = 0
+            for leader in variable_leaders:
+                all_interps = self._make_interpolator(leader, variable_follower, wide_db, time_col)
+                # TODO: consider weighting by GWP* or similar. Currently no sensible weighting.
+                for time in to_compare_timeseries[leader]:
+                    squared_dif += (to_compare_timeseries[leader].loc() - all_interps[time](to_compare_timeseries[variable_follower]))**2
+            scenario_rating[scenario] = squared_dif
+        min_scen = scenario_rating.keys()[scenario_rating.values() == min(scenario_rating.values())][0]
+        return min_scen
 
 
     def _make_interpolator(self, variable_follower, variable_leaders, wide_db, time_col):
@@ -117,12 +164,7 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
                 variable_follower))
         leader_units = leader_units[0]
         use_db_time_col = use_db.time_col
-        columns = "variable"
-        idx = list(set(use_db.data.columns) - {columns, "value", "unit"})
-        use_db = use_db.pivot_table(index=idx, columns=columns, aggfunc="sum")
-        # make sure we don't have empty strings floating around (pyam bug?)
-        use_db = use_db.applymap(lambda x: np.nan if isinstance(x, str) else x)
-        use_db = use_db.dropna(axis=0)
+        use_db = self._make_wide_db(use_db)
         interpolators = self._make_interpolator(variable_follower, variable_leaders, use_db, use_db_time_col)
 
         def filler(in_iamdf):
@@ -186,3 +228,18 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
             return IamDataFrame(output_ts)
 
         return filler
+
+    def _make_wide_db(self, use_db):
+        """
+        Converts an IamDataFrame into a pandas DataFrame that describes the timeseries
+        of variables in index-labelled values.
+        :param use_db: PyamDataFrame
+        :return: pandas DataFrame
+        """
+        columns = "variable"
+        idx = list(set(use_db.data.columns) - {columns, "value", "unit"})
+        use_db = use_db.pivot_table(index=idx, columns=columns, aggfunc="sum")
+        # make sure we don't have empty strings floating around (pyam bug?)
+        use_db = use_db.applymap(lambda x: np.nan if isinstance(x, str) else x)
+        use_db = use_db.dropna(axis=0)
+        return use_db
