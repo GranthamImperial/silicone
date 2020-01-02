@@ -242,15 +242,48 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
         output = interpolator[1](input)
         assert all(abs(output - expected_output) < 1e-10)
 
-    def test_find_matching_scenarios(self, test_db, simple_df):
+    def test_find_matching_scenarios(self, simple_df):
+        variable_leaders = ["Emissions|CO2"]
+        variable_follower = "Emissions|CH4"
+        time_col = simple_df.time_col
+        cruncher = self.tclass(simple_df)
+        half_simple_df = simple_df.filter(scenario="scen_a")
+        scenarios = cruncher._find_matching_scenarios(half_simple_df, variable_follower, variable_leaders, time_col, ["scen_a", "scen_b"])
+        assert scenarios == "scen_a"
+        half_simple_df.data["value"].loc[0] = 0.49
+        scenarios = cruncher._find_matching_scenarios(half_simple_df, variable_follower,
+                                                      variable_leaders, time_col,
+                                                      ["scen_a", "scen_b"])
+        assert scenarios == "scen_a"
+        half_simple_df.data["value"].loc[0] = 0.51
+        scenarios = cruncher._find_matching_scenarios(half_simple_df, variable_follower,
+                                                      variable_leaders, time_col,
+                                                      ["scen_a", "scen_b"])
+        assert scenarios == "scen_b"
+
+    def test_find_matching_scenarios_no_data_for_time(self, simple_df):
+        variable_leaders = ["Emissions|CO2"]
+        variable_follower = "Emissions|CH4"
+        time_col = simple_df.time_col
+        cruncher = self.tclass(simple_df)
+        half_simple_df = simple_df.filter(scenario="scen_a")
+        half_simple_df.data[time_col].loc[0] = 0
+        with pytest.raises(ValueError):
+            cruncher._find_matching_scenarios(half_simple_df, variable_follower,
+                                                      variable_leaders, time_col,
+                                                      ["scen_a", "scen_b"])
+
+    def test_find_matching_scenarios_complicated(self, test_db, simple_df):
+        #TODO: check that this is true
         variable_leaders = ["Emissions|CO2"]
         variable_follower = "Emissions|CH4"
         test_db = self._adjust_time_style_to_match(test_db, simple_df)
         time_col = simple_df.time_col
-        timeseries_db = simple_df.timeseries()
         cruncher = self.tclass(test_db)
-        scenarios = cruncher._find_matching_scenarios(timeseries_db, variable_follower, variable_leaders, time_col, ["scen_a", "scen_b"])
-        assert scenarios == "scen_a"
+        scenarios = cruncher._find_matching_scenarios(simple_df, variable_follower,
+                                                      variable_leaders, time_col,
+                                                      ["scen_a", "scen_b"])
+        assert scenarios == "scen_b"
 
     def test_derive_relationship_error_no_info_leader(self, test_db):
         # test that crunching fails if there's no data about the lead gas in the
