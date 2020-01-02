@@ -21,17 +21,19 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
     """
     def _find_matching_scenarios(
             self,
-            to_compare_timeseries,
+            to_compare_df,
             variable_follower,
             variable_leaders,
             time_col,
-            classify_scenarios=["SSP1*", "SSP2*", "SSP3*", "SSP4*", "SSP5*"]
+            classify_scenarios,
     ):
         """
         Groups scenarios into different classifications and uses those to work out which
         group contains a trendline most similar to the data.
+        In the event of a tie, it returns the scenario name that occurs higher in the
+        input data.
 
-        :param to_compare_timeseries
+        :param to_compare_df
         :param variable_follower:
         :param variable_leaders:
         :return: string
@@ -40,33 +42,34 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
         #    "Not all required data is present in compared series"
         assert all(x in self._db.variables().values for x in [variable_follower] + variable_leaders), \
             "Not all required data is present in compared series"
-        times_needed = set(to_compare_timeseries.columns)
+        times_needed = set(to_compare_df.data[time_col])
         if any(x not in self._db.data[time_col].values for x in times_needed):
             raise ValueError(
                 "Not all required timepoints are present in the database we " \
-                "crunched, we have \n\t`{}`\nbut you passed in \n\t{}".format(
+                "crunched, we have `{}` but you passed in {}".format(
                     list(set(self._db.data[time_col])),
-                    list(set(to_compare_timeseries.columns)),
+                    list(set(to_compare_df.data[time_col])),
                 )
             )
 
         scenario_rating = {}
         time_col = self._db.time_col
+        convenient_compare_db = self._make_wide_db(to_compare_df).reset_index()
         for scenario in classify_scenarios:
-            scenario_data = self._db.filter(
+            scenario_db = self._db.filter(
                 scenario=scenario,
                 variable=variable_leaders + [variable_follower]
             )
-            wide_db = self._make_wide_db(scenario_data)
+            wide_db = self._make_wide_db(scenario_db)
             squared_dif = 0
             for leader in variable_leaders:
-                all_interps = self._make_interpolator(leader, variable_follower, wide_db, time_col)
+                all_interps = self._make_interpolator(variable_follower, leader, wide_db, time_col)
                 # TODO: consider weighting by GWP* or similar. Currently no sensible weighting.
-                for time in to_compare_timeseries[leader]:
-                    squared_dif += (to_compare_timeseries[leader].loc() - all_interps[time](to_compare_timeseries[variable_follower]))**2
+                for row in convenient_compare_db.iterrows():
+                    squared_dif += (row[1][variable_follower] - all_interps[row[1][time_col]](row[1][leader]))**2
             scenario_rating[scenario] = squared_dif
-        min_scen = scenario_rating.keys()[scenario_rating.values() == min(scenario_rating.values())][0]
-        return min_scen
+        ordered_scen = sorted(scenario_rating.items(), key=lambda item: item[1])
+        return ordered_scen[0][0]
 
 
     def _make_interpolator(self, variable_follower, variable_leaders, wide_db, time_col):
