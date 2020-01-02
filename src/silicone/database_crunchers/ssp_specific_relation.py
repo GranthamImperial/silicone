@@ -15,38 +15,70 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
     """
     Database cruncher which pre-filters to only use data from specific scenarios, then
     makes a linear interpolator to return values from that set of scenarios. Uses mean
-    values in the case of repeated leader values and returns the outermost values for
-    x-values beyond those found in the input data.
+    values in the case of repeated leader values. Returns the follower values at the
+    extreme leader values for leader values more extreme than that found in the input
+    data.
 
     """
+
     def _find_matching_scenarios(
-            self,
-            to_compare_df,
-            variable_follower,
-            variable_leaders,
-            time_col,
-            classify_scenarios,
+        self,
+        to_compare_df,
+        variable_follower,
+        variable_leaders,
+        time_col,
+        classify_scenarios,
     ):
         """
         Groups scenarios into different classifications and uses those to work out which
         group contains a trendline most similar to the data.
-        In the event of a tie, it returns the scenario name that occurs higher in the
+        In the event of a tie, it returns the scenario name that occurs earlier in the
         input data.
 
-        :param to_compare_df
-        :param variable_follower:
-        :param variable_leaders:
-        :return: string
+        Parameters
+        ----------
+        to_compare_df : :obj:`pyam.IamDataFrame`
+            The dataframe we wish to find the scenario group closest to. May contain one
+            or more scenarios, we minimise the least squared errors for all the data
+            colleectively.
+
+        variable_follower : str
+            The variable we want to interpolate and compare to the value in to_compare_df
+
+        variable_leaders : list[str]
+            The variable(s) we want to use to construct the interpolation
+            (e.g. ``["Emissions|CO2"]``). In the event that there are multiple, we
+            interpolate with each one separately and minimise the sum of the squared
+            errors.
+
+        classify_scenarios : list[str]
+            The names of scenarios or groups of scenarios that are possible matches.
+            This may have *s to represent wild cards, hence multiple scenarios will have
+            all their data combined to make the interpolator.
+
+        Returns
+        -------
+        String
+            The scenario-specifying string that best matches the data.
+
+        Raises
+        ------
+        ValueError
+            Not all required timepoints are present in the database we crunched, we have
+             `{dates we have}` but you passed in `{dates we need}`."
         """
-        #assert all(x in to_compare_timeseries.columns for x in [variable_follower] + variable_leaders), \
-        #    "Not all required data is present in compared series"
-        assert all(x in self._db.variables().values for x in [variable_follower] + variable_leaders), \
-            "Not all required data is present in compared series"
+        assert (
+            len(classify_scenarios) > 1
+        ), "There must be multiple options for classify_scenario"
+        assert all(
+            x in self._db.variables().values
+            for x in [variable_follower] + variable_leaders
+        ), "Not all required data is present in compared series"
         times_needed = set(to_compare_df.data[time_col])
         if any(x not in self._db.data[time_col].values for x in times_needed):
             raise ValueError(
-                "Not all required timepoints are present in the database we " \
-                "crunched, we have `{}` but you passed in {}".format(
+                "Not all required timepoints are present in the database we "
+                "crunched, we have `{}` but you passed in {}.".format(
                     list(set(self._db.data[time_col])),
                     list(set(to_compare_df.data[time_col])),
                 )
@@ -57,22 +89,27 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
         convenient_compare_db = self._make_wide_db(to_compare_df).reset_index()
         for scenario in classify_scenarios:
             scenario_db = self._db.filter(
-                scenario=scenario,
-                variable=variable_leaders + [variable_follower]
+                scenario=scenario, variable=variable_leaders + [variable_follower]
             )
             wide_db = self._make_wide_db(scenario_db)
             squared_dif = 0
             for leader in variable_leaders:
-                all_interps = self._make_interpolator(variable_follower, leader, wide_db, time_col)
+                all_interps = self._make_interpolator(
+                    variable_follower, leader, wide_db, time_col
+                )
                 # TODO: consider weighting by GWP* or similar. Currently no sensible weighting.
                 for row in convenient_compare_db.iterrows():
-                    squared_dif += (row[1][variable_follower] - all_interps[row[1][time_col]](row[1][leader]))**2
+                    squared_dif += (
+                        row[1][variable_follower]
+                        - all_interps[row[1][time_col]](row[1][leader])
+                    ) ** 2
             scenario_rating[scenario] = squared_dif
         ordered_scen = sorted(scenario_rating.items(), key=lambda item: item[1])
         return ordered_scen[0][0]
 
-
-    def _make_interpolator(self, variable_follower, variable_leaders, wide_db, time_col):
+    def _make_interpolator(
+        self, variable_follower, variable_leaders, wide_db, time_col
+    ):
         derived_relationships = {}
         for db_time, dbtdf in wide_db.groupby(time_col):
             xs = dbtdf[variable_leaders].values.squeeze()
@@ -101,19 +138,13 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
                 xs,
                 ys,
                 bounds_error=False,
-                fill_value=(
-                    ys[0],
-                    ys[-1]
-                ),
-                assume_sorted=True
+                fill_value=(ys[0], ys[-1]),
+                assume_sorted=True,
             )
         return derived_relationships
 
     def derive_relationship(
-        self,
-        variable_follower,
-        variable_leaders,
-        required_scenario="*"
+        self, variable_follower, variable_leaders, required_scenario="*"
     ):
         """
         Derive the relationship between two variables from the database.
@@ -153,22 +184,33 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
             )
         use_db = self._db.filter(
             scenario=required_scenario,
-            variable=[variable_leaders[0], variable_follower]
+            variable=[variable_leaders[0], variable_follower],
         )
         if use_db.data.empty:
-            raise ValueError("There is no data of the appropriate type in the database."
-                             " There may be a typo in the SSP option.")
+            raise ValueError(
+                "There is no data of the appropriate type in the database."
+                " There may be a typo in the SSP option."
+            )
         leader_units = _get_unit_of_variable(use_db, variable_leaders)
         follower_units = _get_unit_of_variable(use_db, variable_follower)
         if len(leader_units) == 0:
-            raise ValueError("No data for `variable_leaders` ({}) in database".format(variable_leaders))
+            raise ValueError(
+                "No data for `variable_leaders` ({}) in database".format(
+                    variable_leaders
+                )
+            )
         if len(follower_units) == 0:
-            raise ValueError("No data for `variable_follower` ({}) in database".format(
-                variable_follower))
+            raise ValueError(
+                "No data for `variable_follower` ({}) in database".format(
+                    variable_follower
+                )
+            )
         leader_units = leader_units[0]
         use_db_time_col = use_db.time_col
         use_db = self._make_wide_db(use_db)
-        interpolators = self._make_interpolator(variable_follower, variable_leaders, use_db, use_db_time_col)
+        interpolators = self._make_interpolator(
+            variable_follower, variable_leaders, use_db, use_db_time_col
+        )
 
         def filler(in_iamdf):
             """
@@ -205,7 +247,7 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
             var_units = var_units[0]
             lead_var = in_iamdf.filter(variable=variable_leaders)
             assert (
-                    lead_var["unit"].nunique() == 1
+                lead_var["unit"].nunique() == 1
             ), "There are multiple units for the lead variable."
             if var_units != leader_units:
                 raise ValueError(
@@ -216,7 +258,7 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
             times_needed = set(in_iamdf.data[in_iamdf.time_col])
             if any(x not in interpolators.keys() for x in times_needed):
                 raise ValueError(
-                    "Not all required timepoints are present in the database we "\
+                    "Not all required timepoints are present in the database we "
                     "crunched, we crunched \n\t`{}`\nbut you passed in \n\t{}".format(
                         list(interpolators.keys()),
                         in_iamdf.timeseries().columns.tolist(),

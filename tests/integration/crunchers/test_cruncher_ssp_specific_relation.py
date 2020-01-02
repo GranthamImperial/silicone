@@ -92,22 +92,21 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
     def test_derive_relationship(self, test_db):
         tcruncher = self.tclass(test_db)
         res = tcruncher.derive_relationship(
-            "Emissions|CO2",
-            ["Emissions|CH4"],
-            required_scenario="scen_a"
+            "Emissions|CO2", ["Emissions|CH4"], required_scenario="scen_a"
         )
         assert callable(res)
 
-
     def test_derive_relationship_bad_ssp(self, test_db):
         tcruncher = self.tclass(test_db)
-        error_msg = "There is no data of the appropriate type in the database." \
+        error_msg = (
+            "There is no data of the appropriate type in the database."
             " There may be a typo in the SSP option."
+        )
         with pytest.raises(ValueError, match=error_msg):
             res = tcruncher.derive_relationship(
                 "Emissions|CO2",
                 ["Emissions|CH4"],
-                required_scenario="Unfindable string"
+                required_scenario="Unfindable string",
             )
 
     def test_derive_relationship_with_nans(self):
@@ -115,9 +114,7 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
         tdb.loc[(tdb["variable"] == _eco2) & (tdb["model"] == _ma), 2050] = np.nan
         tcruncher = self.tclass(IamDataFrame(tdb))
         res = tcruncher.derive_relationship(
-            "Emissions|CO2",
-            ["Emissions|CH4"],
-            required_scenario="scen_a"
+            "Emissions|CO2", ["Emissions|CH4"], required_scenario="scen_a"
         )
         # just make sure that this runs through and no error is raised
         assert callable(res)
@@ -130,13 +127,15 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
         )
         with pytest.raises(NotImplementedError, match=error_msg):
             tcruncher.derive_relationship(
-                "Emissions|CO2", ["Emissions|CH4", "Emissions|HFC|C5F12"], required_scenario="scen_a"
+                "Emissions|CO2",
+                ["Emissions|CH4", "Emissions|HFC|C5F12"],
+                required_scenario="scen_a",
             )
 
     def test_relationship_usage(self, simple_df):
         tcruncher = self.tclass(simple_df)
         res = tcruncher.derive_relationship(
-            "Emissions|CO2", ["Emissions|CH4"],required_scenario="scen_a"
+            "Emissions|CO2", ["Emissions|CH4"], required_scenario="scen_a"
         )
         expect_00 = res(simple_df)
         assert expect_00.filter(scenario="scen_a", year=2010)["value"].iloc[0] == 0
@@ -159,9 +158,7 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
         large_db = IamDataFrame(self.large_db.copy())
         tcruncher = self.tclass(large_db)
         res = tcruncher.derive_relationship(
-            "Emissions|CH4",
-            ["Emissions|CO2"],
-            required_scenario="scen_a"
+            "Emissions|CH4", ["Emissions|CO2"], required_scenario="scen_a"
         )
         assert callable(res)
         to_find = IamDataFrame(self.small_db.copy())
@@ -200,7 +197,7 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
         # Check results are the same
         assert all(crunched["value"] == extreme_crunched["value"])
         # Also check that the results are correct
-        assert crunched["value"][crunched["scenario"]=="scen_b"].iloc[0] == 170
+        assert crunched["value"][crunched["scenario"] == "scen_b"].iloc[0] == 170
 
         # Repeat with reducing the minimum value
         ind = modify_extreme_db["value"].idxmin
@@ -214,7 +211,9 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
     def test_derive_relationship_same_gas(self, test_db, test_downscale_df):
         # Given only a single data series, we recreate the original pattern
         tcruncher = self.tclass(test_db)
-        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CO2"], required_scenario="scen_a")
+        res = tcruncher.derive_relationship(
+            "Emissions|CO2", ["Emissions|CO2"], required_scenario="scen_a"
+        )
         crunched = res(test_db)
         assert all(
             abs(
@@ -231,14 +230,18 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
         x_set = np.array([1, 1, 2, 3])
         y_set = np.array([6, 4, 3, 2])
         times = np.array([1, 1, 1, 1])
-        wide_db = pd.DataFrame({variable_leaders: x_set, variable_follower: y_set, time_col: times})
+        wide_db = pd.DataFrame(
+            {variable_leaders: x_set, variable_follower: y_set, time_col: times}
+        )
 
         # Illustrate the expected relationship between the numbers above, mapping 1 to
         # the average of 6 and 4, i.e. 5.
         input = np.array([5, 4, 3, 2, 2.5, 1, 0])
         expected_output = np.array([2, 2, 2, 3, 2.5, 5, 5])
         cruncher = self.tclass(test_db)
-        interpolator = cruncher._make_interpolator(variable_follower, variable_leaders, wide_db, time_col)
+        interpolator = cruncher._make_interpolator(
+            variable_follower, variable_leaders, wide_db, time_col
+        )
         output = interpolator[1](input)
         assert all(abs(output - expected_output) < 1e-10)
 
@@ -248,17 +251,31 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
         time_col = simple_df.time_col
         cruncher = self.tclass(simple_df)
         half_simple_df = simple_df.filter(scenario="scen_a")
-        scenarios = cruncher._find_matching_scenarios(half_simple_df, variable_follower, variable_leaders, time_col, ["scen_a", "scen_b"])
+        scenarios = cruncher._find_matching_scenarios(
+            half_simple_df,
+            variable_follower,
+            variable_leaders,
+            time_col,
+            ["scen_a", "scen_b"],
+        )
         assert scenarios == "scen_a"
         half_simple_df.data["value"].loc[0] = 0.49
-        scenarios = cruncher._find_matching_scenarios(half_simple_df, variable_follower,
-                                                      variable_leaders, time_col,
-                                                      ["scen_a", "scen_b"])
+        scenarios = cruncher._find_matching_scenarios(
+            half_simple_df,
+            variable_follower,
+            variable_leaders,
+            time_col,
+            ["scen_a", "scen_b"],
+        )
         assert scenarios == "scen_a"
         half_simple_df.data["value"].loc[0] = 0.51
-        scenarios = cruncher._find_matching_scenarios(half_simple_df, variable_follower,
-                                                      variable_leaders, time_col,
-                                                      ["scen_a", "scen_b"])
+        scenarios = cruncher._find_matching_scenarios(
+            half_simple_df,
+            variable_follower,
+            variable_leaders,
+            time_col,
+            ["scen_a", "scen_b"],
+        )
         assert scenarios == "scen_b"
 
     def test_find_matching_scenarios_no_data_for_time(self, simple_df):
@@ -269,20 +286,28 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
         half_simple_df = simple_df.filter(scenario="scen_a")
         half_simple_df.data[time_col].loc[0] = 0
         with pytest.raises(ValueError):
-            cruncher._find_matching_scenarios(half_simple_df, variable_follower,
-                                                      variable_leaders, time_col,
-                                                      ["scen_a", "scen_b"])
+            cruncher._find_matching_scenarios(
+                half_simple_df,
+                variable_follower,
+                variable_leaders,
+                time_col,
+                ["scen_a", "scen_b"],
+            )
 
     def test_find_matching_scenarios_complicated(self, test_db, simple_df):
-        #TODO: check that this is true
+        # TODO: check that this is true
         variable_leaders = ["Emissions|CO2"]
         variable_follower = "Emissions|CH4"
         test_db = self._adjust_time_style_to_match(test_db, simple_df)
         time_col = simple_df.time_col
         cruncher = self.tclass(test_db)
-        scenarios = cruncher._find_matching_scenarios(simple_df, variable_follower,
-                                                      variable_leaders, time_col,
-                                                      ["scen_a", "scen_b"])
+        scenarios = cruncher._find_matching_scenarios(
+            simple_df,
+            variable_follower,
+            variable_leaders,
+            time_col,
+            ["scen_a", "scen_b"],
+        )
         assert scenarios == "scen_b"
 
     def test_derive_relationship_error_no_info_leader(self, test_db):
@@ -295,18 +320,20 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
             "No data for `variable_leaders` ({}) in database".format(variable_leaders)
         )
         with pytest.raises(ValueError, match=error_msg):
-            tcruncher.derive_relationship("Emissions|CH4", variable_leaders, required_scenario="scen_a")
+            tcruncher.derive_relationship(
+                "Emissions|CH4", variable_leaders, required_scenario="scen_a"
+            )
 
     def test_crunch_error_no_info_leader(self, test_db):
         # test that crunching fails if there's no data about the lead gas in the
         # database
         variable_leaders = ["Emissions|CO2"]
         tcruncher = self.tclass(test_db)
-        res = tcruncher.derive_relationship("Emissions|CH4", variable_leaders, required_scenario="scen_a")
+        res = tcruncher.derive_relationship(
+            "Emissions|CH4", variable_leaders, required_scenario="scen_a"
+        )
         error_msg = re.escape(
-            "There is no data for {} so it cannot be infilled".format(
-                variable_leaders
-            )
+            "There is no data for {} so it cannot be infilled".format(variable_leaders)
         )
         with pytest.raises(ValueError, match=error_msg):
             res(test_db.filter(variable=variable_leaders, keep=False))
@@ -321,11 +348,15 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
             "No data for `variable_follower` ({}) in database".format(variable_follower)
         )
         with pytest.raises(ValueError, match=error_msg):
-            tcruncher.derive_relationship(variable_follower, ["Emissions|CO2"], required_scenario="scen_a")
+            tcruncher.derive_relationship(
+                variable_follower, ["Emissions|CO2"], required_scenario="scen_a"
+            )
 
     def test_relationship_usage_wrong_unit(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db)
-        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CO2"], required_scenario="scen_a")
+        res = tcruncher.derive_relationship(
+            "Emissions|CO2", ["Emissions|CO2"], required_scenario="scen_a"
+        )
 
         exp_units = test_db.filter(variable="Emissions|CO2")["unit"].iloc[0]
 
@@ -344,7 +375,9 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
     def test_relationship_usage_wrong_time(self):
         tdb = IamDataFrame(self.tdb)
         tcruncher = self.tclass(tdb)
-        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CO2"], required_scenario="scen_a")
+        res = tcruncher.derive_relationship(
+            "Emissions|CO2", ["Emissions|CO2"], required_scenario="scen_a"
+        )
 
         test_downscale_df = IamDataFrame(self.tdb).timeseries()
         test_downscale_df.columns = test_downscale_df.columns.map(
@@ -364,7 +397,9 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
     ):
         tcruncher = self.tclass(test_db.filter(year=2030, keep=False))
 
-        filler = tcruncher.derive_relationship("Emissions|CH4", ["Emissions|CO2"], required_scenario="scen_a")
+        filler = tcruncher.derive_relationship(
+            "Emissions|CH4", ["Emissions|CO2"], required_scenario="scen_a"
+        )
 
         test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db)
 
