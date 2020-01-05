@@ -333,7 +333,7 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
             variable_follower,
             variable_leaders,
             time_col,
-            ["wrong_scenario", "scen_a", "scen_b", "right_scenario"],
+            ["non-existant", "wrong_scenario", "scen_a", "scen_b", "right_scenario"],
         )
         assert scenario == "wrong_scenario"
         # However if it is passed in as the last option, it should not be selected
