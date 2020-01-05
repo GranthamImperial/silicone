@@ -256,7 +256,6 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
             half_simple_df,
             variable_follower,
             variable_leaders,
-            time_col,
             ["scen_a", "scen_b"],
         )
         assert scenarios == "scen_a"
@@ -265,7 +264,6 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
             half_simple_df,
             variable_follower,
             variable_leaders,
-            time_col,
             ["scen_a", "scen_b"],
         )
         assert scenarios == "scen_a"
@@ -274,7 +272,6 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
             half_simple_df,
             variable_follower,
             variable_leaders,
-            time_col,
             ["scen_a", "scen_b"],
         )
         assert scenarios == "scen_b"
@@ -291,7 +288,6 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
                 half_simple_df,
                 variable_follower,
                 variable_leaders,
-                time_col,
                 ["scen_a", "scen_b"],
             )
 
@@ -322,7 +318,6 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
             simple_df,
             variable_follower,
             variable_leaders,
-            time_col,
             ["scen_a", "scen_b", "right_scenario"],
         )
         assert scenario == "right_scenario"
@@ -332,7 +327,6 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
             simple_df,
             variable_follower,
             variable_leaders,
-            time_col,
             ["non-existant", "wrong_scenario", "scen_a", "scen_b", "right_scenario"],
         )
         assert scenario == "wrong_scenario"
@@ -341,7 +335,6 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
             simple_df,
             variable_follower,
             variable_leaders,
-            time_col,
             ["right_scenario", "wrong_scenario", "scen_a", "scen_b"],
         )
         assert scenario == "right_scenario"
