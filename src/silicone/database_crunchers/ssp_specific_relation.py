@@ -88,11 +88,10 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
         time_col = self._db.time_col
         convenient_compare_db = self._make_wide_db(to_compare_df).reset_index()
         for scenario in classify_scenarios:
-            try:
-                scenario_db = self._db.filter(
-                    scenario=scenario, variable=variable_leaders + [variable_follower]
-                )
-            except KeyError:
+            scenario_db = self._db.filter(
+                scenario=scenario, variable=variable_leaders + [variable_follower]
+            )
+            if scenario_db.data.empty:
                 scenario_rating[scenario] = np.inf
                 print("Warning: scenario {} not found in data".format(scenario))
                 continue
