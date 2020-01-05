@@ -19,6 +19,7 @@ _sb = "scen_b"
 _sc = "scen_c"
 _sd = "scen_d"
 _se = "scen_e"
+_sf = "scen_e"
 _eco2 = "Emissions|CO2"
 _gtc = "Gt C/yr"
 _ech4 = "Emissions|CH4"
@@ -294,21 +295,56 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
                 ["scen_a", "scen_b"],
             )
 
-    def test_find_matching_scenarios_complicated(self, test_db, simple_df):
-        # TODO: check that this is true
+    def test_find_matching_scenarios_complicated(self, simple_df):
+        # This is similar to the above case except with multiple models involved and
+        # requiring specific interpolation.
         variable_leaders = ["Emissions|CO2"]
         variable_follower = "Emissions|CH4"
-        test_db = self._adjust_time_style_to_match(test_db, simple_df)
+        df_low = simple_df.copy()
+        df_low.data["scenario"].loc[
+            df_low.data["scenario"] == "scen_a"
+        ] = "right_scenario"
+        df_low.data["scenario"].loc[
+            df_low.data["scenario"] == "scen_b"
+        ] = "wrong_scenario"
+        df_high = df_low.copy()
+        df_high["model"] = "high_model"
+        df_low.data["value"] = df_low.data["value"] - 10
+        df_high.data["value"] = df_high.data["value"] + 11
+        df_near = simple_df.copy()
+        df_near.data["value"] = df_near["value"] + 1
+        df_to_test = df_low.append(df_near).append(df_high)
+        # We need to refresh the metadata in order to proceed.
+        df_to_test = IamDataFrame(df_to_test.data)
         time_col = simple_df.time_col
-        cruncher = self.tclass(test_db)
-        scenarios = cruncher._find_matching_scenarios(
+        cruncher = self.tclass(df_to_test)
+        scenario = cruncher._find_matching_scenarios(
             simple_df,
             variable_follower,
             variable_leaders,
             time_col,
-            ["scen_a", "scen_b"],
+            ["scen_a", "scen_b", "right_scenario"],
         )
-        assert scenarios == "scen_b"
+        assert scenario == "right_scenario"
+        # If the wrong scenario option is passed in as an earlier option, it will be
+        # selected instead
+        scenario = cruncher._find_matching_scenarios(
+            simple_df,
+            variable_follower,
+            variable_leaders,
+            time_col,
+            ["wrong_scenario", "scen_a", "scen_b", "right_scenario"],
+        )
+        assert scenario == "wrong_scenario"
+        # However if it is passed in as the last option, it should not be selected
+        scenario = cruncher._find_matching_scenarios(
+            simple_df,
+            variable_follower,
+            variable_leaders,
+            time_col,
+            ["right_scenario", "wrong_scenario", "scen_a", "scen_b"],
+        )
+        assert scenario == "right_scenario"
 
     def test_derive_relationship_error_no_info_leader(self, test_db):
         # test that crunching fails if there's no data about the lead gas in the
