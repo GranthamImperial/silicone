@@ -26,14 +26,13 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
         to_compare_df,
         variable_follower,
         variable_leaders,
-        time_col,
         classify_scenarios,
     ):
         """
         Groups scenarios into different classifications and uses those to work out which
         group contains a trendline most similar to the data.
-        In the event of a tie, it returns the scenario name that occurs earlier in the
-        input data.
+        In the event of a tie, it returns the scenario name that occurs earlier in
+        classify_scenarios.
 
         Parameters
         ----------
@@ -74,6 +73,9 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
             x in self._db.variables().values
             for x in [variable_follower] + variable_leaders
         ), "Not all required data is present in compared series"
+        time_col = self._db.time_col
+        assert to_compare_df.time_col == time_col, \
+            "The time column in the data to classify does not match the cruncher"
         times_needed = set(to_compare_df.data[time_col])
         if any(x not in self._db.data[time_col].values for x in times_needed):
             raise ValueError(
@@ -85,7 +87,6 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
             )
 
         scenario_rating = {}
-        time_col = self._db.time_col
         convenient_compare_db = self._make_wide_db(to_compare_df).reset_index()
         for scenario in classify_scenarios:
             scenario_db = self._db.filter(
