@@ -64,11 +64,15 @@ class TestDatabaseCruncherTimeDepRatio:
         ):
             self.tclass(test_db)
 
-        assert caplog.record_tuples == [(
-            "silicone.database_crunchers.constant_ratio",  # namespacing
-            logging.INFO,  # level
-            "{} won't use any information from the database".format(self.tclass),  # message
-        )]
+        assert caplog.record_tuples == [
+            (
+                "silicone.database_crunchers.constant_ratio",  # namespacing
+                logging.INFO,  # level
+                "{} won't use any information from the database".format(
+                    self.tclass
+                ),  # message
+            )
+        ]
 
     def test_derive_relationship(self):
         tcruncher = self.tclass()
