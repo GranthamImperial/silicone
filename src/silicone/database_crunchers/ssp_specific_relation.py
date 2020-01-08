@@ -27,6 +27,8 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
         variable_follower,
         variable_leaders,
         classify_scenarios,
+        classify_models=["*"],
+        return_all_info=False,
     ):
         """
         Groups scenarios into different classifications and uses those to work out which
@@ -55,10 +57,27 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
             This may have *s to represent wild cards, hence multiple scenarios will have
             all their data combined to make the interpolator.
 
+        classify_models : list[str]
+            The names of models or groups of models that are possible matches.
+            This may have *s to represent wild cards, hence multiple models will have
+            all their data combined to make the interpolator.
+
+        return_all_info : bool
+            if True, instead of simply returning the strings spec
+
         Returns
         -------
-        String
-            The scenario-specifying string that best matches the data.
+        if return_all_info == False:
+
+        (string, string)
+            Strings specifying the model (first) and scenario (second) classifications
+            that best match the data.
+
+         if return_all_info == True:
+         dict
+            Maps the model and scenario classification strings to the measure of
+            closeness.
+
 
         Raises
         ------
@@ -66,9 +85,6 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
             Not all required timepoints are present in the database we crunched, we have
              `{dates we have}` but you passed in `{dates we need}`."
         """
-        assert (
-            len(classify_scenarios) > 1
-        ), "There must be multiple options for classify_scenario"
         assert all(
             x in self._db.variables().values
             for x in [variable_follower] + variable_leaders
@@ -86,31 +102,39 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
                 )
             )
 
-        scenario_rating = {}
+        scen_model_rating = {}
         convenient_compare_db = self._make_wide_db(to_compare_df).reset_index()
         for scenario in classify_scenarios:
-            scenario_db = self._db.filter(
-                scenario=scenario, variable=variable_leaders + [variable_follower]
-            )
-            if scenario_db.data.empty:
-                scenario_rating[scenario] = np.inf
-                print("Warning: scenario {} not found in data".format(scenario))
-                continue
-
-            wide_db = self._make_wide_db(scenario_db)
-            squared_dif = 0
-            for leader in variable_leaders:
-                all_interps = self._make_interpolator(
-                    variable_follower, leader, wide_db, time_col
+            for model in classify_models:
+                scenario_db = self._db.filter(
+                    scenario=scenario,
+                    model=model,
+                    variable=variable_leaders + [variable_follower],
                 )
-                # TODO: consider weighting by GWP* or similar. Currently no sensible weighting.
-                for row in convenient_compare_db.iterrows():
-                    squared_dif += (
-                        row[1][variable_follower]
-                        - all_interps[row[1][time_col]](row[1][leader])
-                    ) ** 2
-            scenario_rating[scenario] = squared_dif
-        ordered_scen = sorted(scenario_rating.items(), key=lambda item: item[1])
+                if scenario_db.data.empty:
+                    scen_model_rating[model, scenario] = np.inf
+                    print(
+                        "Warning: data with scenario {} and model {} not found in data"
+                            .format(scenario, model)
+                    )
+                    continue
+
+                wide_db = self._make_wide_db(scenario_db)
+                squared_dif = 0
+                for leader in variable_leaders:
+                    all_interps = self._make_interpolator(
+                        variable_follower, leader, wide_db, time_col
+                    )
+                    # TODO: consider weighting by GWP* or similar. Currently no sensible weighting.
+                    for row in convenient_compare_db.iterrows():
+                        squared_dif += (
+                            row[1][variable_follower]
+                            - all_interps[row[1][time_col]](row[1][leader])
+                        ) ** 2
+                scen_model_rating[model, scenario] = squared_dif
+        ordered_scen = sorted(scen_model_rating.items(), key=lambda item: item[1])
+        if return_all_info:
+            return ordered_scen
         return ordered_scen[0][0]
 
     def _make_interpolator(
