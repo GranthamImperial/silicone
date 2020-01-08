@@ -258,7 +258,7 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
             variable_leaders,
             ["scen_a", "scen_b"],
         )
-        assert scenarios == "scen_a"
+        assert scenarios == ("*", "scen_a")
         half_simple_df.data["value"].loc[0] = 0.49
         scenarios = cruncher._find_matching_scenarios(
             half_simple_df,
@@ -266,7 +266,7 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
             variable_leaders,
             ["scen_a", "scen_b"],
         )
-        assert scenarios == "scen_a"
+        assert scenarios == ("*", "scen_a")
         half_simple_df.data["value"].loc[0] = 0.51
         scenarios = cruncher._find_matching_scenarios(
             half_simple_df,
@@ -274,7 +274,7 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
             variable_leaders,
             ["scen_a", "scen_b"],
         )
-        assert scenarios == "scen_b"
+        assert scenarios == ("*", "scen_b")
 
     def test_find_matching_scenarios_no_data_for_time(self, simple_df):
         variable_leaders = ["Emissions|CO2"]
@@ -320,7 +320,7 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
             variable_leaders,
             ["scen_a", "scen_b", "right_scenario"],
         )
-        assert scenario == "right_scenario"
+        assert scenario == ("*", "right_scenario")
         # If the wrong scenario option is passed in as an earlier option, it will be
         # selected instead
         scenario = cruncher._find_matching_scenarios(
@@ -329,7 +329,7 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
             variable_leaders,
             ["non-existant", "wrong_scenario", "scen_a", "scen_b", "right_scenario"],
         )
-        assert scenario == "wrong_scenario"
+        assert scenario == ("*", "wrong_scenario")
         # However if it is passed in as the last option, it should not be selected
         scenario = cruncher._find_matching_scenarios(
             simple_df,
@@ -337,7 +337,7 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
             variable_leaders,
             ["right_scenario", "wrong_scenario", "scen_a", "scen_b"],
         )
-        assert scenario == "right_scenario"
+        assert scenario == ("*", "right_scenario")
 
     def test_derive_relationship_error_no_info_leader(self, test_db):
         # test that crunching fails if there's no data about the lead gas in the
