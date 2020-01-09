@@ -29,10 +29,11 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
         classify_scenarios,
         classify_models=["*"],
         return_all_info=False,
+        use_change_not_abs=False,
     ):
         """
-        Groups scenarios into different classifications and uses those to work out which
-        group contains a trendline most similar to the data.
+        Groups scenarios and models into different classifications and uses those to
+        work out which group contains a trendline most similar to the data.
         In the event of a tie, it returns the scenario name that occurs earlier in
         classify_scenarios.
 
@@ -63,7 +64,14 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
             all their data combined to make the interpolator.
 
         return_all_info : bool
-            if True, instead of simply returning the strings spec
+            If True, instead of simply returning the strings specifying the closest
+            scenario/model match, we return all scenario/model combinations in order of
+            preference, along with
+
+        use_change_not_abs : bool
+            If True, the code looks for the trend with the closest *derivatives* rather
+            than the closest absolute value, i.e. closest trend allowing for an offset.
+            This requires data from more than one time.
 
         Returns
         -------
@@ -89,6 +97,7 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
             x in self._db.variables().values
             for x in [variable_follower] + variable_leaders
         ), "Not all required data is present in compared series"
+        assert len(variable_leaders) == 1, "This is only calibrated to work with one leader"
         time_col = self._db.time_col
         assert to_compare_df.time_col == time_col, \
             "The time column in the data to classify does not match the cruncher"
@@ -101,9 +110,17 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
                     list(set(to_compare_df.data[time_col])),
                 )
             )
+        assert len(times_needed) > 1 or  use_change_not_abs == False, \
+            "We need data from multiple times in order to calculate a difference."
 
         scen_model_rating = {}
-        convenient_compare_db = self._make_wide_db(to_compare_df).reset_index()
+        to_compare_db = self._make_wide_db(to_compare_df)
+        if use_change_not_abs:
+            # Set all values to 0 at time 0 to remove any offset
+            to_compare_db = to_compare_db - to_compare_db.iloc[
+                to_compare_db.index.get_level_values(time_col) == min(times_needed)
+            ].values.squeeze()
+        to_compare_db = to_compare_db.reset_index()
         for scenario in classify_scenarios:
             for model in classify_models:
                 scenario_db = self._db.filter(
@@ -120,13 +137,18 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
                     continue
 
                 wide_db = self._make_wide_db(scenario_db)
+                if use_change_not_abs:
+                    # Set all values to 0 at time 0
+                    wide_db = wide_db - wide_db.iloc[
+                        wide_db.index.get_level_values(time_col) == min(times_needed)
+                    ].values.squeeze()
+
                 squared_dif = 0
                 for leader in variable_leaders:
                     all_interps = self._make_interpolator(
                         variable_follower, leader, wide_db, time_col
                     )
-                    # TODO: consider weighting by GWP* or similar. Currently no sensible weighting.
-                    for row in convenient_compare_db.iterrows():
+                    for row in to_compare_db.iterrows():
                         squared_dif += (
                             row[1][variable_follower]
                             - all_interps[row[1][time_col]](row[1][leader])

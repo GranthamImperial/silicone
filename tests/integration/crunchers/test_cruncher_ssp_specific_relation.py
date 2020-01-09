@@ -291,6 +291,23 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
                 ["scen_a", "scen_b"],
             )
 
+    def test_find_matching_scenarios_use_change_instead_of_absolute(self, simple_df):
+        # In this case, we will ignore any offset
+        variable_leaders = ["Emissions|CO2"]
+        variable_follower = "Emissions|CH4"
+        time_col = simple_df.time_col
+        cruncher = self.tclass(simple_df)
+        half_simple_df = simple_df.filter(scenario="scen_a")
+        half_simple_df.data["value"] = half_simple_df.data["value"] - 10000
+        scenarios = cruncher._find_matching_scenarios(
+                half_simple_df,
+                variable_follower,
+                variable_leaders,
+                ["scen_a", "scen_b"],
+                use_change_not_abs=True,
+            )
+        assert scenarios == ("*", "scen_a")
+
     def test_find_matching_scenarios_complicated(self, simple_df):
         # This is similar to the above case except with multiple models involved and
         # requiring specific interpolation. First we construct the database:
