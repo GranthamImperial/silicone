@@ -375,12 +375,52 @@ class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
             variable_follower,
             variable_leaders,
             ["right_scenario", "wrong_scenario", "scen_a", "scen_b"],
-            classify_models=[_mc, "high_model"],
+            classify_models=["high_model", _mc],
             return_all_info=True
         )
         assert all_data[-1][0][0] == "high_model"
         assert all_data[0][0][0] == _mc
         assert all_data[0][1] == unsplit_model_c
+        # If we use a differential measurement, they should all be the same
+        all_data = cruncher._find_matching_scenarios(
+            simple_df,
+            variable_follower,
+            variable_leaders,
+            ["right_scenario", "wrong_scenario", "scen_a", "scen_b"],
+            classify_models=["high_model", _mc],
+            return_all_info=True,
+            use_change_not_abs=True
+        )
+        assert all_data[0][0] == ("high_model", "right_scenario")
+        assert all_data[0][1] == all_data[5][1]
+        # But if we add a small amount to only one point in the differential, it will
+        # be downgraded
+        df_to_test["value"].iloc[0] = df_to_test["value"].iloc[0] + 0.1
+        cruncher = self.tclass(df_to_test)
+        all_data = cruncher._find_matching_scenarios(
+            simple_df,
+            variable_follower,
+            variable_leaders,
+            ["right_scenario", "wrong_scenario", "scen_a", "scen_b"],
+            classify_models=["high_model", _mc],
+            return_all_info=True,
+            use_change_not_abs=True
+        )
+        assert all_data[0][0] == ("high_model", "right_scenario")
+        assert all_data[0][1] != all_data[1][1]
+        df_to_test["value"].iloc[0] = df_to_test["value"].iloc[0] - 0.6
+        cruncher = self.tclass(df_to_test)
+        all_data = cruncher._find_matching_scenarios(
+            simple_df,
+            variable_follower,
+            variable_leaders,
+            ["right_scenario", "wrong_scenario", "scen_a", "scen_b"],
+            classify_models=["high_model", _mc],
+            return_all_info=True,
+            use_change_not_abs=True
+        )
+        assert all_data[0][0] == (_mc, "right_scenario")
+        assert all_data[0][1] == all_data[1][1]
 
     def test_derive_relationship_error_no_info_leader(self, test_db):
         # test that crunching fails if there's no data about the lead gas in the
