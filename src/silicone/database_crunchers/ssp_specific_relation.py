@@ -1,9 +1,11 @@
 """
 Module for the database cruncher which makes a linear interpolator from a subset of scenarios
 """
+import itertools
 
 import numpy as np
 import pandas as pd
+import prometheus_client.values
 import scipy.interpolate
 from pyam import IamDataFrame
 
@@ -22,14 +24,14 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
     """
 
     def _find_matching_scenarios(
-        self,
-        to_compare_df,
-        variable_follower,
-        variable_leaders,
-        classify_scenarios,
-        classify_models=["*"],
-        return_all_info=False,
-        use_change_not_abs=False,
+            self,
+            to_compare_df,
+            variable_follower,
+            variable_leaders,
+            classify_scenarios,
+            classify_models=["*"],
+            return_all_info=False,
+            use_change_not_abs=False,
     ):
         """
         Groups scenarios and models into different classifications and uses those to
@@ -97,7 +99,8 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
             x in self._db.variables().values
             for x in [variable_follower] + variable_leaders
         ), "Not all required data is present in compared series"
-        assert len(variable_leaders) == 1, "This is only calibrated to work with one leader"
+        assert len(variable_leaders) == 1, \
+            "This is only calibrated to work with one leader"
         time_col = self._db.time_col
         assert to_compare_df.time_col == time_col, \
             "The time column in the data to classify does not match the cruncher"
@@ -110,16 +113,14 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
                     list(set(to_compare_df.data[time_col])),
                 )
             )
-        assert len(times_needed) > 1 or  use_change_not_abs == False, \
+        assert len(times_needed) > 1 or use_change_not_abs == False, \
             "We need data from multiple times in order to calculate a difference."
 
         scen_model_rating = {}
         to_compare_db = self._make_wide_db(to_compare_df)
         if use_change_not_abs:
             # Set all values to 0 at time 0 to remove any offset
-            to_compare_db = to_compare_db - to_compare_db.iloc[
-                to_compare_db.index.get_level_values(time_col) == min(times_needed)
-            ].values.squeeze()
+            self._remove_t0_from_wide_db(times_needed, to_compare_db)
         to_compare_db = to_compare_db.reset_index()
         for scenario in classify_scenarios:
             for model in classify_models:
@@ -139,10 +140,7 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
                 wide_db = self._make_wide_db(scenario_db)
                 if use_change_not_abs:
                     # Set all values to 0 at time 0
-                    wide_db = wide_db - wide_db.iloc[
-                        wide_db.index.get_level_values(time_col) == min(times_needed)
-                    ].values.squeeze()
-
+                    self._remove_t0_from_wide_db(times_needed, wide_db)
                 squared_dif = 0
                 for leader in variable_leaders:
                     all_interps = self._make_interpolator(
@@ -150,21 +148,41 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
                     )
                     for row in to_compare_db.iterrows():
                         squared_dif += (
-                            row[1][variable_follower]
-                            - all_interps[row[1][time_col]](row[1][leader])
-                        ) ** 2
+                                               row[1][variable_follower]
+                                               - all_interps[row[1][time_col]](
+                                           row[1][leader])
+                                       ) ** 2
                 scen_model_rating[model, scenario] = squared_dif
         ordered_scen = sorted(scen_model_rating.items(), key=lambda item: item[1])
         if return_all_info:
             return ordered_scen
         return ordered_scen[0][0]
 
+    def _remove_t0_from_wide_db(self, times_needed, _db):
+        """
+        This function finds the first set of values for each model and scenario and
+        subtracts them from all values to remove the offset.
+        """
+
+        for model, scenario in set(zip(_db.index.get_level_values("model"),
+                                       _db.index.get_level_values(
+                                               "scenario"))):
+            offset = _db.loc[
+                    model, scenario, min(times_needed)
+                ].copy().values.squeeze()
+            for time in times_needed:
+                _db.loc[model, scenario, time] = _db.loc[model, scenario, time] - offset
+
     def _make_interpolator(
-        self, variable_follower, variable_leaders, wide_db, time_col
+            self, variable_follower, variable_leader, wide_db, time_col
     ):
+        """
+        Constructs a linear interpolator for variable_follower as a function of
+        (one) variable_leader for each timestep in the data.
+        """
         derived_relationships = {}
         for db_time, dbtdf in wide_db.groupby(time_col):
-            xs = dbtdf[variable_leaders].values.squeeze()
+            xs = dbtdf[variable_leader].values.squeeze()
             ys = dbtdf[variable_follower].values.squeeze()
             if xs.shape != ys.shape:
                 raise NotImplementedError(
@@ -196,7 +214,7 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
         return derived_relationships
 
     def derive_relationship(
-        self, variable_follower, variable_leaders, required_scenario="*"
+            self, variable_follower, variable_leaders, required_scenario="*"
     ):
         """
         Derive the relationship between two variables from the database.
@@ -299,7 +317,7 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
             var_units = var_units[0]
             lead_var = in_iamdf.filter(variable=variable_leaders)
             assert (
-                lead_var["unit"].nunique() == 1
+                    lead_var["unit"].nunique() == 1
             ), "There are multiple units for the lead variable."
             if var_units != leader_units:
                 raise ValueError(
@@ -330,12 +348,10 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
         """
         Converts an IamDataFrame into a pandas DataFrame that describes the timeseries
         of variables in index-labelled values.
-        :param use_db: PyamDataFrame
-        :return: pandas DataFrame
         """
-        columns = "variable"
-        idx = list(set(use_db.data.columns) - {columns, "value", "unit"})
-        use_db = use_db.pivot_table(index=idx, columns=columns, aggfunc="sum")
+
+        idx = ["model", "scenario", use_db.time_col]
+        use_db = use_db.pivot_table(index=idx, columns="variable", aggfunc="sum")
         # make sure we don't have empty strings floating around (pyam bug?)
         use_db = use_db.applymap(lambda x: np.nan if isinstance(x, str) else x)
         use_db = use_db.dropna(axis=0)
