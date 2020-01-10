@@ -1,11 +1,9 @@
 """
 Module for the database cruncher which makes a linear interpolator from a subset of scenarios
 """
-import itertools
 
 import numpy as np
 import pandas as pd
-import prometheus_client.values
 import scipy.interpolate
 from pyam import IamDataFrame
 

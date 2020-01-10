@@ -49,7 +49,7 @@ REQUIREMENTS_NOTEBOOKS = ["notebook", "seaborn", "statsmodels"]
 REQUIREMENTS_TESTS = [
     "codecov",
     "nbval",
-    "pytest>=4.0,<5.0",
+    "pytest>=4.0",
     "pytest-console-scripts",
     "pytest-cov",
 ]
