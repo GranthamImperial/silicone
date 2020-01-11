@@ -46,7 +46,7 @@ class _DatabaseCruncher(metaclass=ABCMeta):
             ``variable_leaders`` timeseries and returns timeseries for
             ``variable_follower`` based on the derived relationship between the two.
             Please see the source code for the exact definition (and docstring) of the
-            returned function.
+            returned function. 
         """
         # TODO: think about how to add region handling in here...
 
