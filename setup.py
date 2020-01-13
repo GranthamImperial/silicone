@@ -49,6 +49,7 @@ REQUIREMENTS_NOTEBOOKS = ["notebook", "seaborn", "statsmodels"]
 REQUIREMENTS_TESTS = [
     "codecov",
     "nbval",
+    "coverage<5",  # nbval requirement, see https://github.com/computationalmodelling/nbval/issues/129
     "pytest>=4.0,<5.0",
     "pytest-console-scripts",
     "pytest-cov",
