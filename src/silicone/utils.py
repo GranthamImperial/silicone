@@ -8,14 +8,14 @@ Utils contains a number of helpful functions that don't belong elsewhere.
 
 
 def find_matching_scenarios(
-        options_df,
-        to_compare_df,
-        variable_follower,
-        variable_leaders,
-        classify_scenarios,
-        classify_models=["*"],
-        return_all_info=False,
-        use_change_not_abs=False,
+    options_df,
+    to_compare_df,
+    variable_follower,
+    variable_leaders,
+    classify_scenarios,
+    classify_models=["*"],
+    return_all_info=False,
+    use_change_not_abs=False,
 ):
     """
     Groups scenarios and models into different classifications and uses those to
@@ -86,11 +86,11 @@ def find_matching_scenarios(
         x in options_df.variables().values
         for x in [variable_follower] + variable_leaders
     ), "Not all required data is present in compared series"
-    assert len(variable_leaders) == 1, \
-        "This is only calibrated to work with one leader"
+    assert len(variable_leaders) == 1, "This is only calibrated to work with one leader"
     time_col = options_df.time_col
-    assert to_compare_df.time_col == time_col, \
-        "The time column in the data to classify does not match the cruncher"
+    assert (
+        to_compare_df.time_col == time_col
+    ), "The time column in the data to classify does not match the cruncher"
     times_needed = set(to_compare_df.data[time_col])
     if any(x not in options_df.data[time_col].values for x in times_needed):
         raise ValueError(
@@ -100,8 +100,9 @@ def find_matching_scenarios(
                 list(set(to_compare_df.data[time_col])),
             )
         )
-    assert len(times_needed) > 1 or use_change_not_abs == False, \
-        "We need data from multiple times in order to calculate a difference."
+    assert (
+        len(times_needed) > 1 or use_change_not_abs == False
+    ), "We need data from multiple times in order to calculate a difference."
 
     scen_model_rating = {}
     to_compare_db = _make_wide_db(to_compare_df)
@@ -119,8 +120,9 @@ def find_matching_scenarios(
             if scenario_db.data.empty:
                 scen_model_rating[model, scenario] = np.inf
                 print(
-                    "Warning: data with scenario {} and model {} not found in data"
-                        .format(scenario, model)
+                    "Warning: data with scenario {} and model {} not found in data".format(
+                        scenario, model
+                    )
                 )
                 continue
 
@@ -135,10 +137,9 @@ def find_matching_scenarios(
                 )
                 for row in to_compare_db.iterrows():
                     squared_dif += (
-                                           row[1][variable_follower]
-                                           - all_interps[row[1][time_col]](
-                                       row[1][leader])
-                                   ) ** 2
+                        row[1][variable_follower]
+                        - all_interps[row[1][time_col]](row[1][leader])
+                    ) ** 2
             scen_model_rating[model, scenario] = squared_dif
     ordered_scen = sorted(scen_model_rating.items(), key=lambda item: item[1])
     if return_all_info:
@@ -152,11 +153,10 @@ def _remove_t0_from_wide_db(times_needed, _db):
     subtracts them from all values to remove the offset.
     """
 
-    for model, scenario in set(zip(_db.index.get_level_values("model"),
-                                   _db.index.get_level_values("scenario"))):
-        offset = _db.loc[
-            model, scenario, min(times_needed)
-        ].copy().values.squeeze()
+    for model, scenario in set(
+        zip(_db.index.get_level_values("model"), _db.index.get_level_values("scenario"))
+    ):
+        offset = _db.loc[model, scenario, min(times_needed)].copy().values.squeeze()
         for time in times_needed:
             _db.loc[model, scenario, time] = _db.loc[model, scenario, time] - offset
 
@@ -191,11 +191,7 @@ def make_interpolator(variable_follower, variable_leader, wide_db, time_col):
             xs = np.append(xs, xs)
             ys = np.append(ys, ys)
         derived_relationships[db_time] = scipy.interpolate.interp1d(
-            xs,
-            ys,
-            bounds_error=False,
-            fill_value=(ys[0], ys[-1]),
-            assume_sorted=True,
+            xs, ys, bounds_error=False, fill_value=(ys[0], ys[-1]), assume_sorted=True
         )
     return derived_relationships
 
