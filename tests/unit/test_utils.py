@@ -26,11 +26,35 @@ simple_df = pd.DataFrame(
     )
 simple_df = pyam.IamDataFrame(simple_df)
 
+df_low = simple_df.copy()
+df_low.data["scenario"].loc[
+    df_low.data["scenario"] == "scen_a"
+    ] = "right_scenario"
+df_low.data["scenario"].loc[
+    df_low.data["scenario"] == "scen_b"
+    ] = "wrong_scenario"
+df_high = df_low.copy()
+df_high["model"] = "high_model"
+df_low.data["value"] = df_low.data["value"] - 10
+df_high.data["value"] = df_high.data["value"] + 11
+df_near = simple_df.copy()
+df_near.data["value"] = df_near["value"] + 1
+df_to_test = df_low.append(df_near).append(df_high)
+# We need to refresh the metadata in order to proceed.
+df_to_test = pyam.IamDataFrame(df_to_test.data)
 
-def test_find_matching_scenarios():
-    variable_leaders = ["Emissions|CO2"]
-    variable_follower = "Emissions|CH4"
+variable_leaders = ["Emissions|CO2"]
+variable_follower = "Emissions|CH4"
+
+
+@pytest.mark.parametrize("half_val, expected", [(0.5, "scen_a"), (0.49, "scen_a"), (0.51, "scen_b")])
+def test_find_matching_scenarios_matched(half_val, expected):
+    # Tests
+    # 1) that 1st option is used in the case of equality
+    # 2) and if it's closer,
+    # 3) But not if it's further away
     half_simple_df = simple_df.filter(scenario="scen_a")
+    half_simple_df.data["value"].loc[0] = half_val
     scenarios = find_matching_scenarios(
         simple_df,
         half_simple_df,
@@ -38,30 +62,10 @@ def test_find_matching_scenarios():
         variable_leaders,
         ["scen_a", "scen_b"],
     )
-    assert scenarios == ("*", "scen_a")
-    half_simple_df.data["value"].loc[0] = 0.49
-    scenarios = find_matching_scenarios(
-        simple_df,
-        half_simple_df,
-        variable_follower,
-        variable_leaders,
-        ["scen_a", "scen_b"],
-    )
-    assert scenarios == ("*", "scen_a")
-    half_simple_df.data["value"].loc[0] = 0.51
-    scenarios = find_matching_scenarios(
-        simple_df,
-        half_simple_df,
-        variable_follower,
-        variable_leaders,
-        ["scen_a", "scen_b"],
-    )
-    assert scenarios == ("*", "scen_b")
+    assert scenarios == ("*", expected)
 
 
 def test_find_matching_scenarios_no_data_for_time():
-    variable_leaders = ["Emissions|CO2"]
-    variable_follower = "Emissions|CH4"
     time_col = simple_df.time_col
     half_simple_df = simple_df.filter(scenario="scen_a")
     half_simple_df.data[time_col].loc[0] = 0
@@ -77,10 +81,8 @@ def test_find_matching_scenarios_no_data_for_time():
 
 def test_find_matching_scenarios_use_change_instead_of_absolute():
     # In this case, we will ignore any offset
-    variable_leaders = ["Emissions|CO2"]
-    variable_follower = "Emissions|CH4"
     half_simple_df = simple_df.filter(scenario="scen_a")
-    half_simple_df.data["value"] = half_simple_df.data["value"] - 10000
+    half_simple_df.data["value"] = half_simple_df.data["value"] + 10000
     scenarios = find_matching_scenarios(
         simple_df,
         half_simple_df,
@@ -91,57 +93,28 @@ def test_find_matching_scenarios_use_change_instead_of_absolute():
     )
     assert scenarios == ("*", "scen_a")
 
-
-def test_find_matching_scenarios_complicated():
+@pytest.mark.parametrize("options,expected", [
+    (["scen_a", "scen_b", "right_scenario"], "right_scenario"),
+    (["non-existant", "wrong_scenario", "scen_a", "scen_b", "right_scenario"], "wrong_scenario"),
+    (["right_scenario", "wrong_scenario", "scen_a", "scen_b"], "right_scenario")
+])
+def test_find_matching_scenarios_complicated(options, expected):
     # This is similar to the above case except with multiple models involved and
-    # requiring specific interpolation. First we construct the database:
-    variable_leaders = ["Emissions|CO2"]
-    variable_follower = "Emissions|CH4"
-    df_low = simple_df.copy()
-    df_low.data["scenario"].loc[
-        df_low.data["scenario"] == "scen_a"
-        ] = "right_scenario"
-    df_low.data["scenario"].loc[
-        df_low.data["scenario"] == "scen_b"
-        ] = "wrong_scenario"
-    df_high = df_low.copy()
-    df_high["model"] = "high_model"
-    df_low.data["value"] = df_low.data["value"] - 10
-    df_high.data["value"] = df_high.data["value"] + 11
-    df_near = simple_df.copy()
-    df_near.data["value"] = df_near["value"] + 1
-    df_to_test = df_low.append(df_near).append(df_high)
-    # We need to refresh the metadata in order to proceed.
-    df_to_test = pyam.IamDataFrame(df_to_test.data)
+    # requiring specific interpolation. Tests:
+    # 1) Closest option chosen
+    # 2) Invalid options ignored, if tied the earlier option is selected instead
+    # 3) This reverses as expected
+    scenario = find_matching_scenarios(
+        df_to_test,
+        simple_df,
+        variable_follower,
+        variable_leaders,
+        options,
+    )
+    assert scenario == ("*", expected)
 
-    # Now the tests can begin
-    scenario = find_matching_scenarios(
-        df_to_test,
-        simple_df,
-        variable_follower,
-        variable_leaders,
-        ["scen_a", "scen_b", "right_scenario"],
-    )
-    assert scenario == ("*", "right_scenario")
-    # If the "wrong scenario" option is passed in as an earlier option, it will be
-    # selected instead
-    scenario = find_matching_scenarios(
-        df_to_test,
-        simple_df,
-        variable_follower,
-        variable_leaders,
-        ["non-existant", "wrong_scenario", "scen_a", "scen_b", "right_scenario"],
-    )
-    assert scenario == ("*", "wrong_scenario")
-    # However if it is passed in as the latter option, it should not be selected
-    scenario = find_matching_scenarios(
-        df_to_test,
-        simple_df,
-        variable_follower,
-        variable_leaders,
-        ["right_scenario", "wrong_scenario", "scen_a", "scen_b"],
-    )
-    assert scenario == ("*", "right_scenario")
+
+def test_find_matching_scenarios_get_precise_values():
     # We should get out explicit numbers if we ask for them
     all_data = find_matching_scenarios(
         df_to_test,
@@ -169,7 +142,10 @@ def test_find_matching_scenarios_complicated():
     assert all_data[-1][0][0] == "high_model"
     assert all_data[0][0][0] == _mc
     assert all_data[0][1] == unsplit_model_c
-    # If we use a differential measurement, they should all be the same
+
+
+def test_find_matching_scenarios_differential():
+    # If we use a differential measurement, they should all be the same in this case
     all_data = find_matching_scenarios(
         df_to_test,
         simple_df,
@@ -211,6 +187,7 @@ def test_find_matching_scenarios_complicated():
     assert all_data[0][0] == (_mc, "right_scenario")
     assert all_data[0][1] == all_data[1][1]
 
+
 def test__make_interpolator():
     variable_leaders = "variable_leaders"
     variable_follower = "variable_follower"
@@ -230,7 +207,8 @@ def test__make_interpolator():
         variable_follower, variable_leaders, wide_db, time_col
     )
     output = interpolator[1](input)
-    assert all(abs(output - expected_output) < 1e-10)
+    np.testing.assert_allclose(output, expected_output, atol=1e-10)
+
 
 @pytest.mark.parametrize(
     "var,exp",
