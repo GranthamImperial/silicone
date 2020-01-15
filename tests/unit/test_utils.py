@@ -5,7 +5,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from silicone.utils import _get_unit_of_variable, find_matching_scenarios, make_interpolator
+from silicone.utils import (
+    _get_unit_of_variable,
+    find_matching_scenarios,
+    make_interpolator,
+)
 
 _mc = "model_c"
 _sa = "scen_a"
@@ -16,23 +20,19 @@ _ech4 = "Emissions|CH4"
 _mtch4 = "Mt CH4/yr"
 _msrvu = ["model", "scenario", "region", "variable", "unit"]
 simple_df = pd.DataFrame(
-        [
-            [_mc, _sa, "World", _eco2, _gtc, 0, 1000, 5000],
-            [_mc, _sb, "World", _eco2, _gtc, 1, 1000, 5000],
-            [_mc, _sa, "World", _ech4, _mtch4, 0, 300, 500],
-            [_mc, _sb, "World", _ech4, _mtch4, 1, 300, 500],
-        ],
-        columns=_msrvu + [2010, 2030, 2050],
-    )
+    [
+        [_mc, _sa, "World", _eco2, _gtc, 0, 1000, 5000],
+        [_mc, _sb, "World", _eco2, _gtc, 1, 1000, 5000],
+        [_mc, _sa, "World", _ech4, _mtch4, 0, 300, 500],
+        [_mc, _sb, "World", _ech4, _mtch4, 1, 300, 500],
+    ],
+    columns=_msrvu + [2010, 2030, 2050],
+)
 simple_df = pyam.IamDataFrame(simple_df)
 
 df_low = simple_df.copy()
-df_low.data["scenario"].loc[
-    df_low.data["scenario"] == "scen_a"
-    ] = "right_scenario"
-df_low.data["scenario"].loc[
-    df_low.data["scenario"] == "scen_b"
-    ] = "wrong_scenario"
+df_low.data["scenario"].loc[df_low.data["scenario"] == "scen_a"] = "right_scenario"
+df_low.data["scenario"].loc[df_low.data["scenario"] == "scen_b"] = "wrong_scenario"
 df_high = df_low.copy()
 df_high["model"] = "high_model"
 df_low.data["value"] = df_low.data["value"] - 10
@@ -47,7 +47,9 @@ variable_leaders = ["Emissions|CO2"]
 variable_follower = "Emissions|CH4"
 
 
-@pytest.mark.parametrize("half_val, expected", [(0.5, "scen_a"), (0.49, "scen_a"), (0.51, "scen_b")])
+@pytest.mark.parametrize(
+    "half_val, expected", [(0.5, "scen_a"), (0.49, "scen_a"), (0.51, "scen_b")]
+)
 def test_find_matching_scenarios_matched(half_val, expected):
     # Tests
     # 1) that 1st option is used in the case of equality
@@ -93,11 +95,18 @@ def test_find_matching_scenarios_use_change_instead_of_absolute():
     )
     assert scenarios == ("*", "scen_a")
 
-@pytest.mark.parametrize("options,expected", [
-    (["scen_a", "scen_b", "right_scenario"], "right_scenario"),
-    (["non-existant", "wrong_scenario", "scen_a", "scen_b", "right_scenario"], "wrong_scenario"),
-    (["right_scenario", "wrong_scenario", "scen_a", "scen_b"], "right_scenario")
-])
+
+@pytest.mark.parametrize(
+    "options,expected",
+    [
+        (["scen_a", "scen_b", "right_scenario"], "right_scenario"),
+        (
+            ["non-existant", "wrong_scenario", "scen_a", "scen_b", "right_scenario"],
+            "wrong_scenario",
+        ),
+        (["right_scenario", "wrong_scenario", "scen_a", "scen_b"], "right_scenario"),
+    ],
+)
 def test_find_matching_scenarios_complicated(options, expected):
     # This is similar to the above case except with multiple models involved and
     # requiring specific interpolation. Tests:
@@ -105,11 +114,7 @@ def test_find_matching_scenarios_complicated(options, expected):
     # 2) Invalid options ignored, if tied the earlier option is selected instead
     # 3) This reverses as expected
     scenario = find_matching_scenarios(
-        df_to_test,
-        simple_df,
-        variable_follower,
-        variable_leaders,
-        options,
+        df_to_test, simple_df, variable_follower, variable_leaders, options
     )
     assert scenario == ("*", expected)
 
@@ -122,7 +127,7 @@ def test_find_matching_scenarios_get_precise_values():
         variable_follower,
         variable_leaders,
         ["right_scenario", "wrong_scenario", "scen_a", "scen_b"],
-        return_all_info=True
+        return_all_info=True,
     )
     assert all_data[0][1] == all_data[1][1]
     assert all_data[0][1] == 0
@@ -137,7 +142,7 @@ def test_find_matching_scenarios_get_precise_values():
         variable_leaders,
         ["right_scenario", "wrong_scenario", "scen_a", "scen_b"],
         classify_models=["high_model", _mc],
-        return_all_info=True
+        return_all_info=True,
     )
     assert all_data[-1][0][0] == "high_model"
     assert all_data[0][0][0] == _mc
@@ -154,7 +159,7 @@ def test_find_matching_scenarios_differential():
         ["right_scenario", "wrong_scenario", "scen_a", "scen_b"],
         classify_models=["high_model", _mc],
         return_all_info=True,
-        use_change_not_abs=True
+        use_change_not_abs=True,
     )
     assert all_data[0][0] == ("high_model", "right_scenario")
     assert all_data[0][1] == all_data[5][1]
@@ -169,7 +174,7 @@ def test_find_matching_scenarios_differential():
         ["right_scenario", "wrong_scenario", "scen_a", "scen_b"],
         classify_models=["high_model", _mc],
         return_all_info=True,
-        use_change_not_abs=True
+        use_change_not_abs=True,
     )
     assert all_data[0][0] == ("high_model", "right_scenario")
     assert all_data[0][1] != all_data[1][1]
@@ -182,7 +187,7 @@ def test_find_matching_scenarios_differential():
         ["right_scenario", "wrong_scenario", "scen_a", "scen_b"],
         classify_models=["high_model", _mc],
         return_all_info=True,
-        use_change_not_abs=True
+        use_change_not_abs=True,
     )
     assert all_data[0][0] == (_mc, "right_scenario")
     assert all_data[0][1] == all_data[1][1]

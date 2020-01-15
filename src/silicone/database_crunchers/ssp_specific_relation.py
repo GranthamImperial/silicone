@@ -19,7 +19,7 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
     """
 
     def derive_relationship(
-            self, variable_follower, variable_leaders, required_scenario="*"
+        self, variable_follower, variable_leaders, required_scenario="*"
     ):
         """
         Derive the relationship between two variables from the database.
@@ -122,7 +122,7 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
             var_units = var_units[0]
             lead_var = in_iamdf.filter(variable=variable_leaders)
             assert (
-                    lead_var["unit"].nunique() == 1
+                lead_var["unit"].nunique() == 1
             ), "There are multiple units for the lead variable."
             if var_units != leader_units:
                 raise ValueError(
