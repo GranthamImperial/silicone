@@ -3,7 +3,7 @@ Changelog
 
 master
 ------
-- (`#37 <https://github.com/znicholls/silicone/pull/37>`_) Added a cruncher to interpolate values between data from specific scenarios
+- (`#41 <https://github.com/znicholls/silicone/pull/41>`_) Added a cruncher to interpolate values between data from specific scenarios
 - (`#32 <https://github.com/znicholls/silicone/pull/32>`_) Raise `ValueError` when asking to infill a case with no data
 - (`#27 <https://github.com/znicholls/silicone/pull/27>`_) Developed the constant ratio cruncher
 - (`#21 <https://github.com/znicholls/silicone/pull/21>`_) Developed the time-dependent ratio cruncher
