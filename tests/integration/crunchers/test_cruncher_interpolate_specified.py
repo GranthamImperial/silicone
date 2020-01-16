@@ -9,7 +9,7 @@ from base import _DataBaseCruncherTester
 from pyam import IamDataFrame
 
 import silicone.stats
-from silicone.database_crunchers import DatabaseCruncherScenarioAndModelSpecificInterpolate
+from silicone.database_crunchers import DatabaseCruncherScenarioAndModelSpecificInterpolate, DatabaseCruncherLinearInterpolation
 
 _ma = "model_a"
 _mb = "model_b"
@@ -89,6 +89,16 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         ],
         columns=_msrvu + [2010, 2030, 2050],
     )
+
+    def test_database_crunchers_with_filters(self, test_db, simple_df):
+        test_db = self._adjust_time_style_to_match(test_db, simple_df)
+        tcruncher_filtered = self.tclass(test_db)
+        tcruncher_linear = DatabaseCruncherLinearInterpolation(test_db)
+        filtered_cruncher = tcruncher_filtered.derive_relationship("Emissions|CO2", ["Emissions|CH4"])
+        infilled_filter = filtered_cruncher(simple_df)
+        linear_cruncher = tcruncher_linear.derive_relationship("Emissions|CO2", ["Emissions|CH4"])
+        infilled_linear = linear_cruncher(simple_df)
+        pd.testing.assert_frame_equal(infilled_filter.data, infilled_linear.data)
 
     def test_derive_relationship(self, test_db):
         tcruncher = self.tclass(test_db)
