@@ -8,7 +8,7 @@ import pytest
 from silicone.utils import (
     _get_unit_of_variable,
     find_matching_scenarios,
-    make_interpolator,
+    _make_interpolator,
 )
 
 _mc = "model_c"
@@ -118,6 +118,38 @@ def test_find_matching_scenarios_complicated(options, expected):
     )
     assert scenario == ("*", expected)
 
+def test_find_matching_scenarios_dual_region():
+    multiregion_df = simple_df.data.append(
+        pd.DataFrame(
+            [
+                [_mc, _sa, "Country", _eco2, _gtc, 2010, 2],
+            ],
+            columns=_msrvu + [simple_df.time_col, "value"],
+        )
+    )
+    multiregion_df = pyam.IamDataFrame(multiregion_df)
+    with pytest.raises(AssertionError):
+        find_matching_scenarios(
+            df_to_test,
+            multiregion_df,
+            variable_follower,
+            variable_leaders,
+            ["right_scenario", "wrong_scenario", "scen_a", "scen_b"],
+            return_all_info=True,
+        )
+
+def test_find_matching_scenarios_empty():
+    noregion_df = simple_df.filter(scenario="impossible")
+    nothing = find_matching_scenarios(
+        df_to_test,
+        noregion_df,
+        variable_follower,
+        variable_leaders,
+        ["right_scenario", "wrong_scenario", "scen_a", "scen_b"],
+        return_all_info=True,
+    )
+    assert nothing is None
+
 
 def test_find_matching_scenarios_get_precise_values():
     # We should get out explicit numbers if we ask for them
@@ -208,7 +240,7 @@ def test__make_interpolator():
     # the average of 6 and 4, i.e. 5.
     input = np.array([5, 4, 3, 2, 2.5, 1, 0])
     expected_output = np.array([2, 2, 2, 3, 2.5, 5, 5])
-    interpolator = make_interpolator(
+    interpolator = _make_interpolator(
         variable_follower, variable_leaders, wide_db, time_col
     )
     output = interpolator[1](input)

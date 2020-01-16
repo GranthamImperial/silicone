@@ -5,7 +5,7 @@ Module for the database cruncher which makes a linear interpolator from a subset
 from pyam import IamDataFrame
 
 from .base import _DatabaseCruncher
-from ..utils import _get_unit_of_variable, _make_wide_db, make_interpolator
+from ..utils import _get_unit_of_variable, _make_wide_db, _make_interpolator
 
 
 class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
@@ -83,7 +83,7 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
         leader_units = leader_units[0]
         use_db_time_col = use_db.time_col
         use_db = _make_wide_db(use_db)
-        interpolators = make_interpolator(
+        interpolators = _make_interpolator(
             variable_follower, variable_leaders, use_db, use_db_time_col
         )
 

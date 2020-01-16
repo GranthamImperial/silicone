@@ -19,9 +19,15 @@ def find_matching_scenarios(
 ):
     """
     Groups scenarios and models into different classifications and uses those to
-    work out which group contains a trendline most similar to the data.
-    In the event of a tie, it returns the scenario name that occurs earlier in
-    classify_scenarios.
+    work out which group contains a trendline most similar to the data. These
+    combinations may group several models/scenarios together by means of wild cards.
+    Most similar means having the smallest total squared distance between the
+    to_compare_df value of variable_follower and the variable_follower values
+    interpolated in options_df at the variable_leaders points in to_compare_df, i.e.
+    assuming errors only exist in variable_follower.
+    In the event of a tie between different scenario/model classifications, it returns the
+    scenario/model combination that occurs earlier in the input lists, looping through
+    scenarios first.
 
     Parameters
     ----------
@@ -103,7 +109,9 @@ def find_matching_scenarios(
     assert (
         len(times_needed) > 1 or use_change_not_abs == False
     ), "We need data from multiple times in order to calculate a difference."
-
+    if to_compare_df.data.empty:
+        print("The database being compared is empty")
+        return None
     scen_model_rating = {}
     to_compare_db = _make_wide_db(to_compare_df)
     if use_change_not_abs:
@@ -132,7 +140,7 @@ def find_matching_scenarios(
                 _remove_t0_from_wide_db(times_needed, wide_db)
             squared_dif = 0
             for leader in variable_leaders:
-                all_interps = make_interpolator(
+                all_interps = _make_interpolator(
                     variable_follower, leader, wide_db, time_col
                 )
                 for row in to_compare_db.iterrows():
@@ -161,7 +169,7 @@ def _remove_t0_from_wide_db(times_needed, _db):
             _db.loc[model, scenario, time] = _db.loc[model, scenario, time] - offset
 
 
-def make_interpolator(variable_follower, variable_leader, wide_db, time_col):
+def _make_interpolator(variable_follower, variable_leader, wide_db, time_col):
     """
     Constructs a linear interpolator for variable_follower as a function of
     (one) variable_leader for each timestep in the data.
@@ -201,8 +209,9 @@ def _make_wide_db(use_db):
     Converts an IamDataFrame into a pandas DataFrame that describes the timeseries
     of variables in index-labelled values.
     """
-
     idx = ["model", "scenario", use_db.time_col]
+    assert use_db.data.groupby(idx + ["variable"]).count()._get_values.max() <= 1, \
+        "The table contains multiple entries with the same model and scenario"
     use_db = use_db.pivot_table(index=idx, columns="variable", aggfunc="sum")
     # make sure we don't have empty strings floating around (pyam bug?)
     use_db = use_db.applymap(lambda x: np.nan if isinstance(x, str) else x)
