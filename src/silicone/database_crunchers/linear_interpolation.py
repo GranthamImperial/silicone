@@ -1,5 +1,5 @@
 """
-Module for the database cruncher which makes a linear interpolator from a subset of scenarios
+Module for the database cruncher which makes a linear interpolator between known values
 """
 
 from pyam import IamDataFrame
@@ -8,14 +8,12 @@ from .base import _DatabaseCruncher
 from ..utils import _get_unit_of_variable, _make_wide_db, _make_interpolator
 
 
-class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
+class DatabaseCruncherLinearInterpolation(_DatabaseCruncher):
     """
-    Database cruncher which pre-filters to only use data from specific scenarios, then
-    makes a linear interpolator to return values from that set of scenarios. Uses mean
-    values in the case of repeated leader values. Returns the follower values at the
-    extreme leader values for leader values more extreme than that found in the input
-    data.
-
+    Database cruncher which fits via a linear interpolator to return values from that
+    set of scenarios. Uses mean values in the case of repeated leader values.
+    Returns the follower values at the extreme leader values for leader values more
+    extreme than that found in the input data.
     """
 
     def derive_relationship(
@@ -58,7 +56,6 @@ class DatabaseCruncherSSPSpecificRelation(_DatabaseCruncher):
                 "Having more than one `variable_leaders` is not yet implemented"
             )
         use_db = self._db.filter(
-            scenario=required_scenario,
             variable=[variable_leaders[0], variable_follower],
         )
         if use_db.data.empty:

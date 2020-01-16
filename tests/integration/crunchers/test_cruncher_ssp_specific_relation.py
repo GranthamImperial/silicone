@@ -9,7 +9,7 @@ from base import _DataBaseCruncherTester
 from pyam import IamDataFrame
 
 import silicone.stats
-from silicone.database_crunchers import DatabaseCruncherSSPSpecificRelation
+from silicone.database_crunchers import DatabaseCruncherScenarioAndModelSpecificInterpolate
 
 _ma = "model_a"
 _mb = "model_b"
@@ -31,8 +31,8 @@ _ktc2f6 = "kt C2F6/yr"
 _msrvu = ["model", "scenario", "region", "variable", "unit"]
 
 
-class TestDatabaseCruncherSSPSpecificRelation(_DataBaseCruncherTester):
-    tclass = DatabaseCruncherSSPSpecificRelation
+class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherTester):
+    tclass = DatabaseCruncherScenarioAndModelSpecificInterpolate
     # The units in this dataframe are intentionally illogical for C5F12
     tdb = pd.DataFrame(
         [
