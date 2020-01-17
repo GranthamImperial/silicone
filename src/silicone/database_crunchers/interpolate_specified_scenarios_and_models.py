@@ -8,8 +8,13 @@ class DatabaseCruncherScenarioAndModelSpecificInterpolate(_DatabaseCruncher):
     runs the linear interpolator to return values from that set of scenarios. See the
     documentation of DatabaseCruncherLinearInterpolation for more details.
     """
+
     def derive_relationship(
-        self, variable_follower, variable_leaders, required_scenario="*", required_model="*"
+        self,
+        variable_follower,
+        variable_leaders,
+        required_scenario="*",
+        required_model="*",
     ):
         """
         Derive the relationship between two variables from the database.
@@ -47,10 +52,11 @@ class DatabaseCruncherScenarioAndModelSpecificInterpolate(_DatabaseCruncher):
             There is no data of the appropriate type in the database.
              There may be a typo in the SSP option.
         """
-        use_db = self._db.filter(
-            scenario=required_scenario, model=required_model
-        )
+        use_db = self._db.filter(scenario=required_scenario, model=required_model)
+        if use_db.data.empty:
+            raise ValueError(
+                "There is no data of the appropriate type in the database."
+                " There may be a typo in the SSP option."
+            )
         cruncher = DatabaseCruncherLinearInterpolation(use_db)
-        return cruncher.derive_relationship(
-                variable_follower, variable_leaders
-        )
+        return cruncher.derive_relationship(variable_follower, variable_leaders)

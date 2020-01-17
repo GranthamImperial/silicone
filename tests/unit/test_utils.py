@@ -118,12 +118,11 @@ def test_find_matching_scenarios_complicated(options, expected):
     )
     assert scenario == ("*", expected)
 
+
 def test_find_matching_scenarios_dual_region():
     multiregion_df = simple_df.data.append(
         pd.DataFrame(
-            [
-                [_mc, _sa, "Country", _eco2, _gtc, 2010, 2],
-            ],
+            [[_mc, _sa, "Country", _eco2, _gtc, 2010, 2]],
             columns=_msrvu + [simple_df.time_col, "value"],
         )
     )
@@ -137,6 +136,7 @@ def test_find_matching_scenarios_dual_region():
             ["right_scenario", "wrong_scenario", "scen_a", "scen_b"],
             return_all_info=True,
         )
+
 
 def test_find_matching_scenarios_empty():
     noregion_df = simple_df.filter(scenario="impossible")
