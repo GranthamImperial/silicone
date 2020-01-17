@@ -210,8 +210,9 @@ def _make_wide_db(use_db):
     of variables in index-labelled values.
     """
     idx = ["model", "scenario", use_db.time_col]
-    assert use_db.data.groupby(idx + ["variable"]).count()._get_values.max() <= 1, \
-        "The table contains multiple entries with the same model and scenario"
+    assert (
+        use_db.data.groupby(idx + ["variable"]).count()._get_values.max() <= 1
+    ), "The table contains multiple entries with the same model and scenario"
     use_db = use_db.pivot_table(index=idx, columns="variable", aggfunc="sum")
     # make sure we don't have empty strings floating around (pyam bug?)
     use_db = use_db.applymap(lambda x: np.nan if isinstance(x, str) else x)
