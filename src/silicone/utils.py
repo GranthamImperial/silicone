@@ -252,10 +252,11 @@ def _get_unit_of_variable(df, variable, multiple_units="raise"):
 
     return units
 
+
 def return_cases_which_consistently_split(df, to_split, components):
     """
     Returns model-scenario tuples which correctly split up the to_split into the various
-    components.
+    components. Components may contain wildcard "*"s to match several variables.
     Parameters
     ----------
     df: IamDataFrame
@@ -268,19 +269,25 @@ def return_cases_which_consistently_split(df, to_split, components):
         List of the variable names whose sum should equal the to_split value (if
         expressed in common units).
 
-    :return: (str, str)
-        (Model name, scenario name)
+    :return: [(str, str, str)]
+        List of consistent (Model name, scenario name, region name) tuples.
     """
     np_isclose_args = {
         'equal_nan': True,
         'rtol': 1e-03,
-        'atol': 1e-05,
     }
     valid_model_scenario = []
-    df = convert_units_to_MtCO2_equiv(df.filter(variable=[to_split] + components), components)
-    for model, scenario in df.data[["model", "scenario"]].unique():
-        model_df = df.filter(model=model, scenario=scenario)
-        model_df.check_internal_consistency(**np_isclose_args)
+    df = convert_units_to_MtCO2_equiv(df.filter(variable=[to_split] + components))
+    combinations = df.data[["model", "scenario", "region"]].drop_duplicates()
+    for ind in range(len(combinations)):
+        model, scenario, region = combinations.iloc[ind]
+        model_df = df.filter(model=model, scenario=scenario, region=region)
+        to_split_df = model_df.filter(variable=to_split)
+        sum_all = model_df.data.groupby(model_df.time_col).agg("sum")
+        sum_to_split = to_split_df.data.groupby(model_df.time_col).agg("sum")
+        if all(np.isclose(sum_all.loc[time], sum_to_split.loc[time] * 2, **np_isclose_args) for time in sum_to_split.index):
+            valid_model_scenario.append((model, scenario, region))
+    return valid_model_scenario
 
 
 def convert_units_to_MtCO2_equiv(df):
@@ -300,7 +307,7 @@ def convert_units_to_MtCO2_equiv(df):
     # TODO: note that this is hard-coded to use the AR5GWP100 figures
     conversion_factors = pd.read_csv(
         os.path.join(os.path.dirname(__file__),
-                     "..\..\Input\GWP100_unit_conversion.csv"),
+        "..\..\Input\GWP100_unit_conversion.csv"),
         sep=";",
         header=2,
     )

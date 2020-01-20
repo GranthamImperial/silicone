@@ -281,11 +281,31 @@ def test_get_unit_of_variable_error(check_aggregate_df):
     ) == sorted(["Mt CH4/yr", "Mt C/yr"])
 
 
-def test_return_cases_which_consistently_split(check_aggregate_df):
-    return_cases_which_consistently_split(check_aggregate_df)
+def test_return_cases_which_consistently_split_works(check_aggregate_df):
+    limited_check_agg = check_aggregate_df.filter(variable="Primary Energy*",
+                                                  keep=False)
+    cases = return_cases_which_consistently_split(limited_check_agg, "*CO2", ["*CO2*"])
+    assert pd.DataFrame(
+        cases, columns=["model", "scenario", "region"]
+    ).equals(
+        limited_check_agg.data[["model", "scenario", "region"]].drop_duplicates().reset_index(drop=True)
+    )
 
 
-def test_convert_units_to_MtCO2_equiv_fails_with_bad_units(check_aggregate_df):
+def test_return_cases_which_consistently_split_one_fails(check_aggregate_df):
+    limited_check_agg = check_aggregate_df.filter(variable="Primary Energy*",
+                                                  keep=False)
+    limited_check_agg.data["value"].iloc[0] = 41
+    cases = return_cases_which_consistently_split(limited_check_agg, "*CO2", ["*CO2*"])
+    # This time do not match the initial case, so we have to remove that to do the comparison.
+    assert pd.DataFrame(
+        cases, columns=["model", "scenario", "region"]
+    ).equals(
+        limited_check_agg.data[["model", "scenario", "region"]].drop_duplicates().iloc[1:].reset_index(drop=True)
+    )
+
+
+def test_convert_units_to_mtco2_equiv_fails_with_bad_units(check_aggregate_df):
     with pytest.raises(AssertionError):
         convert_units_to_MtCO2_equiv(check_aggregate_df)
     limited_check_agg = check_aggregate_df.filter(variable="Primary Energy*",
