@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import scipy.interpolate
+import os.path
 
 """
 Utils contains a number of helpful functions that don't belong elsewhere.
@@ -250,3 +251,88 @@ def _get_unit_of_variable(df, variable, multiple_units="raise"):
         return units
 
     return units
+
+def return_cases_which_consistently_split(df, to_split, components):
+    """
+    Returns model-scenario tuples which correctly split up the to_split into the various
+    components.
+    Parameters
+    ----------
+    df: IamDataFrame
+        The input dataframe.
+
+    to_split : Str
+        Name of the variable that should split into the others
+
+    components : [Str]
+        List of the variable names whose sum should equal the to_split value (if
+        expressed in common units).
+
+    :return: (str, str)
+        (Model name, scenario name)
+    """
+    np_isclose_args = {
+        'equal_nan': True,
+        'rtol': 1e-03,
+        'atol': 1e-05,
+    }
+    valid_model_scenario = []
+    df = convert_units_to_MtCO2_equiv(df.filter(variable=[to_split] + components), components)
+    for model, scenario in df.data[["model", "scenario"]].unique():
+        model_df = df.filter(model=model, scenario=scenario)
+        model_df.check_internal_consistency(**np_isclose_args)
+
+
+def convert_units_to_MtCO2_equiv(df):
+    """
+    Converts the units of gases reported in kt into Mt CO2 equivalent.
+
+    Parameters
+    ----------
+    df : IamDataFrame
+        The input dataframe whose units need conversion.
+
+    Return
+    ------
+    IamDataFrame
+        The input data with units converted.
+    """
+    # TODO: note that this is hard-coded to use the AR5GWP100 figures
+    conversion_factors = pd.read_csv(
+        os.path.join(os.path.dirname(__file__),
+                     "..\..\Input\GWP100_unit_conversion.csv"),
+        sep=";",
+        header=2,
+    )
+    # This string is found at the start of all correct units:
+    convert_to_str = "Mt CO2"
+    to_convert_df = df.copy()
+    to_convert_var = to_convert_df.filter(unit=convert_to_str + "*", keep=False).variables(True)
+    to_convert_units = to_convert_var["unit"]
+    assert all(
+        y in conversion_factors["Gas"].values
+        for y in to_convert_units.map(lambda x: x.split(" ")[-1][:-3]).values
+    ), "Not all units are found in the conversion table"
+    assert all(
+        y == "/yr" for y in to_convert_units.map(lambda x: x.split(" ")[-1][-3:]).values
+    ), "The units are unexpectedly not per year"
+    for ind in range(len(to_convert_units)):
+        unit = to_convert_units[ind]
+        gas_name = to_convert_units[ind].split(" ")[-1][:-3]
+        # We divide by 1000 if we convert Mt to kt
+        if unit[0] == "M":
+            order_of_magnitude = 1
+        elif unit[0] == "k":
+            order_of_magnitude = 1 / 1000
+        else:
+            raise ValueError("Unclear how to parse the units for {}.".format(unit))
+        conv_factor = (
+            order_of_magnitude * conversion_factors[conversion_factors["Gas"] == gas_name][
+                "AR5GWP100"
+            ].iloc[0]
+        )
+        to_convert_df.convert_unit(
+            {unit: [convert_to_str + " equiv/yr", conv_factor]}, inplace=True
+        )
+
+    return to_convert_df

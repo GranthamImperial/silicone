@@ -9,6 +9,8 @@ from silicone.utils import (
     _get_unit_of_variable,
     find_matching_scenarios,
     _make_interpolator,
+    return_cases_which_consistently_split,
+    convert_units_to_MtCO2_equiv,
 )
 
 _mc = "model_c"
@@ -277,3 +279,31 @@ def test_get_unit_of_variable_error(check_aggregate_df):
             check_aggregate_df, "Emissions|CH4", multiple_units="continue"
         )
     ) == sorted(["Mt CH4/yr", "Mt C/yr"])
+
+
+def test_return_cases_which_consistently_split(check_aggregate_df):
+    return_cases_which_consistently_split(check_aggregate_df)
+
+
+def test_convert_units_to_MtCO2_equiv_fails_with_bad_units(check_aggregate_df):
+    with pytest.raises(AssertionError):
+        convert_units_to_MtCO2_equiv(check_aggregate_df)
+    limited_check_agg = check_aggregate_df.filter(variable="Primary Energy*",
+                                                  keep=False)
+    limited_check_agg.data["unit"].iloc[0] = "bad unit"
+    with pytest.raises(AssertionError):
+        convert_units_to_MtCO2_equiv(limited_check_agg)
+
+
+def test_convert_units_to_MtCO2_equiv_works(check_aggregate_df):
+    limited_check_agg = check_aggregate_df.filter(variable="Primary Energy*", keep=False)
+    converted_units = convert_units_to_MtCO2_equiv(limited_check_agg)
+    assert all(y[:6] == "Mt CO2" for y in converted_units.data["unit"].unique())
+    # Index 1 is already in CO2
+    assert converted_units.data["value"].loc[1] == limited_check_agg.data["value"].loc[1]
+    # At index 122 we are in units of Mt methane, rate 28* higher
+    assert converted_units.data["value"].loc[122] == \
+           limited_check_agg.data["value"].loc[122] * 28
+    # At index 142 we have kt CF4, 6630 times more effective/kg but / 1000 for k -> G
+    assert converted_units.data["value"].loc[142] == \
+           limited_check_agg.data["value"].loc[142] * 6.63
