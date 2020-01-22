@@ -1,4 +1,5 @@
 import re
+import os.path
 
 import pyam
 import numpy as np
@@ -11,6 +12,7 @@ from silicone.utils import (
     _make_interpolator,
     return_cases_which_consistently_split,
     convert_units_to_MtCO2_equiv,
+    get_sr15_scenarios
 )
 
 _mc = "model_c"
@@ -291,6 +293,9 @@ def test_return_cases_which_consistently_split_works(check_aggregate_df):
         limited_check_agg.data[["model", "scenario", "region"]].drop_duplicates().reset_index(drop=True)
     )
 
+def test_return_cases_which_consistently_split_returns_nothing_with_no_data(check_aggregate_df):
+    cases = return_cases_which_consistently_split(check_aggregate_df, "not_here", ["also_not_here"])
+    assert not cases
 
 def test_return_cases_which_consistently_split_one_fails(check_aggregate_df):
     limited_check_agg = check_aggregate_df.filter(variable="Primary Energy*",
@@ -346,3 +351,26 @@ def test_convert_units_to_MtCO2_equiv_works(check_aggregate_df):
     # At index 142 we have kt CF4, 6630 times more effective/kg but / 1000 for k -> G
     assert converted_units.data["value"].loc[142] == \
            limited_check_agg.data["value"].loc[142] * 6.63
+
+def test_get_files_and_use_them():
+    SR15_SCENARIOS = "./sr15_scenarios.csv"
+    valid_model_ids = [
+        "MESSAGE*",
+        "AIM*",
+        "C-ROADS*",
+        "GCAM*",
+        # "IEA*",
+        # "IMAGE*",
+        # "MERGE*",
+        # "POLES*",
+        # "REMIND*",
+        "WITCH*"
+    ]
+    if not os.path.isfile(SR15_SCENARIOS):
+        get_sr15_scenarios(SR15_SCENARIOS, valid_model_ids)
+    sr15_data = pyam.IamDataFrame(SR15_SCENARIOS)
+    kyoto_list = ["Emissions|HFC", "Emissions|PFC"]
+    target = "Emissions|F-Gases"
+    valid_cases = return_cases_which_consistently_split(sr15_data,
+            target, kyoto_list)
+    len(valid_cases)

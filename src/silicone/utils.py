@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import scipy.interpolate
 import os.path
+import pyam
 
 """
 Utils contains a number of helpful functions that don't belong elsewhere.
@@ -9,14 +10,14 @@ Utils contains a number of helpful functions that don't belong elsewhere.
 
 
 def find_matching_scenarios(
-    options_df,
-    to_compare_df,
-    variable_follower,
-    variable_leaders,
-    classify_scenarios,
-    classify_models=["*"],
-    return_all_info=False,
-    use_change_not_abs=False,
+        options_df,
+        to_compare_df,
+        variable_follower,
+        variable_leaders,
+        classify_scenarios,
+        classify_models=["*"],
+        return_all_info=False,
+        use_change_not_abs=False,
 ):
     """
     Groups scenarios and models into different classifications and uses those to
@@ -96,7 +97,7 @@ def find_matching_scenarios(
     assert len(variable_leaders) == 1, "This is only calibrated to work with one leader"
     time_col = options_df.time_col
     assert (
-        to_compare_df.time_col == time_col
+            to_compare_df.time_col == time_col
     ), "The time column in the data to classify does not match the cruncher"
     times_needed = set(to_compare_df.data[time_col])
     if any(x not in options_df.data[time_col].values for x in times_needed):
@@ -108,7 +109,7 @@ def find_matching_scenarios(
             )
         )
     assert (
-        len(times_needed) > 1 or use_change_not_abs == False
+            len(times_needed) > 1 or use_change_not_abs == False
     ), "We need data from multiple times in order to calculate a difference."
     if to_compare_df.data.empty:
         print("The database being compared is empty")
@@ -146,9 +147,10 @@ def find_matching_scenarios(
                 )
                 for row in to_compare_db.iterrows():
                     squared_dif += (
-                        row[1][variable_follower]
-                        - all_interps[row[1][time_col]](row[1][leader])
-                    ) ** 2
+                                           row[1][variable_follower]
+                                           - all_interps[row[1][time_col]](
+                                       row[1][leader])
+                                   ) ** 2
             scen_model_rating[model, scenario] = squared_dif
     ordered_scen = sorted(scen_model_rating.items(), key=lambda item: item[1])
     if return_all_info:
@@ -163,7 +165,8 @@ def _remove_t0_from_wide_db(times_needed, _db):
     """
 
     for model, scenario in set(
-        zip(_db.index.get_level_values("model"), _db.index.get_level_values("scenario"))
+            zip(_db.index.get_level_values("model"),
+                _db.index.get_level_values("scenario"))
     ):
         offset = _db.loc[model, scenario, min(times_needed)].copy().values.squeeze()
         for time in times_needed:
@@ -212,7 +215,7 @@ def _make_wide_db(use_db):
     """
     idx = ["model", "scenario", use_db.time_col]
     assert (
-        use_db.data.groupby(idx + ["variable"]).count()._get_values.max() <= 1
+            use_db.data.groupby(idx + ["variable"]).count()._get_values.max() <= 1
     ), "The table contains multiple entries with the same model and scenario"
     use_db = use_db.pivot_table(index=idx, columns="variable", aggfunc="sum")
     # make sure we don't have empty strings floating around (pyam bug?)
@@ -253,7 +256,7 @@ def _get_unit_of_variable(df, variable, multiple_units="raise"):
     return units
 
 
-def return_cases_which_consistently_split(df, to_split, components):
+def return_cases_which_consistently_split(df, to_split, components, how_close=None):
     """
     Returns model-scenario tuples which correctly split up the to_split into the various
     components. Components may contain wildcard "*"s to match several variables.
@@ -269,13 +272,20 @@ def return_cases_which_consistently_split(df, to_split, components):
         List of the variable names whose sum should equal the to_split value (if
         expressed in common units).
 
+    how_close : Dict
+        This is a dictionary of numpy.isclose options specifying how exact the match
+        must be for the case to be included as passing. By default we specify a relative
+        tolerance of 1% ('rtol': 1e-2). The syntax for this can be found in the numpy
+        documentation.
+
     :return: [(str, str, str)]
         List of consistent (Model name, scenario name, region name) tuples.
     """
-    np_isclose_args = {
-        'equal_nan': True,
-        'rtol': 1e-03,
-    }
+    if not how_close:
+        how_close = {
+            'equal_nan': True,
+            'rtol': 1e-02,
+        }
     valid_model_scenario = []
     df = convert_units_to_MtCO2_equiv(df.filter(variable=[to_split] + components))
     combinations = df.data[["model", "scenario", "region"]].drop_duplicates()
@@ -283,9 +293,13 @@ def return_cases_which_consistently_split(df, to_split, components):
         model, scenario, region = combinations.iloc[ind]
         model_df = df.filter(model=model, scenario=scenario, region=region)
         to_split_df = model_df.filter(variable=to_split)
+        if to_split_df.data.empty:
+            continue
         sum_all = model_df.data.groupby(model_df.time_col).agg("sum")
         sum_to_split = to_split_df.data.groupby(model_df.time_col).agg("sum")
-        if all(np.isclose(sum_all.loc[time], sum_to_split.loc[time] * 2, **np_isclose_args) for time in sum_to_split.index):
+        if all([np.isclose(sum_all["value"].loc[time],
+                           sum_to_split["value"].loc[time] * 2, **how_close) for time in
+                sum_to_split.index]):
             valid_model_scenario.append((model, scenario, region))
     return valid_model_scenario
 
@@ -307,25 +321,27 @@ def convert_units_to_MtCO2_equiv(df):
     # TODO: note that this is hard-coded to use the AR5GWP100 figures
     conversion_factors = pd.read_csv(
         os.path.join(os.path.dirname(__file__),
-        "..\..\Input\GWP100_unit_conversion.csv"),
+                     "..\..\Input\GWP100_unit_conversion.csv"),
         sep=";",
         header=2,
     )
     # This string is found at the start of all correct units:
     convert_to_str = "Mt CO2"
     to_convert_df = df.copy()
-    to_convert_var = to_convert_df.filter(unit=convert_to_str + "*", keep=False).variables(True)
+    to_convert_var = to_convert_df.filter(unit=convert_to_str + "*",
+                                          keep=False).variables(True)
     to_convert_units = to_convert_var["unit"]
-    assert all(
-        y in conversion_factors["Gas"].values
-        for y in to_convert_units.map(lambda x: x.split(" ")[-1][:-3]).values
-    ), "Not all units are found in the conversion table"
+    not_found = [y for y in to_convert_units.map(lambda x: x.split(" ")[-1][:-3]
+                                                 .replace("-equiv", "")).values if
+                 y not in conversion_factors["Gas"].values]
+    assert not not_found, "Not all units are found in the conversion table. We lack {}".format(
+        not_found)
     assert all(
         y == "/yr" for y in to_convert_units.map(lambda x: x.split(" ")[-1][-3:]).values
     ), "The units are unexpectedly not per year"
     for ind in range(len(to_convert_units)):
         unit = to_convert_units[ind]
-        gas_name = to_convert_units[ind].split(" ")[-1][:-3]
+        gas_name = to_convert_units[ind].split(" ")[-1][:-3].replace("-equiv", "")
         # We divide by 1000 if we convert Mt to kt
         if unit[0] == "M":
             order_of_magnitude = 1
@@ -334,12 +350,31 @@ def convert_units_to_MtCO2_equiv(df):
         else:
             raise ValueError("Unclear how to parse the units for {}.".format(unit))
         conv_factor = (
-            order_of_magnitude * conversion_factors[conversion_factors["Gas"] == gas_name][
-                "AR5GWP100"
-            ].iloc[0]
+                order_of_magnitude *
+                conversion_factors[conversion_factors["Gas"] == gas_name][
+                    "AR5GWP100"
+                ].iloc[0]
         )
         to_convert_df.convert_unit(
-            {unit: [convert_to_str + " equiv/yr", conv_factor]}, inplace=True
+            {unit: [convert_to_str + "-equiv/yr", conv_factor]}, inplace=True
         )
-
     return to_convert_df
+
+
+def get_sr15_scenarios(output_file, valid_model_ids):
+    conn = pyam.iiasa.Connection("iamc15")
+    variables_to_fetch = [
+        "Emissions*",
+    ]
+    for model in valid_model_ids:
+        print("Fetching data for {}".format(model))
+        for variable in variables_to_fetch:
+            print("Fetching {}".format(variable))
+            var_df = conn.query(model=model, variable=variable, region='World')
+            try:
+                df.append(var_df, inplace=True)
+            except NameError:
+                df = pyam.IamDataFrame(var_df)
+
+    print("Writing to {}".format(output_file))
+    df.to_csv(output_file)
