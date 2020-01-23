@@ -304,27 +304,38 @@ def return_cases_which_consistently_split(df, to_split, components, how_close=No
     return valid_model_scenario
 
 
-def convert_units_to_MtCO2_equiv(df):
+def convert_units_to_MtCO2_equiv(df, use_AR4_data=False):
     """
-    Converts the units of gases reported in kt into Mt CO2 equivalent.
+    Converts the units of gases reported in kt into Mt CO2 equivalent, using GWP100
+    values from either (by default) AR5 or AR4 UNFCCC reports.
 
     Parameters
     ----------
     df : IamDataFrame
         The input dataframe whose units need conversion.
 
+    use_AR4_data : Bool
+        If true, use the AR4 conversion figures, else  use the AR5
+
     Return
     ------
     IamDataFrame
         The input data with units converted.
     """
-    # TODO: note that this is hard-coded to use the AR5GWP100 figures
-    conversion_factors = pd.read_csv(
-        os.path.join(os.path.dirname(__file__),
-                     "..\..\Input\GWP100_unit_conversion.csv"),
-        sep=";",
-        header=2,
-    )
+    if use_AR4_data:
+        conversion_factors = pd.read_csv(
+            os.path.join(os.path.dirname(__file__),
+                         "..\..\Input\GWP100_unit_conversion_AR4.csv"),
+            sep=";",
+            header=3,
+        )
+    else:
+        conversion_factors = pd.read_csv(
+            os.path.join(os.path.dirname(__file__),
+                         "..\..\Input\GWP100_unit_conversion_AR5.csv"),
+            sep=";",
+            header=3,
+        )
     # This string is found at the start of all correct units:
     convert_to_str = "Mt CO2"
     to_convert_df = df.copy()
@@ -352,7 +363,7 @@ def convert_units_to_MtCO2_equiv(df):
         conv_factor = (
                 order_of_magnitude *
                 conversion_factors[conversion_factors["Gas"] == gas_name][
-                    "AR5GWP100"
+                    "GWP100"
                 ].iloc[0]
         )
         to_convert_df.convert_unit(

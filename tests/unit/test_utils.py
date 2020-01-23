@@ -339,18 +339,22 @@ def test_convert_units_to_mtco2_equiv_fails_with_bad_units(check_aggregate_df):
         convert_units_to_MtCO2_equiv(limited_check_agg)
 
 
-def test_convert_units_to_MtCO2_equiv_works(check_aggregate_df):
+@pytest.mark.parametrize("ARoption,expected", [
+    (False, [28, 6.63]), (True, [25, 7.390])
+])
+def test_convert_units_to_MtCO2_equiv_works(check_aggregate_df, ARoption, expected):
+    # ARoption turns the use of AR4 on, rather than AR5 (the default)
     limited_check_agg = check_aggregate_df.filter(variable="Primary Energy*", keep=False)
-    converted_units = convert_units_to_MtCO2_equiv(limited_check_agg)
+    converted_units = convert_units_to_MtCO2_equiv(limited_check_agg, ARoption)
     assert all(y[:6] == "Mt CO2" for y in converted_units.data["unit"].unique())
     # Index 1 is already in CO2
     assert converted_units.data["value"].loc[1] == limited_check_agg.data["value"].loc[1]
-    # At index 122 we are in units of Mt methane, rate 28* higher
-    assert converted_units.data["value"].loc[122] == \
-           limited_check_agg.data["value"].loc[122] * 28
+    # At index 122 we are in units of Mt methane, rate 28* higher in AR5
+    assert np.isclose(converted_units.data["value"].loc[122],
+           limited_check_agg.data["value"].loc[122] * expected[0])
     # At index 142 we have kt CF4, 6630 times more effective/kg but / 1000 for k -> G
-    assert converted_units.data["value"].loc[142] == \
-           limited_check_agg.data["value"].loc[142] * 6.63
+    assert np.isclose(converted_units.data["value"].loc[142],
+           limited_check_agg.data["value"].loc[142] * expected[1])
 
 def test_get_files_and_use_them():
     SR15_SCENARIOS = "./sr15_scenarios.csv"
