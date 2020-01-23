@@ -12,7 +12,7 @@ from silicone.utils import (
     _make_interpolator,
     return_cases_which_consistently_split,
     convert_units_to_MtCO2_equiv,
-    get_sr15_scenarios
+    get_sr15_scenarios,
 )
 
 _mc = "model_c"
@@ -284,44 +284,56 @@ def test_get_unit_of_variable_error(check_aggregate_df):
 
 
 def test_return_cases_which_consistently_split_works(check_aggregate_df):
-    limited_check_agg = check_aggregate_df.filter(variable="Primary Energy*",
-                                                  keep=False)
+    limited_check_agg = check_aggregate_df.filter(
+        variable="Primary Energy*", keep=False
+    )
     cases = return_cases_which_consistently_split(limited_check_agg, "*CO2", ["*CO2*"])
-    assert pd.DataFrame(
-        cases, columns=["model", "scenario", "region"]
-    ).equals(
-        limited_check_agg.data[["model", "scenario", "region"]].drop_duplicates().reset_index(drop=True)
+    assert pd.DataFrame(cases, columns=["model", "scenario", "region"]).equals(
+        limited_check_agg.data[["model", "scenario", "region"]]
+        .drop_duplicates()
+        .reset_index(drop=True)
     )
 
-def test_return_cases_which_consistently_split_returns_nothing_with_no_data(check_aggregate_df):
-    cases = return_cases_which_consistently_split(check_aggregate_df, "not_here", ["also_not_here"])
+
+def test_return_cases_which_consistently_split_returns_nothing_with_no_data(
+    check_aggregate_df
+):
+    cases = return_cases_which_consistently_split(
+        check_aggregate_df, "not_here", ["also_not_here"]
+    )
     assert not cases
 
+
 def test_return_cases_which_consistently_split_one_fails(check_aggregate_df):
-    limited_check_agg = check_aggregate_df.filter(variable="Primary Energy*",
-                                                  keep=False)
+    limited_check_agg = check_aggregate_df.filter(
+        variable="Primary Energy*", keep=False
+    )
     limited_check_agg.data["value"].iloc[0] = 41
     cases = return_cases_which_consistently_split(limited_check_agg, "*CO2", ["*CO2*"])
     # This time do not match the initial case, so we have to remove that to do the comparison.
-    assert pd.DataFrame(
-        cases, columns=["model", "scenario", "region"]
-    ).equals(
-        limited_check_agg.data[["model", "scenario", "region"]].drop_duplicates().iloc[1:].reset_index(drop=True)
+    assert pd.DataFrame(cases, columns=["model", "scenario", "region"]).equals(
+        limited_check_agg.data[["model", "scenario", "region"]]
+        .drop_duplicates()
+        .iloc[1:]
+        .reset_index(drop=True)
     )
 
 
 def test_convert_units_to_mtco2_equiv_fails_with_month_units(check_aggregate_df):
-    limited_check_agg = check_aggregate_df.filter(variable="Primary Energy*",
-                                                  keep=False)
+    limited_check_agg = check_aggregate_df.filter(
+        variable="Primary Energy*", keep=False
+    )
     limited_check_agg.data["unit"].iloc[0] = "Mt CH4/mo"
     limited_check_agg = pyam.IamDataFrame(limited_check_agg.data)
     err_msg = "The units are unexpectedly not per year"
     with pytest.raises(AssertionError, match=err_msg):
         convert_units_to_MtCO2_equiv(limited_check_agg)
 
+
 def test_convert_units_to_mtco2_equiv_fails_with_oom_units(check_aggregate_df):
-    limited_check_agg = check_aggregate_df.filter(variable="Primary Energy*",
-                                                  keep=False)
+    limited_check_agg = check_aggregate_df.filter(
+        variable="Primary Energy*", keep=False
+    )
     limited_check_agg.data["unit"].iloc[0] = "Tt CO2/yr"
     limited_check_agg = pyam.IamDataFrame(limited_check_agg.data)
     err_msg = "Unclear how to parse the units for {}.".format("Tt CO2")
@@ -332,29 +344,39 @@ def test_convert_units_to_mtco2_equiv_fails_with_oom_units(check_aggregate_df):
 def test_convert_units_to_mtco2_equiv_fails_with_bad_units(check_aggregate_df):
     with pytest.raises(AssertionError):
         convert_units_to_MtCO2_equiv(check_aggregate_df)
-    limited_check_agg = check_aggregate_df.filter(variable="Primary Energy*",
-                                                  keep=False)
+    limited_check_agg = check_aggregate_df.filter(
+        variable="Primary Energy*", keep=False
+    )
     limited_check_agg.data["unit"].iloc[0] = "bad unit"
     with pytest.raises(AssertionError):
         convert_units_to_MtCO2_equiv(limited_check_agg)
 
 
-@pytest.mark.parametrize("ARoption,expected", [
-    (False, [28, 6.63]), (True, [25, 7.390])
-])
+@pytest.mark.parametrize(
+    "ARoption,expected", [(False, [28, 6.63]), (True, [25, 7.390])]
+)
 def test_convert_units_to_MtCO2_equiv_works(check_aggregate_df, ARoption, expected):
     # ARoption turns the use of AR4 on, rather than AR5 (the default)
-    limited_check_agg = check_aggregate_df.filter(variable="Primary Energy*", keep=False)
+    limited_check_agg = check_aggregate_df.filter(
+        variable="Primary Energy*", keep=False
+    )
     converted_units = convert_units_to_MtCO2_equiv(limited_check_agg, ARoption)
     assert all(y[:6] == "Mt CO2" for y in converted_units.data["unit"].unique())
     # Index 1 is already in CO2
-    assert converted_units.data["value"].loc[1] == limited_check_agg.data["value"].loc[1]
+    assert (
+        converted_units.data["value"].loc[1] == limited_check_agg.data["value"].loc[1]
+    )
     # At index 122 we are in units of Mt methane, rate 28* higher in AR5
-    assert np.isclose(converted_units.data["value"].loc[122],
-           limited_check_agg.data["value"].loc[122] * expected[0])
+    assert np.isclose(
+        converted_units.data["value"].loc[122],
+        limited_check_agg.data["value"].loc[122] * expected[0],
+    )
     # At index 142 we have kt CF4, 6630 times more effective/kg but / 1000 for k -> G
-    assert np.isclose(converted_units.data["value"].loc[142],
-           limited_check_agg.data["value"].loc[142] * expected[1])
+    assert np.isclose(
+        converted_units.data["value"].loc[142],
+        limited_check_agg.data["value"].loc[142] * expected[1],
+    )
+
 
 def test_get_files_and_use_them():
     SR15_SCENARIOS = "./sr15_scenarios.csv"
@@ -368,13 +390,12 @@ def test_get_files_and_use_them():
         # "MERGE*",
         # "POLES*",
         # "REMIND*",
-        "WITCH*"
+        "WITCH*",
     ]
     if not os.path.isfile(SR15_SCENARIOS):
         get_sr15_scenarios(SR15_SCENARIOS, valid_model_ids)
     sr15_data = pyam.IamDataFrame(SR15_SCENARIOS)
     kyoto_list = ["Emissions|HFC", "Emissions|PFC"]
     target = "Emissions|F-Gases"
-    valid_cases = return_cases_which_consistently_split(sr15_data,
-            target, kyoto_list)
+    valid_cases = return_cases_which_consistently_split(sr15_data, target, kyoto_list)
     len(valid_cases)
