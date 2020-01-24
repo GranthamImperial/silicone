@@ -254,7 +254,9 @@ def _get_unit_of_variable(df, variable, multiple_units="raise"):
     return units
 
 
-def return_cases_which_consistently_split(df, to_split, components, how_close=None):
+def return_cases_which_consistently_split(
+        df, to_split, components, how_close=None, use_AR4_data=False
+):
     """
     Returns model-scenario tuples which correctly split up the to_split into the various
     components. Components may contain wildcard "*"s to match several variables.
@@ -276,13 +278,19 @@ def return_cases_which_consistently_split(df, to_split, components, how_close=No
         tolerance of 1% ('rtol': 1e-2). The syntax for this can be found in the numpy
         documentation.
 
+    use_AR4_data : Bool
+        Determines whether the unit conversion takes place using GWP100 values from
+        the UNFCCC AR5 (if false, default) or AR4 (if true).
+
     :return: [(str, str, str)]
         List of consistent (Model name, scenario name, region name) tuples.
     """
     if not how_close:
         how_close = {"equal_nan": True, "rtol": 1e-02}
     valid_model_scenario = []
-    df = convert_units_to_MtCO2_equiv(df.filter(variable=[to_split] + components))
+    df = convert_units_to_MtCO2_equiv(
+        df.filter(variable=[to_split] + components), use_AR4_data
+    )
     combinations = df.data[["model", "scenario", "region"]].drop_duplicates()
     for ind in range(len(combinations)):
         model, scenario, region = combinations.iloc[ind]

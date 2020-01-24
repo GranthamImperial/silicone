@@ -18,3 +18,4 @@ from .linear_interpolation import DatabaseCruncherLinearInterpolation  # noqa: F
 from .interpolate_specified_scenarios_and_models import (
     DatabaseCruncherScenarioAndModelSpecificInterpolate,
 )  # noqa: F401
+from .gas_decompose_time_dep import DatabaseCruncherGasDecomposeTimeDepRatio  # noqa: F401
