@@ -262,23 +262,23 @@ def return_cases_which_consistently_split(
     components. Components may contain wildcard "*"s to match several variables.
     Parameters
     ----------
-    df: IamDataFrame
+    df: :obj:`pyam.IamDataFrame`
         The input dataframe.
 
-    to_split : Str
+    to_split : str
         Name of the variable that should split into the others
 
-    components : [Str]
+    components : [str]
         List of the variable names whose sum should equal the to_split value (if
         expressed in common units).
 
-    how_close : Dict
+    how_close : dict
         This is a dictionary of numpy.isclose options specifying how exact the match
         must be for the case to be included as passing. By default we specify a relative
         tolerance of 1% ('rtol': 1e-2). The syntax for this can be found in the numpy
         documentation.
 
-    use_AR4_data : Bool
+    use_AR4_data : bool
         Determines whether the unit conversion takes place using GWP100 values from
         the UNFCCC AR5 (if false, default) or AR4 (if true).
 
@@ -321,15 +321,15 @@ def convert_units_to_MtCO2_equiv(df, use_AR4_data=False):
 
     Parameters
     ----------
-    df : IamDataFrame
+    df : :obj:`pyam.IamDataFrame`
         The input dataframe whose units need conversion.
 
-    use_AR4_data : Bool
+    use_AR4_data : bool
         If true, use the AR4 conversion figures, else  use the AR5
 
     Return
     ------
-    IamDataFrame
+    :obj:`pyam.IamDataFrame`
         The input data with units converted.
     """
     if use_AR4_data:

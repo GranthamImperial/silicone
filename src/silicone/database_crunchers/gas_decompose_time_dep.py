@@ -5,7 +5,7 @@ composite gas mix into its constituents.
 
 import numpy as np
 import pandas as pd
-from pyam import IamDataFrame
+from src.silicone.utils import convert_units_to_MtCO2_equiv
 
 from .base import _DatabaseCruncher
 from silicone.database_crunchers import DatabaseCruncherTimeDepRatio
@@ -23,10 +23,10 @@ class DatabaseCruncherGasDecomposeTimeDepRatio(_DatabaseCruncher):
 
             Parameters
             ----------
-            aggregate_name : Str
+            aggregate_name : str
                 The name of the aggregate variable
 
-            component_ratio : [Str]
+            component_ratio : [str]
                 List of the names of the variables to be summed
 
             Return
@@ -59,7 +59,7 @@ class DatabaseCruncherGasDecomposeTimeDepRatio(_DatabaseCruncher):
                 })
         self._db.append(pd.DataFrame(append_db), inplace=True)
 
-    def derive_relationship(self, variable_follower, variable_leaders):
+    def derive_relationship(self, variable_follower, variable_leaders, use_ar4_data=False):
         """
         Derive the relationship between two variables from the database.
 
@@ -72,6 +72,10 @@ class DatabaseCruncherGasDecomposeTimeDepRatio(_DatabaseCruncher):
         variable_leaders : list[str]
             The variable we want to use in order to infer timeseries of
             ``variable_follower`` (e.g. ``["Emissions|CO2"]``).
+
+        use_ar4_data : bool
+            If true, we convert all values to Mt CO2 equivalent using the IPCC AR4
+            GWP100 data, otherwise (by default) we use the GWP100 data from AR5.
 
         Returns
         -------
@@ -91,6 +95,7 @@ class DatabaseCruncherGasDecomposeTimeDepRatio(_DatabaseCruncher):
             There is no data for ``variable_leaders`` or ``variable_follower`` in the
             database.
         """
-        use_db = self._db
+        use_db = self._db.filter(variable=[variable_follower]+variable_leaders)
+        # use_db = convert_units_to_MtCO2_equiv(use_db, use_AR4_data=use_ar4_data)
         cruncher = DatabaseCruncherTimeDepRatio(use_db)
         return cruncher.derive_relationship(variable_follower, variable_leaders)

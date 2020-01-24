@@ -1,6 +1,6 @@
-# Conversion factors between GWP100 and actual concentrations in kilotons
-# Found in Table 8.A.1 in Appendix 8.A
-# Source: https://www.ipcc.ch/site/assets/uploads/2018/02/WG1AR5_Chapter08_FINAL.pdf
+# Conversion factors between GWP100 and actual concentrations in kilotons.
+# Data from Table 8.A.1 in Appendix 8.A of WG1 AR5 report,
+# https://www.ipcc.ch/site/assets/uploads/2018/02/WG1AR5_Chapter08_FINAL.pdf
 Gas;GWP100
 CO2;1
 CH4;28

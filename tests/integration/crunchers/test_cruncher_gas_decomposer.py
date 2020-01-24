@@ -3,7 +3,7 @@ import re
 import numpy as np
 import pandas as pd
 import pytest
-import silicone.utils
+from silicone.utils import convert_units_to_MtCO2_equiv
 from base import _DataBaseCruncherTester
 from pyam import IamDataFrame
 
@@ -60,7 +60,7 @@ class TestDatabaseCruncherGasDecomposeTimeDepRatio(_DataBaseCruncherTester):
     )
 
     def test__construct_consistent_values(self, test_db):
-        test_db_co2 = silicone.utils.convert_units_to_MtCO2_equiv(test_db)
+        test_db_co2 = convert_units_to_MtCO2_equiv(test_db)
         tcruncher = self.tclass(test_db_co2)
         aggregate_name = "agg"
         assert aggregate_name not in tcruncher._db.variables().values
