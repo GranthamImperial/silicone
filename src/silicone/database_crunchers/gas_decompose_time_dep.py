@@ -67,10 +67,10 @@ class DatabaseCruncherGasDecomposeTimeDepRatio(_DatabaseCruncher):
                         "variable": aggregate_name,
                         data_to_add.index.name: data[0],
                         "unit": units[0],
-                        "value": data[1],
+                        "value": data[1]["value"],
                     }
                 )
-        self._db.append(pd.DataFrame(append_db), inplace=True)
+        return pd.DataFrame(append_db)
 
     def derive_relationship(
         self, variable_follower, variable_leaders, use_ar4_data=False
@@ -110,7 +110,10 @@ class DatabaseCruncherGasDecomposeTimeDepRatio(_DatabaseCruncher):
             There is no data for ``variable_leaders`` or ``variable_follower`` in the
             database.
         """
+        if len(variable_leaders) > 1:
+            raise ValueError("``variable_leaders`` contains more than one variable. ")
         use_db = self._db.filter(variable=[variable_follower] + variable_leaders)
-        # use_db = convert_units_to_MtCO2_equiv(use_db, use_AR4_data=use_ar4_data)
+        db_to_generate = convert_units_to_MtCO2_equiv(use_db, use_AR4_data=use_ar4_data)
+
         cruncher = DatabaseCruncherTimeDepRatio(use_db)
         return cruncher.derive_relationship(variable_follower, variable_leaders)

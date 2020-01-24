@@ -2,6 +2,7 @@ import re
 
 import numpy as np
 import pandas as pd
+import pyam
 import pytest
 from silicone.utils import convert_units_to_MtCO2_equiv
 from base import _DataBaseCruncherTester
@@ -65,16 +66,16 @@ class TestDatabaseCruncherGasDecomposeTimeDepRatio(_DataBaseCruncherTester):
         aggregate_name = "agg"
         assert aggregate_name not in tcruncher._db.variables().values
         component_ratio = ["Emissions|HFC|C2F6", "Emissions|HFC|C5F12"]
-
         consistent_vals = tcruncher._construct_consistent_values(
             aggregate_name, component_ratio
         )
-        assert aggregate_name in tcruncher._db.variables().values
+        assert aggregate_name in consistent_vals["variable"].values
+        consistent_vals = pyam.IamDataFrame(consistent_vals).timeseries()
         timeseries_data = tcruncher._db.timeseries()
         assert all(
             [
                 np.allclose(
-                    timeseries_data.iloc[-1].iloc[ind],
+                    consistent_vals.iloc[0].iloc[ind],
                     timeseries_data.iloc[0].iloc[ind]
                     + timeseries_data.iloc[1].iloc[ind],
                 )
