@@ -66,10 +66,21 @@ class TestDatabaseCruncherGasDecomposeTimeDepRatio(_DataBaseCruncherTester):
         assert aggregate_name not in tcruncher._db.variables().values
         component_ratio = ["Emissions|HFC|C2F6", "Emissions|HFC|C5F12"]
 
-        consistent_vals = tcruncher._construct_consistent_values(aggregate_name, component_ratio)
+        consistent_vals = tcruncher._construct_consistent_values(
+            aggregate_name, component_ratio
+        )
         assert aggregate_name in tcruncher._db.variables().values
         timeseries_data = tcruncher._db.timeseries()
-        assert all([np.allclose(timeseries_data.iloc[-1].iloc[ind], timeseries_data.iloc[0].iloc[ind] + timeseries_data.iloc[1].iloc[ind]) for ind in range(len(timeseries_data.iloc[0]))])
+        assert all(
+            [
+                np.allclose(
+                    timeseries_data.iloc[-1].iloc[ind],
+                    timeseries_data.iloc[0].iloc[ind]
+                    + timeseries_data.iloc[1].iloc[ind],
+                )
+                for ind in range(len(timeseries_data.iloc[0]))
+            ]
+        )
 
     def test_derive_relationship(self, test_db):
         tcruncher = self.tclass(test_db)

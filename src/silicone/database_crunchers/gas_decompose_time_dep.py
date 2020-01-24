@@ -33,33 +33,48 @@ class DatabaseCruncherGasDecomposeTimeDepRatio(_DatabaseCruncher):
             ------
             (Entry is added directly to self._db)
             """
-        assert aggregate_name not in self._db.variables(), "We already have a " \
-                                                           "variable of this name"
+        assert aggregate_name not in self._db.variables(), (
+            "We already have a " "variable of this name"
+        )
         relevant_db = self._db.filter(variable=component_ratio)
         units = relevant_db.data["unit"].drop_duplicates()
         if len(units) == 0:
-            print("Attempting to construct a consistent {} but none of the components "
-                  "present".format(aggregate_name))
+            print(
+                "Attempting to construct a consistent {} but none of the components "
+                "present".format(aggregate_name)
+            )
             return
         elif len(units) > 1:
-            raise ValueError("Too many units found to make a consistent {}".format(aggregate_name))
-        combinations = relevant_db.data[["model", "scenario", "region"]].drop_duplicates()
+            raise ValueError(
+                "Too many units found to make a consistent {}".format(aggregate_name)
+            )
+        combinations = relevant_db.data[
+            ["model", "scenario", "region"]
+        ].drop_duplicates()
         append_db = []
         for ind in range(len(combinations)):
             model, scenario, region = combinations.iloc[ind]
-            case_df = relevant_db.filter(
-                model=model, scenario=scenario, region=region
-            )
+            case_df = relevant_db.filter(model=model, scenario=scenario, region=region)
             if case_df.data.empty:
                 continue
             data_to_add = case_df.data.groupby(case_df.time_col).agg("sum")
             for data in data_to_add.iterrows():
-                append_db.append({
-                    "model": model, "scenario": scenario, "region": region, "variable": aggregate_name, data_to_add.index.name: data[0], "unit": units[0], "value": data[1]
-                })
+                append_db.append(
+                    {
+                        "model": model,
+                        "scenario": scenario,
+                        "region": region,
+                        "variable": aggregate_name,
+                        data_to_add.index.name: data[0],
+                        "unit": units[0],
+                        "value": data[1],
+                    }
+                )
         self._db.append(pd.DataFrame(append_db), inplace=True)
 
-    def derive_relationship(self, variable_follower, variable_leaders, use_ar4_data=False):
+    def derive_relationship(
+        self, variable_follower, variable_leaders, use_ar4_data=False
+    ):
         """
         Derive the relationship between two variables from the database.
 
@@ -95,7 +110,7 @@ class DatabaseCruncherGasDecomposeTimeDepRatio(_DatabaseCruncher):
             There is no data for ``variable_leaders`` or ``variable_follower`` in the
             database.
         """
-        use_db = self._db.filter(variable=[variable_follower]+variable_leaders)
+        use_db = self._db.filter(variable=[variable_follower] + variable_leaders)
         # use_db = convert_units_to_MtCO2_equiv(use_db, use_AR4_data=use_ar4_data)
         cruncher = DatabaseCruncherTimeDepRatio(use_db)
         return cruncher.derive_relationship(variable_follower, variable_leaders)

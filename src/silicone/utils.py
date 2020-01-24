@@ -255,7 +255,7 @@ def _get_unit_of_variable(df, variable, multiple_units="raise"):
 
 
 def return_cases_which_consistently_split(
-        df, to_split, components, how_close=None, use_AR4_data=False
+    df, to_split, components, how_close=None, use_AR4_data=False
 ):
     """
     Returns model-scenario tuples which correctly split up the to_split into the various
