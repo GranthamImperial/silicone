@@ -93,8 +93,7 @@ class TestDatabaseCruncherGasDecomposeTimeDepRatio(_DataBaseCruncherTester):
     def test_derive_relationship_error_multiple_lead_vars(self, test_db):
         tcruncher = self.tclass(test_db)
         error_msg = re.escape(
-            "For `DatabaseCruncherTimeDepRatio`, ``variable_leaders`` should only "
-            "contain one variable"
+            "``variable_leaders`` contains more than one variable. "
         )
         with pytest.raises(ValueError, match=error_msg):
             tcruncher.derive_relationship("Emissions|HFC|C5F12", ["a", "b"])
@@ -241,9 +240,10 @@ class TestDatabaseCruncherGasDecomposeTimeDepRatio(_DataBaseCruncherTester):
             res = filler(test_downscale_df)
 
     def test_multiple_units_breaks_infiller_follower(self, test_db, test_downscale_df):
-        test_db["unit"].iloc[2] = "bad units"
+        test_db["unit"].iloc[2] = "bad units/yr"
         with pytest.raises(
-            ValueError, match="There are multiple/no units in follower data"
+            AssertionError,
+            match=re.escape("Not all units are found in the conversion table. We lack {}".format(["units"]))
         ):
             tcruncher = self.tclass(test_db)
             filler = tcruncher.derive_relationship(
@@ -251,9 +251,20 @@ class TestDatabaseCruncherGasDecomposeTimeDepRatio(_DataBaseCruncherTester):
             )
 
     def test_multiple_units_breaks_infiller_leader(self, test_db, test_downscale_df):
-        test_db["unit"].iloc[0] = "bad units"
+        bad_units = "bad units/yr"
+        test_db["unit"].iloc[0] = bad_units
+        to_convert_var = test_db.variables(True)
+        to_convert_units = to_convert_var["unit"]
+        not_found = [
+            y
+            for y in to_convert_units.map(
+                lambda x: x.split(" ")[-1][:-3].replace("-equiv", "")
+            ).values
+            if y not in ["C2F6", "C5F12"]
+        ]
+        er_msg = re.escape("Not all units are found in the conversion table. We lack {}".format(not_found))
         with pytest.raises(
-            ValueError, match="There are multiple/no units for the leader data."
+            AssertionError, match=er_msg
         ):
             tcruncher = self.tclass(test_db)
             filler = tcruncher.derive_relationship(
