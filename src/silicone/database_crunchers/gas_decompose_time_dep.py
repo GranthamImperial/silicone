@@ -3,20 +3,30 @@ A wrapper for the 'time-dependent ratio' database cruncher designed for breaking
 composite gas mix into its constituents.
 """
 
-import numpy as np
 import pandas as pd
-from src.silicone.utils import convert_units_to_MtCO2_equiv
+from silicone.utils import convert_units_to_MtCO2_equiv
 
-from .base import _DatabaseCruncher
 from silicone.database_crunchers import DatabaseCruncherTimeDepRatio
 
 
-class DatabaseCruncherGasDecomposeTimeDepRatio(_DatabaseCruncher):
+class GasDecomposeTimeDepRatio:
     """
-    Database cruncher which uses the 'time-dependent ratio' technique.
+    Constructs an aggregate variable and uses the 'time-dependent ratio' technique to
+    calculate what this predicts for our database.
     """
 
-    def _construct_consistent_values(self, aggregate_name, component_ratio):
+    def __init__(self, db):
+        """
+        Initialises the database to use for infilling.
+
+        Parameters
+        ----------
+        db : IamDataFrame
+            The database for infilling.
+        """
+        self._db = db.copy()
+
+    def _construct_consistent_values(self, aggregate_name, components, db_to_generate):
         """
             Calculates the sum of the components with a given ratio and adds the value
             to the database in self.
@@ -24,26 +34,29 @@ class DatabaseCruncherGasDecomposeTimeDepRatio(_DatabaseCruncher):
             Parameters
             ----------
             aggregate_name : str
-                The name of the aggregate variable
+                The name of the aggregate variable.
 
-            component_ratio : [str]
-                List of the names of the variables to be summed
+            components : [str]
+                List of the names of the variables to be summed.
+
+            db_to_generate : :obj:`pyam.IamDataFrame`
+                Input data from which to construct consistent values.
 
             Return
             ------
-            (Entry is added directly to self._db)
+            :obj:`pyam.IamDataFrame`
+                Consistently calculated aggregate data.
             """
-        assert aggregate_name not in self._db.variables(), (
-            "We already have a " "variable of this name"
+        assert aggregate_name not in db_to_generate.variables(), (
+            "We already have a variable of this name"
         )
-        relevant_db = self._db.filter(variable=component_ratio)
+        relevant_db = db_to_generate.filter(variable=components)
         units = relevant_db.data["unit"].drop_duplicates()
         if len(units) == 0:
-            print(
+            raise ValueError(
                 "Attempting to construct a consistent {} but none of the components "
                 "present".format(aggregate_name)
             )
-            return
         elif len(units) > 1:
             raise ValueError(
                 "Too many units found to make a consistent {}".format(aggregate_name)
@@ -66,27 +79,33 @@ class DatabaseCruncherGasDecomposeTimeDepRatio(_DatabaseCruncher):
                         "region": region,
                         "variable": aggregate_name,
                         data_to_add.index.name: data[0],
-                        "unit": units[0],
+                        "unit": units.iloc[0],
                         "value": data[1]["value"],
                     }
                 )
         return pd.DataFrame(append_db)
 
-    def derive_relationship(
-        self, variable_follower, variable_leaders, use_ar4_data=False
+    def infill_components(
+        self, aggregate, components, to_infill_df, use_ar4_data=False
     ):
         """
-        Derive the relationship between two variables from the database.
+        Derive the relationship between the composite variables and their sum, then use
+        this to deconstruct the sum.
 
         Parameters
         ----------
-        variable_follower : str
+        aggregate : str
             The variable for which we want to calculate timeseries (e.g.
-            ``"Emissions|C5F12"``).
+            ``"Emissions|C5F12"``). Unlike in most crunchers, we do not expect the
+            database to already contain this data.
 
-        variable_leaders : list[str]
+        components : list[str]
             The variable we want to use in order to infer timeseries of
             ``variable_follower`` (e.g. ``["Emissions|CO2"]``).
+
+        to_infill_df : :obj:`pyam.IamDataFrame`
+            The dataframe that already contains the ``aggregate`` variable, but needs
+            the ``components`` to be infilled.
 
         use_ar4_data : bool
             If true, we convert all values to Mt CO2 equivalent using the IPCC AR4
@@ -94,26 +113,28 @@ class DatabaseCruncherGasDecomposeTimeDepRatio(_DatabaseCruncher):
 
         Returns
         -------
-        :obj:`func`
-            Function which takes a :obj:`pyam.IamDataFrame` containing
-            ``variable_leaders`` timeseries and returns timeseries for
-            ``variable_follower`` based on the derived relationship between the two.
-            Please see the source code for the exact definition (and docstring) of the
-            returned function.
+        :obj:`pyam.IamDataFrame`
+            The data for the
 
         Raises
         ------
         ValueError
-            ``variable_leaders`` contains more than one variable.
-
-        ValueError
             There is no data for ``variable_leaders`` or ``variable_follower`` in the
             database.
         """
-        if len(variable_leaders) > 1:
-            raise ValueError("``variable_leaders`` contains more than one variable. ")
-        use_db = self._db.filter(variable=[variable_follower] + variable_leaders)
-        db_to_generate = convert_units_to_MtCO2_equiv(use_db, use_AR4_data=use_ar4_data)
-
-        cruncher = DatabaseCruncherTimeDepRatio(use_db)
-        return cruncher.derive_relationship(variable_follower, variable_leaders)
+        assert aggregate in to_infill_df.variables().values, \
+            "The database to infill does not have the aggregate variable"
+        assert all(y not in components for y in to_infill_df.variables().values), \
+            "The database to infill already has some component variables"
+        self._db = self._db.filter(variable=components)
+        db_to_generate = convert_units_to_MtCO2_equiv(self._db, use_AR4_data=use_ar4_data)
+        consistent_composite = self._construct_consistent_values(
+            aggregate, components, db_to_generate
+        )
+        self._db.append(consistent_composite, inplace=True)
+        cruncher = DatabaseCruncherTimeDepRatio(self._db)
+        df_to_append = []
+        for leader in components:
+            to_add = cruncher.derive_relationship(leader, [aggregate])(to_infill_df)
+            df_to_append.append(to_add)
+        return df_to_append

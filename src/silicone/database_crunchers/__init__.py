@@ -19,5 +19,5 @@ from .interpolate_specified_scenarios_and_models import (
     DatabaseCruncherScenarioAndModelSpecificInterpolate,
 )  # noqa: F401
 from .gas_decompose_time_dep import (
-    DatabaseCruncherGasDecomposeTimeDepRatio,
+    GasDecomposeTimeDepRatio,
 )  # noqa: F401

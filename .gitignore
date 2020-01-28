@@ -2,7 +2,7 @@
 output-examples
 
 # SR1.5 data
-notebooks/sr15_scenarios.csv
+notebooks/sr15_scenarios_alternate.csv
 scripts/sr15_scenarios.csv
 
 # Byte-compiled / optimized / DLL files

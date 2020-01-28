@@ -23,7 +23,7 @@ model_colours = True
 legend_fraction = 0.65
 # ________________________________________________________
 # where do we get the data from?
-SR15_SCENARIOS = "./sr15_scenarios.csv"
+SR15_SCENARIOS = "./sr15_scenarios_alternate.csv"
 sr15_data = download_or_load_sr15(SR15_SCENARIOS)
 
 silicone.plotting._plot_emission_correlations_quantile_rolling_windows(

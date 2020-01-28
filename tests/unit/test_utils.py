@@ -379,7 +379,7 @@ def test_convert_units_to_MtCO2_equiv_works(check_aggregate_df, ARoption, expect
 
 
 def test_get_files_and_use_them():
-    SR15_SCENARIOS = "./sr15_scenarios.csv"
+    SR15_SCENARIOS = "./sr15_scenarios_alternate.csv"
     valid_model_ids = [
         "MESSAGE*",
         "AIM*",
