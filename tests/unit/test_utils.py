@@ -394,19 +394,20 @@ def test_convert_units_to_MtCO2_equiv_works(check_aggregate_df, ARoption, expect
     )
 
 
+def test_convert_units_to_MtCO2_equiv_doesnt_change(check_aggregate_df):
+    # Check that it does nothing when nothing needs doing
+    limited_check_agg = check_aggregate_df.filter(
+        variable="Primary Energy*", keep=False
+    )
+    limited_check_agg.data["unit"] = "Mt CO2 equiv/yr"
+    converted_data = convert_units_to_MtCO2_equiv(limited_check_agg)
+    assert converted_data.data.equals(limited_check_agg.data)
+
+
 def test_get_files_and_use_them():
     SR15_SCENARIOS = "./sr15_scenarios_alternate.csv"
     valid_model_ids = [
-        # "MESSAGE*",
-        # "AIM*",
-        # "C-ROADS*",
         "GCAM*",
-        # "IEA*",
-        # "IMAGE*",
-        # "MERGE*",
-        # "POLES*",
-        # "REMIND*",
-        # "WITCH*",
     ]
     if not os.path.isfile(SR15_SCENARIOS):
         get_sr15_scenarios(SR15_SCENARIOS, valid_model_ids)

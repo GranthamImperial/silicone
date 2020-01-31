@@ -90,7 +90,7 @@ class TestGasDecomposeTimeDepRatio:
         with pytest.raises(AssertionError, match=error_msg):
             tcruncher.infill_components("c", ["a", "b"], test_db)
 
-    def test_test_db_error_no_info_leader(self, test_db):
+    def test_db_error_no_info_leader(self, test_db):
         # test that crunching fails if there's no data about the lead gas in the
         # database
         variable_leaders = ["Emissions|HFC|C2F6"]
@@ -104,7 +104,7 @@ class TestGasDecomposeTimeDepRatio:
         with pytest.raises(ValueError, match=error_msg):
             tcruncher.infill_components(follower, variable_leaders, test_db.filter(variable=variable_leaders, keep=False))
 
-    def test_test_db_error_preexisting_follow_data(self, test_db):
+    def test_db_error_preexisting_follow_data(self, test_db):
         # test that crunching fails if there's no data about the follower gas in the
         # database
         variable_follower = "Emissions|HFC|C5F12"
@@ -117,9 +117,21 @@ class TestGasDecomposeTimeDepRatio:
         with pytest.raises(AssertionError, match=error_msg):
             tcruncher.infill_components(variable_follower, variable_leaders, test_db)
 
+    def test_db_error_multiple_units(self, test_db):
+        # test that crunching fails if there's no data about the follower gas in the
+        # database
+        aggregate_name = "Emissions|HFC|C5F12"
+        components = ["Emissions|HFC|C2F6"]
+        test_db.data["variable"] = components[0]
+        tcruncher = self.tclass(test_db)
+        error_msg = re.escape(
+            "Too many units found to make a consistent {}".format(aggregate_name)
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            tcruncher._construct_consistent_values(aggregate_name, components, test_db)
+
     def test_relationship_usage_not_enough_time(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db)
-
         test_downscale_df = _adjust_time_style_to_match(test_downscale_df, test_db)
         error_msg = re.escape(
             "Not all required timepoints are in the data for the lead"
@@ -129,3 +141,20 @@ class TestGasDecomposeTimeDepRatio:
             filler = tcruncher.infill_components(
                 "Emissions|HFC|C2F6", ["Emissions|HFC|C5F12"], test_downscale_df
             )
+
+    def test_relationship_usage_works(self, test_db, test_downscale_df):
+        tcruncher = self.tclass(test_db)
+        test_downscale_df = _adjust_time_style_to_match(test_downscale_df, test_db)
+        if test_db.time_col == "year":
+            test_downscale_df.filter(year=test_db.data[test_db.time_col].values, inplace=True)
+        else:
+            test_downscale_df.filter(time=test_db.data[test_db.time_col],
+                                     inplace=True)
+        components = ["Emissions|HFC|C5F12"]
+        filled = tcruncher.infill_components(
+            "Emissions|HFC|C2F6", components, test_downscale_df
+        )
+        # The value returned should include only one entry with
+        assert len(filled) == 1
+        assert all(y == components[0] for y in filled[0].variables())
+        assert np.allclose(filled[0].data["value"], test_downscale_df.data["value"])

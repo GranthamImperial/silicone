@@ -333,6 +333,9 @@ def convert_units_to_MtCO2_equiv(df, use_AR4_data=False):
     :obj:`pyam.IamDataFrame`
         The input data with units converted.
     """
+    # Check things need converting
+    if all(y[0:6] == "Mt CO2" for y in df.variables(True)["unit"]):
+        return df
     if use_AR4_data:
         file = "..\..\Input\GWP100_unit_conversion_AR4.csv"
     else:
