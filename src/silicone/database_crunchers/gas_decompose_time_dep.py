@@ -68,8 +68,6 @@ class GasDecomposeTimeDepRatio:
         for ind in range(len(combinations)):
             model, scenario, region = combinations.iloc[ind]
             case_df = relevant_db.filter(model=model, scenario=scenario, region=region)
-            if case_df.data.empty:
-                continue
             data_to_add = case_df.data.groupby(case_df.time_col).agg("sum")
             for data in data_to_add.iterrows():
                 append_db.append(
