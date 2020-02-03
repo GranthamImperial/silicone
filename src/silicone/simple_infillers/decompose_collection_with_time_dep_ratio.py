@@ -9,7 +9,7 @@ from silicone.utils import convert_units_to_MtCO2_equiv
 from silicone.database_crunchers import DatabaseCruncherTimeDepRatio
 
 
-class GasDecomposeTimeDepRatio:
+class DecomposeCollectionTimeDepRatio:
     """
     Constructs an aggregate variable and uses the 'time-dependent ratio' technique to
     calculate what this predicts for our database.

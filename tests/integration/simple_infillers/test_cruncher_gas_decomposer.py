@@ -5,16 +5,15 @@ import pandas as pd
 import pyam
 import pytest
 from silicone.utils import convert_units_to_MtCO2_equiv, _adjust_time_style_to_match
-from pyam import IamDataFrame
 
-from silicone.database_crunchers import GasDecomposeTimeDepRatio
+from silicone.simple_infillers.decompose_collection_with_time_dep_ratio import DecomposeCollectionTimeDepRatio
 
 _msa = ["model_a", "scen_a"]
 _msb = ["model_a", "scen_b"]
 
 
 class TestGasDecomposeTimeDepRatio:
-    tclass = GasDecomposeTimeDepRatio
+    tclass = DecomposeCollectionTimeDepRatio
     tdb = pd.DataFrame(
         [
             _msa + ["World", "Emissions|HFC|C5F12", "kt C5F12/yr", 2, 3],
