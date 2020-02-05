@@ -8,13 +8,13 @@ from silicone.database_crunchers import DatabaseCruncherQuantileRollingWindows, 
 def InfillAllRequiredVariables(
         to_fill,
         database,
+        variable_leaders,
         required_variables_list=None,
-        variable_leaders=None,
         cruncher=DatabaseCruncherQuantileRollingWindows,
         output_timesteps=None,
         infilled_data_prefix=None,
         to_fill_old_prefix=None,
-
+        check_data_returned=False,
 ):
     # Use default arguments for unfilled options:
     if output_timesteps is None:
@@ -52,7 +52,7 @@ def InfillAllRequiredVariables(
             to_fill.data["variable"].map(lambda x: x[: len(to_fill_old_prefix)])
             != to_fill_old_prefix
         ):
-            Warning("Not all of the data begins with the expected prefix")
+            raise ValueError("Not all of the data begins with the expected prefix")
         to_fill.data["variable"] = to_fill.data["variable"].str.replace(
             re.escape(to_fill_old_prefix + "|"), ""
         )
@@ -61,7 +61,7 @@ def InfillAllRequiredVariables(
             to_fill.data["variable"].map(lambda x: x[: len(infilled_data_prefix)])
             == infilled_data_prefix
         ):
-            Warning(
+            raise ValueError(
                 "This data already contains values with the expected final "
                 "prefix. This suggests that some of it has already been infilled."
             )
@@ -111,8 +111,17 @@ def InfillAllRequiredVariables(
     available_variables = [variab for variab in required_variables_list if variab in database.variables().values]
     if available_variables:
         to_fill = _perform_crunch_and_check(
-            available_variables, variable_leaders, to_fill, database, cruncher, output_timesteps, to_fill_orig,
+            available_variables,
+            variable_leaders,
+            to_fill,
+            database,
+            cruncher,
+            output_timesteps,
+            to_fill_orig,
+            check_data_returned=check_data_returned
         )
+    if infilled_data_prefix:
+        to_fill.data["variable"] = infilled_data_prefix + "|" + to_fill.data["variable"]
     return to_fill
 
 
@@ -182,7 +191,8 @@ def _perform_crunch_and_check(
             assert not msvdf_data.isnull().any().any()
             assert not msvdf_data.empty
             assert all(
-                [y in msvdf_data[df.time_col].values for y in output_timesteps])
+                [y in msvdf_data[df.time_col].values for y in output_timesteps]
+            ), "We do not have data for all required timesteps"
 
     # Check no data was overwritten by accident
     for model in tqdm.tqdm(
