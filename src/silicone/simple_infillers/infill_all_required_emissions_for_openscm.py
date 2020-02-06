@@ -65,12 +65,14 @@ def InfillAllRequiredVariables(
                 "This data already contains values with the expected final "
                 "prefix. This suggests that some of it has already been infilled."
             )
-    assert len(to_fill.regions()) == 1
+    assert len(to_fill.regions()) == 1, "There are {} regions in the data."\
+        .format(len(to_fill.regions()))
     assert len(database.regions()) == 1
     assert (
             to_fill.data["region"][0] == database.data["region"][0]
     ), "The cruncher data and the infilled data have different regions."
     # Perform any interpolations required here
+    to_fill_orig = to_fill.copy()
     timecol = database.time_col
     assert timecol == to_fill.time_col
     df_times_missing = database.timeseries().isna().sum() > 0
@@ -91,7 +93,6 @@ def InfillAllRequiredVariables(
     # Infill unavailable data
     assert not database.data.isnull().any().any()
     assert not to_fill.data.isnull().any().any()
-    to_fill_orig = to_fill.copy()
     unavailable_variables = [variab for variab in required_variables_list if variab not in database.variables().values]
     if unavailable_variables:
         Warning("No data for {}".format(unavailable_variables))

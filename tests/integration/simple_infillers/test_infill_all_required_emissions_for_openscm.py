@@ -3,6 +3,7 @@ import re
 import pytest
 from silicone.simple_infillers.infill_all_required_emissions_for_openscm import InfillAllRequiredVariables
 import pandas as pd
+import numpy as np
 class TestGasDecomposeTimeDepRatio:
     _msa = ["model_a", "scen_a"]
     _msb = ["model_a", "scen_b"]
@@ -195,7 +196,7 @@ class TestGasDecomposeTimeDepRatio:
                 "prefix. This suggests that some of it has already been infilled."
             )
             with pytest.raises(ValueError, match=err_msg):
-                output_df = InfillAllRequiredVariables(
+                InfillAllRequiredVariables(
                     to_fill,
                     modified_test_db,
                     ["HFC|C2F6"],
@@ -204,3 +205,23 @@ class TestGasDecomposeTimeDepRatio:
                     check_data_returned=True,
                     output_timesteps=[2010, 2015],
                 )
+
+    def test_infillallrequiredvariables_check_results_interp_times(
+         self, test_db
+    ):
+        #
+        if test_db.time_col == "year":
+            required_variables_list = ["Emissions|HFC|C5F12"]
+            leader = ["Emissions|HFC|C2F6"]
+            to_fill = test_db.filter(variable=leader)
+            output_df = InfillAllRequiredVariables(
+                to_fill,
+                test_db,
+                leader,
+                required_variables_list,
+                check_data_returned=True,
+                output_timesteps=[2012],
+            )
+            # The values should be interpolations between the known values at the start
+            assert output_df.data["value"][0] == (3*0.5 + 2*1.5) / 5
+            assert output_df.data["value"][1] == (3*2 + 2*3) / 5
