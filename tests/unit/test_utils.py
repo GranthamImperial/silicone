@@ -294,20 +294,24 @@ def test_return_cases_which_consistently_split_works(check_aggregate_df):
         .reset_index(drop=True)
     )
 
+
 def test_return_cases_which_consistently_split_numerical_error(check_aggregate_df):
     limited_check_agg = check_aggregate_df.filter(
         variable="Primary Energy*", keep=False
     )
-    limited_check_agg.data["value"] = limited_check_agg.data["value"] + np.random.normal(0, 0.0001, len(limited_check_agg.data["value"]))
+    limited_check_agg.data["value"] = limited_check_agg.data[
+        "value"
+    ] + np.random.normal(0, 0.0001, len(limited_check_agg.data["value"]))
     cases = return_cases_which_consistently_split(limited_check_agg, "*CO2", ["*CO2*"])
     assert pd.DataFrame(cases, columns=["model", "scenario", "region"]).equals(
         limited_check_agg.data[["model", "scenario", "region"]]
-            .drop_duplicates()
-            .reset_index(drop=True)
+        .drop_duplicates()
+        .reset_index(drop=True)
     )
     how_close = {"equal_nan": True, "rtol": 1e-16}
-    cases = return_cases_which_consistently_split(limited_check_agg, "*CO2", ["*CO2*"],
-                                                  how_close=how_close)
+    cases = return_cases_which_consistently_split(
+        limited_check_agg, "*CO2", ["*CO2*"], how_close=how_close
+    )
     assert not cases
 
 
@@ -406,9 +410,7 @@ def test_convert_units_to_MtCO2_equiv_doesnt_change(check_aggregate_df):
 
 def test_get_files_and_use_them():
     SR15_SCENARIOS = "./sr15_scenarios_alternate.csv"
-    valid_model_ids = [
-        "GCAM*",
-    ]
+    valid_model_ids = ["GCAM*"]
     if not os.path.isfile(SR15_SCENARIOS):
         get_sr15_scenarios(SR15_SCENARIOS, valid_model_ids)
     sr15_data = pyam.IamDataFrame(SR15_SCENARIOS)

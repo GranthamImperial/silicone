@@ -47,9 +47,9 @@ class DecomposeCollectionTimeDepRatio:
             :obj:`pyam.IamDataFrame`
                 Consistently calculated aggregate data.
             """
-        assert aggregate_name not in db_to_generate.variables().values, (
-            "We already have a variable of this name"
-        )
+        assert (
+            aggregate_name not in db_to_generate.variables().values
+        ), "We already have a variable of this name"
         relevant_db = db_to_generate.filter(variable=components)
         units = relevant_db.data["unit"].drop_duplicates()
         if len(units) == 0:
@@ -120,16 +120,18 @@ class DecomposeCollectionTimeDepRatio:
             There is no data for ``variable_leaders`` or ``variable_follower`` in the
             database.
         """
-        assert aggregate in to_infill_df.variables().values, \
-            "The database to infill does not have the aggregate variable"
-        assert all(y not in components for y in to_infill_df.variables().values), \
-            "The database to infill already has some component variables"
-        convert_base = convert_units_to_MtCO2_equiv(self._db.filter(
-            variable=components),
-            use_AR4_data=use_ar4_data
+        assert (
+            aggregate in to_infill_df.variables().values
+        ), "The database to infill does not have the aggregate variable"
+        assert all(
+            y not in components for y in to_infill_df.variables().values
+        ), "The database to infill already has some component variables"
+        convert_base = convert_units_to_MtCO2_equiv(
+            self._db.filter(variable=components), use_AR4_data=use_ar4_data
         )
-        db_to_generate = convert_units_to_MtCO2_equiv(convert_base,
-                                                      use_AR4_data=use_ar4_data)
+        db_to_generate = convert_units_to_MtCO2_equiv(
+            convert_base, use_AR4_data=use_ar4_data
+        )
         consistent_composite = self._construct_consistent_values(
             aggregate, components, db_to_generate
         )

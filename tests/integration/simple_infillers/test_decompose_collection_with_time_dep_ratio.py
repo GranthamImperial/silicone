@@ -6,7 +6,9 @@ import pyam
 import pytest
 from silicone.utils import convert_units_to_MtCO2_equiv, _adjust_time_style_to_match
 
-from silicone.simple_infillers.decompose_collection_with_time_dep_ratio import DecomposeCollectionTimeDepRatio
+from silicone.simple_infillers.decompose_collection_with_time_dep_ratio import (
+    DecomposeCollectionTimeDepRatio,
+)
 
 _msa = ["model_a", "scen_a"]
 _msb = ["model_a", "scen_b"]
@@ -101,7 +103,11 @@ class TestGasDecomposeTimeDepRatio:
             "present".format(follower)
         )
         with pytest.raises(ValueError, match=error_msg):
-            tcruncher.infill_components(follower, variable_leaders, test_db.filter(variable=variable_leaders, keep=False))
+            tcruncher.infill_components(
+                follower,
+                variable_leaders,
+                test_db.filter(variable=variable_leaders, keep=False),
+            )
 
     def test_db_error_preexisting_follow_data(self, test_db):
         # test that crunching fails if there's no data about the follower gas in the
@@ -145,10 +151,11 @@ class TestGasDecomposeTimeDepRatio:
         tcruncher = self.tclass(test_db)
         test_downscale_df = _adjust_time_style_to_match(test_downscale_df, test_db)
         if test_db.time_col == "year":
-            test_downscale_df.filter(year=test_db.data[test_db.time_col].values, inplace=True)
+            test_downscale_df.filter(
+                year=test_db.data[test_db.time_col].values, inplace=True
+            )
         else:
-            test_downscale_df.filter(time=test_db.data[test_db.time_col],
-                                     inplace=True)
+            test_downscale_df.filter(time=test_db.data[test_db.time_col], inplace=True)
         components = ["Emissions|HFC|C5F12"]
         filled = tcruncher.infill_components(
             "Emissions|HFC|C2F6", components, test_downscale_df

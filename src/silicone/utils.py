@@ -79,8 +79,8 @@ def find_matching_scenarios(
         Strings specifying the model (first) and scenario (second) classifications
         that best match the data.
 
-     if return_all_info == True:
-     dict
+    if return_all_info == True:
+    dict
         Maps the model and scenario classification strings to the measure of
         closeness.
 
@@ -269,7 +269,7 @@ def return_cases_which_consistently_split(
     to_split : str
         Name of the variable that should split into the others
 
-    components : [str]
+    components : list[str]
         List of the variable names whose sum should equal the to_split value (if
         expressed in common units).
 
@@ -283,7 +283,7 @@ def return_cases_which_consistently_split(
         Determines whether the unit conversion takes place using GWP100 values from
         the UNFCCC AR5 (if false, default) or AR4 (if true).
 
-    :return: [(str, str, str)]
+    :return: list[(str, str, str)]
         List of consistent (Model name, scenario name, region name) tuples.
     """
     if not how_close:

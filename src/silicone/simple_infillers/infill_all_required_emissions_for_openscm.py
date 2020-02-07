@@ -3,26 +3,83 @@ import re
 
 import pyam
 import tqdm
-from silicone.database_crunchers import DatabaseCruncherQuantileRollingWindows, DatabaseCruncherConstantRatio
+from silicone.database_crunchers import (
+    DatabaseCruncherQuantileRollingWindows,
+    DatabaseCruncherConstantRatio,
+)
+
+"""
+Infills all required data for MAGICC and FAIR emulators with minimal configuration 
+"""
+
 
 def InfillAllRequiredVariables(
-        to_fill,
-        database,
-        variable_leaders,
-        required_variables_list=None,
-        cruncher=DatabaseCruncherQuantileRollingWindows,
-        output_timesteps=None,
-        infilled_data_prefix=None,
-        to_fill_old_prefix=None,
-        check_data_returned=False,
+    to_fill,
+    database,
+    variable_leaders,
+    required_variables_list=None,
+    cruncher=DatabaseCruncherQuantileRollingWindows,
+    output_timesteps=None,
+    infilled_data_prefix=None,
+    to_fill_old_prefix=None,
+    check_data_returned=False,
 ):
+    """
+
+
+    Parameters
+    ----------
+    to_fill : :obj:`pyam.IamDataFrame`
+        The dataframe which is to be infilled
+
+    database: :obj:`pyam.IamDataFrame`
+        The dataframe containing all information to be used in the infilling process.
+
+    variable_leaders: list[str]
+        The name of the variable(s) found in to_fill which should be used to determine
+        the values of the other variables. For most infillers (including the default)
+        this list must contain only one entry. E.g. ["Emissions|CO2"]
+
+    required_variables_list: list[str]
+        The list of variables to infill. Each will be done separately. The default
+        behaviour (None option) will result in this being filled with the complete list
+        of required emissions.
+
+    cruncher : :class:
+        The class of cruncher to use to compute the infilled values. Defaults to
+        DatabaseCruncherQuantileRollingWindows, which uses the median value of a rolling
+        window. See the cruncher documentation for more details.
+
+    output_timesteps : list[int or datetime]
+        List of times at which to return infilled values. Will interpolate values in
+        between known data, but will not extend beyond the range of data provided.
+
+    infilled_data_prefix : str
+        A string that should be prefixed on all the variable names of the results
+        returned. Used to distinguish returned values from those input.
+
+    to_fill_old_prefix : str
+        Any string already found at the beginning of the variables names of the input
+        `to_fill` dataframe. This will be removed before comparing the variable names
+        with `database`.
+
+    check_data_returned : bool
+        If true, we perform checks that all desired data has been returned. Potential
+        reasons for failing this include requesting results at times outside our input
+        time range, as well as code bugs.
+
+    Returns
+    -------
+    :obj:`pyam.IamDataFrame`
+        The infilled dataframe (including input data) at requested times. All variables
+        now begin with infilled_data_prefix instead of to_fill_old_prefix.
+    """
     # Use default arguments for unfilled options:
     if output_timesteps is None:
         output_timesteps = [2015] + list(range(2020, 2101, 10))
     if required_variables_list is None:
         required_variables_list = [
-            "Emissions|HFC|HFC245ca"
-            "Emissions|BC",
+            "Emissions|HFC|HFC245ca" "Emissions|BC",
             "Emissions|HFC|HFC125",
             "Emissions|PFC|CF4",
             "Emissions|PFC|C2F6",
@@ -65,11 +122,12 @@ def InfillAllRequiredVariables(
                 "This data already contains values with the expected final "
                 "prefix. This suggests that some of it has already been infilled."
             )
-    assert len(to_fill.regions()) == 1, "There are {} regions in the data."\
-        .format(len(to_fill.regions()))
+    assert len(to_fill.regions()) == 1, "There are {} regions in the data.".format(
+        len(to_fill.regions())
+    )
     assert len(database.regions()) == 1
     assert (
-            to_fill.data["region"][0] == database.data["region"][0]
+        to_fill.data["region"][0] == database.data["region"][0]
     ), "The cruncher data and the infilled data have different regions."
     # Perform any interpolations required here
     to_fill_orig = to_fill.copy()
@@ -93,7 +151,11 @@ def InfillAllRequiredVariables(
     # Infill unavailable data
     assert not database.data.isnull().any().any()
     assert not to_fill.data.isnull().any().any()
-    unavailable_variables = [variab for variab in required_variables_list if variab not in database.variables().values]
+    unavailable_variables = [
+        variab
+        for variab in required_variables_list
+        if variab not in database.variables().values
+    ]
     if unavailable_variables:
         Warning("No data for {}".format(unavailable_variables))
         # Infill the required variables with 0s.
@@ -109,7 +171,11 @@ def InfillAllRequiredVariables(
             check_data_returned=False,
             **kwarg_dict
         )
-    available_variables = [variab for variab in required_variables_list if variab in database.variables().values]
+    available_variables = [
+        variab
+        for variab in required_variables_list
+        if variab in database.variables().values
+    ]
     if available_variables:
         to_fill = _perform_crunch_and_check(
             available_variables,
@@ -119,7 +185,7 @@ def InfillAllRequiredVariables(
             cruncher,
             output_timesteps,
             to_fill_orig,
-            check_data_returned=check_data_returned
+            check_data_returned=check_data_returned,
         )
     if infilled_data_prefix:
         to_fill.data["variable"] = infilled_data_prefix + "|" + to_fill.data["variable"]
@@ -127,15 +193,15 @@ def InfillAllRequiredVariables(
 
 
 def _perform_crunch_and_check(
-        required_variables,
-        leaders,
-        to_fill,
-        df,
-        type_of_cruncher,
-        output_timesteps,
-        to_fill_orig,
-        check_data_returned=False,
-        **kwargs
+    required_variables,
+    leaders,
+    to_fill,
+    df,
+    type_of_cruncher,
+    output_timesteps,
+    to_fill_orig,
+    check_data_returned=False,
+    **kwargs
 ):
     """
         Takes a list of scenarios to infill and infills them according to the options
@@ -143,23 +209,30 @@ def _perform_crunch_and_check(
 
         Parameters
         ----------
-        required_variables : List(str)
+        required_variables : list[str]
             The variable names to infill
-        leaders : List(str)
+
+        leaders : list[str]
             The leaders to guide the infilling
+
         to_fill : IamDataFrame
             The data frame to infill
+
         df : IamDataFrame
             The data frame to base the infilling on
+
         type_of_cruncher : :obj: silicone cruncher
             the silicone package cruncher class to use for the infilling
-        output_timesteps : list(int or datetime)
+
+        output_timesteps : list[int or datetime]
             When there should be data returned. Time-based interpolation will occur if
             this is more frequent than the data allows, data will be filtered out if
             there is additional time information.
+
         to_fill_orig : IamDataFrame
             The original, unfiltered and unaltered data input. We use this for
             performing checks.
+
         kwargs : Dict
             Any key word arguments to include in the cruncher calculation
 
@@ -169,13 +242,10 @@ def _perform_crunch_and_check(
             The infilled dataframe
         """
     if not all(x in df.variables().values for x in required_variables):
-        not_present = [x for x in required_variables if
-                       x not in df.variables().values]
-        raise ValueError(
-            "Missing some requested variables: {}".format(not_present))
+        not_present = [x for x in required_variables if x not in df.variables().values]
+        raise ValueError("Missing some requested variables: {}".format(not_present))
     cruncher = type_of_cruncher(df)
-    for req_var in tqdm.tqdm(required_variables,
-                             desc="Filling required variables"):
+    for req_var in tqdm.tqdm(required_variables, desc="Filling required variables"):
         interpolated = _infill_variable(cruncher, req_var, leaders, to_fill, **kwargs)
         if interpolated:
             to_fill = to_fill.append(interpolated)
@@ -183,7 +253,7 @@ def _perform_crunch_and_check(
     if not check_data_returned:
         return to_fill
     for _, (model, scenario) in (
-            to_fill[["model", "scenario"]].drop_duplicates().iterrows()
+        to_fill[["model", "scenario"]].drop_duplicates().iterrows()
     ):
         msdf = to_fill.filter(model=model, scenario=scenario)
         for v in required_variables:
@@ -197,19 +267,18 @@ def _perform_crunch_and_check(
 
     # Check no data was overwritten by accident
     for model in tqdm.tqdm(
-            to_fill_orig.models(),
-            desc="Consistency with original model data checks"
+        to_fill_orig.models(), desc="Consistency with original model data checks"
     ):
-        mdf = to_fill_orig.filter(model=model,
-                                  variable=leaders + required_variables)
+        mdf = to_fill_orig.filter(model=model, variable=leaders + required_variables)
         for scenario in mdf.scenarios():
             msdf = mdf.filter(scenario=scenario)
             msdf_filled = to_fill.filter(
-                model=model, scenario=scenario,
-                variable=msdf["variable"].unique()
+                model=model, scenario=scenario, variable=msdf["variable"].unique()
             )
 
-            common_times = set(msdf_filled[msdf.time_col]).intersection(msdf[msdf.time_col])
+            common_times = set(msdf_filled[msdf.time_col]).intersection(
+                msdf[msdf.time_col]
+            )
             if common_times:
                 if msdf.time_col == "year":
                     msdf = msdf.filter(year=list(common_times))
@@ -222,6 +291,31 @@ def _perform_crunch_and_check(
 
 
 def _infill_variable(cruncher_i, req_variable, leader_i, to_fill_i, **kwargs):
+    """
+    A function used to iterate the actual crunching if the data doesn't already
+    exist.
+    Parameters
+    ----------
+    cruncher_i : :obj: silicone cruncher
+        the initiated silicone cruncher to use for the infilling
+
+    req_variable : str
+        The follower variable to infill.
+
+    leader_i : str
+        The leader variable to guide the infilling.
+
+    to_fill_i : IamDataFrame
+        The dataframe to infill.
+
+    kwargs : Dict
+        Any key word arguments to include in the cruncher calculation
+
+    Returns
+    -------
+    :obj:IamDataFrame
+        The infilled component of the dataframe (or None if no infilling done)
+    """
     filler = cruncher_i.derive_relationship(req_variable, leader_i, **kwargs)
     # only fill for scenarios who don't have that variable
     # quieten logging about empty data frame as it doesn't matter here
