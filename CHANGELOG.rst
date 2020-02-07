@@ -3,6 +3,7 @@ Changelog
 
 master
 ------
+-(`#42 <https://github.com/znicholls/silicone/pull/42>`_) Added convenient wrappers for the crunchers and introduced utilities that check for consistent summation of variables.
 - (`#41 <https://github.com/znicholls/silicone/pull/41>`_) Added a cruncher to interpolate values between data from specific scenarios. Only test notebooks with lax option.
 - (`#32 <https://github.com/znicholls/silicone/pull/32>`_) Raise `ValueError` when asking to infill a case with no data
 - (`#27 <https://github.com/znicholls/silicone/pull/27>`_) Developed the constant ratio cruncher
