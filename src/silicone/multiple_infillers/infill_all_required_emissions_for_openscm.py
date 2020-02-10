@@ -1,5 +1,6 @@
 import logging
 import re
+import warnings
 
 import pyam
 import tqdm
@@ -79,8 +80,7 @@ def InfillAllRequiredVariables(
         output_timesteps = [2015] + list(range(2020, 2101, 10))
     if required_variables_list is None:
         required_variables_list = [
-            "Emissions|HFC|HFC245ca" "Emissions|BC",
-            "Emissions|HFC|HFC125",
+            "Emissions|BC",
             "Emissions|PFC|CF4",
             "Emissions|PFC|C2F6",
             "Emissions|PFC|C6F14",
@@ -94,6 +94,8 @@ def InfillAllRequiredVariables(
             "Emissions|HFC|HFC23",
             "Emissions|HFC|HFC32",
             "Emissions|HFC|HFC43-10",
+            "Emissions|HFC|HFC245ca",
+            "Emissions|HFC|HFC125",
             "Emissions|N2O",
             "Emissions|NH3",
             "Emissions|NOx",
@@ -157,7 +159,7 @@ def InfillAllRequiredVariables(
         if variab not in database.variables().values
     ]
     if unavailable_variables:
-        raise UserWarning("No data for {}".format(unavailable_variables))
+        warnings.warn("No data for {}".format(unavailable_variables))
         # Infill the required variables with 0s.
         kwarg_dict = {"ratio": 0, "units": "Mt Co2-equiv/yr"}
         to_fill = _perform_crunch_and_check(
@@ -302,7 +304,7 @@ def _infill_variable(cruncher_i, req_variable, leader_i, to_fill_i, **kwargs):
     req_variable : str
         The follower variable to infill.
 
-    leader_i : str
+    leader_i : list[str]
         The leader variable to guide the infilling.
 
     to_fill_i : IamDataFrame
