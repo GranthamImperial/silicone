@@ -127,7 +127,7 @@ def InfillAllRequiredVariables(
     )
     assert len(database.regions()) == 1
     assert (
-        to_fill.data["region"][0] == database.data["region"][0]
+        to_fill.data["region"].iloc[0] == database.data["region"].iloc[0]
     ), "The cruncher data and the infilled data have different regions."
     # Perform any interpolations required here
     to_fill_orig = to_fill.copy()
@@ -157,7 +157,7 @@ def InfillAllRequiredVariables(
         if variab not in database.variables().values
     ]
     if unavailable_variables:
-        Warning("No data for {}".format(unavailable_variables))
+        raise UserWarning("No data for {}".format(unavailable_variables))
         # Infill the required variables with 0s.
         kwarg_dict = {"ratio": 0, "units": "Mt Co2-equiv/yr"}
         to_fill = _perform_crunch_and_check(
@@ -174,7 +174,7 @@ def InfillAllRequiredVariables(
     available_variables = [
         variab
         for variab in required_variables_list
-        if variab in database.variables().values
+        if variab not in unavailable_variables
     ]
     if available_variables:
         to_fill = _perform_crunch_and_check(
@@ -241,9 +241,9 @@ def _perform_crunch_and_check(
         :obj:IamDataFrame
             The infilled dataframe
         """
-    if not all(x in df.variables().values for x in required_variables):
+    if not all(x in df.variables().values for x in required_variables) and type_of_cruncher != DatabaseCruncherConstantRatio:
         not_present = [x for x in required_variables if x not in df.variables().values]
-        raise ValueError("Missing some requested variables: {}".format(not_present))
+        raise Warning("Missing some requested variables: {}".format(not_present))
     cruncher = type_of_cruncher(df)
     for req_var in tqdm.tqdm(required_variables, desc="Filling required variables"):
         interpolated = _infill_variable(cruncher, req_var, leaders, to_fill, **kwargs)

@@ -2,7 +2,7 @@ import re
 
 import pandas as pd
 import pytest
-from silicone.simple_infillers.infill_all_required_emissions_for_openscm import (
+from silicone.multiple_infillers.infill_all_required_emissions_for_openscm import (
     InfillAllRequiredVariables,
 )
 
@@ -18,7 +18,7 @@ class TestGasDecomposeTimeDepRatio:
         columns=["model", "scenario", "region", "variable", "unit", 2010, 2015],
     )
 
-    def test_InfillAllRequiredVariables_works(self, test_db):
+    def test_infillallrequiredvariables_works(self, test_db):
         # TODO: Ensure this works for datetimes too
         if test_db.time_col == "year":
             required_variables_list = ["Emissions|HFC|C5F12"]
@@ -31,14 +31,32 @@ class TestGasDecomposeTimeDepRatio:
             )
             output_df.data.equals(test_db.data)
 
-    def test_infill_all_fails_with_insufficient_input(self, test_db):
+    def test_infillallrequiredvariables_warning(self, test_db):
+        # TODO: Ensure this works for datetimes too
         if test_db.time_col == "year":
             required_variables_list = ["Emissions|HFC|C5F12"]
             to_fill = test_db.filter(variable=required_variables_list, keep=False)
-            with pytest.raises(ValueError):
+            database = test_db.copy()
+            database.data["variable"].loc[
+                database.data["variable"] == required_variables_list[0]
+            ] = "Emissions|wrong"
+            err_msg = re.escape("Missing some requested variables: {}".format(
+                required_variables_list[0]
+            ))
+            with pytest.raises(UserWarning):
                 InfillAllRequiredVariables(
                     to_fill,
-                    test_db,
+                    database,
+                    variable_leaders=["Emissions|HFC|C2F6"],
+                    output_timesteps=[2010, 2015],
+                    required_variables_list=required_variables_list
+                )
+            # We should also get the same warning if we do not set an explicit
+            # required_variables_list
+            with pytest.raises(UserWarning):
+                InfillAllRequiredVariables(
+                    to_fill,
+                    database,
                     variable_leaders=["Emissions|HFC|C2F6"],
                     output_timesteps=[2010, 2015],
                 )

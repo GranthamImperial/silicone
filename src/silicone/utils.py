@@ -64,7 +64,7 @@ def find_matching_scenarios(
     return_all_info : bool
         If True, instead of simply returning the strings specifying the closest
         scenario/model match, we return all scenario/model combinations in order of
-        preference, along with
+        preference, along with the rms distance, quantifying the closeness.
 
     use_change_not_abs : bool
         If True, the code looks for the trend with the closest *derivatives* rather

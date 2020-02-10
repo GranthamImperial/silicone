@@ -6,7 +6,7 @@ import pyam
 import pytest
 from silicone.utils import convert_units_to_MtCO2_equiv, _adjust_time_style_to_match
 
-from silicone.simple_infillers.decompose_collection_with_time_dep_ratio import (
+from silicone.multiple_infillers.decompose_collection_with_time_dep_ratio import (
     DecomposeCollectionTimeDepRatio,
 )
 
