@@ -1,4 +1,5 @@
 import re
+import warnings
 
 import pandas as pd
 import pytest
@@ -18,6 +19,16 @@ class TestGasDecomposeTimeDepRatio:
         columns=["model", "scenario", "region", "variable", "unit", 2010, 2015],
     )
 
+    larger_df = pd.DataFrame(
+        [
+            _msa + ["World", "Emissions|HFC|C5F12", "kt C5F12/yr", 2, 3],
+            _msa + ["World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1, 2],
+            _msb + ["World", "Emissions|HFC|C5F12", "kt C5F12/yr", 4, 5],
+            _msb + ["World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.5, 2],
+        ],
+        columns=["model", "scenario", "region", "variable", "unit", 2010, 2015],
+    )
+
     def test_infillallrequiredvariables_works(self, test_db):
         # TODO: Ensure this works for datetimes too
         if test_db.time_col == "year":
@@ -31,6 +42,19 @@ class TestGasDecomposeTimeDepRatio:
             )
             output_df.data.equals(test_db.data)
 
+    def test_infillallrequiredvariables_doesnt_overwrite(self, test_db, larger_df):
+        if test_db.time_col == "year":
+            required_variables_list = ["Emissions|HFC|C5F12"]
+            to_fill = test_db.copy()
+            infilled = InfillAllRequiredVariables(
+                to_fill,
+                larger_df,
+                variable_leaders=["Emissions|HFC|C2F6"],
+                output_timesteps=[2010, 2015],
+                required_variables_list=required_variables_list
+            )
+            assert infilled.data.equals(test_db.data)
+
     def test_infillallrequiredvariables_warning(self, test_db):
         # TODO: Ensure this works for datetimes too
         if test_db.time_col == "year":
@@ -39,7 +63,7 @@ class TestGasDecomposeTimeDepRatio:
             database = test_db.copy()
             database.data["variable"].loc[
                 database.data["variable"] == required_variables_list[0]
-            ] = "Emissions|wrong"
+            ] = "Emissions|odd"
             err_msg = re.escape("Missing some requested variables: {}".format(
                 required_variables_list[0]
             ))
