@@ -5,4 +5,4 @@ Multiple infillers provide easy-to-use infiller options for the most common use-
 """
 
 from .decompose_collection_with_time_dep_ratio import DecomposeCollectionTimeDepRatio  # noqa: F401
-from .infill_all_required_emissions_for_openscm import InfillAllRequiredVariables  # noqa: F401
+from .infill_all_required_emissions_for_openscm import infill_all_required_variables  # noqa: F401

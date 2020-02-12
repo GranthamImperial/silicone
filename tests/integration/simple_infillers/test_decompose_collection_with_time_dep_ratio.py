@@ -4,11 +4,10 @@ import numpy as np
 import pandas as pd
 import pyam
 import pytest
-from silicone.utils import convert_units_to_MtCO2_equiv, _adjust_time_style_to_match
-
 from silicone.multiple_infillers.decompose_collection_with_time_dep_ratio import (
     DecomposeCollectionTimeDepRatio,
 )
+from silicone.utils import convert_units_to_MtCO2_equiv, _adjust_time_style_to_match
 
 _msa = ["model_a", "scen_a"]
 _msb = ["model_a", "scen_b"]
@@ -70,7 +69,7 @@ class TestGasDecomposeTimeDepRatio:
             aggregate_name, component_ratio, test_db_co2
         )
         assert aggregate_name in consistent_vals["variable"].values
-        consistent_vals = pyam.IamDataFrame(consistent_vals).timeseries()
+        consistent_vals = consistent_vals.timeseries()
         timeseries_data = tcruncher._db.timeseries()
         assert all(
             [
@@ -81,6 +80,35 @@ class TestGasDecomposeTimeDepRatio:
                 )
                 for ind in range(len(timeseries_data.iloc[0]))
             ]
+        )
+
+    def test__construct_consistent_values_with_equiv(self, test_db):
+        test_db_co2 = convert_units_to_MtCO2_equiv(test_db)
+        test_db_co2.data["unit"].loc[0:1] = "Mt CO2/yr"
+        tcruncher = self.tclass(test_db_co2)
+        aggregate_name = "agg"
+        assert aggregate_name not in tcruncher._db.variables().values
+        component_ratio = ["Emissions|HFC|C2F6", "Emissions|HFC|C5F12"]
+        consistent_vals = tcruncher._construct_consistent_values(
+            aggregate_name, component_ratio, test_db_co2
+        )
+        assert aggregate_name in consistent_vals["variable"].values
+        consistent_vals = consistent_vals.timeseries()
+        timeseries_data = tcruncher._db.timeseries()
+        assert all(
+            [
+                np.allclose(
+                    consistent_vals.iloc[0].iloc[ind],
+                    timeseries_data.iloc[0].iloc[ind]
+                    + timeseries_data.iloc[1].iloc[ind],
+                )
+                for ind in range(len(timeseries_data.iloc[0]))
+            ]
+        )
+        # We also require that the output units are '-equiv'
+        assert all(
+            y == "Mt CO2-equiv/yr" for y in
+            consistent_vals.index.get_level_values("unit")
         )
 
     def test_infill_components_error_no_lead_vars(self, test_db):
@@ -122,7 +150,7 @@ class TestGasDecomposeTimeDepRatio:
         with pytest.raises(AssertionError, match=error_msg):
             tcruncher.infill_components(variable_follower, variable_leaders, test_db)
 
-    def test_db_error_multiple_units(self, test_db):
+    def test_construct_consistent_error_multiple_units(self, test_db):
         # test that crunching fails if there's no data about the follower gas in the
         # database
         aggregate_name = "Emissions|HFC|C5F12"
@@ -164,3 +192,19 @@ class TestGasDecomposeTimeDepRatio:
         assert len(filled) == 1
         assert all(y == components[0] for y in filled[0].variables())
         assert np.allclose(filled[0].data["value"], test_downscale_df.data["value"])
+
+
+    def test_deleteme(self):
+        SR15_SCENARIOS = "./sr15_scenarios.csv"
+        sr15_data = pyam.IamDataFrame(SR15_SCENARIOS)
+        database = sr15_data.filter(model="WITCH*", keep=False)
+        components = ["Emissions|CO2", "Emissions|CH4", "Emissions|N2O",
+                      "Emissions|F-Gases"]
+        aggregate = "Emissions|Kyoto Gases (AR4-GWP100)"
+        to_infill = sr15_data.filter(model="WITCH*", variable=aggregate)
+        unit_consistant_db = convert_units_to_MtCO2_equiv(
+            database.filter(variable=components))
+        unit_consistant_db.variables(True)
+        decomposer = DecomposeCollectionTimeDepRatio(unit_consistant_db)
+        results = decomposer.infill_components(aggregate, components, to_infill)
+        results.head()

@@ -4,6 +4,7 @@ composite gas mix into its constituents.
 """
 
 import pandas as pd
+import pyam
 from silicone.utils import convert_units_to_MtCO2_equiv
 
 from silicone.database_crunchers import DatabaseCruncherTimeDepRatio
@@ -51,13 +52,14 @@ class DecomposeCollectionTimeDepRatio:
             aggregate_name not in db_to_generate.variables().values
         ), "We already have a variable of this name"
         relevant_db = db_to_generate.filter(variable=components)
-        units = relevant_db.data["unit"].drop_duplicates()
-        if len(units) == 0:
+        units = relevant_db.data["unit"].drop_duplicates().sort_values()
+        unit_equivs = units.map(lambda x: x.replace("-equiv", "")).drop_duplicates()
+        if len(unit_equivs) == 0:
             raise ValueError(
                 "Attempting to construct a consistent {} but none of the components "
                 "present".format(aggregate_name)
             )
-        elif len(units) > 1:
+        elif len(unit_equivs) > 1:
             raise ValueError(
                 "Too many units found to make a consistent {}".format(aggregate_name)
             )
@@ -81,7 +83,7 @@ class DecomposeCollectionTimeDepRatio:
                         "value": data[1]["value"],
                     }
                 )
-        return pd.DataFrame(append_db)
+        return pyam.IamDataFrame(pd.DataFrame(append_db))
 
     def infill_components(
         self, aggregate, components, to_infill_df, use_ar4_data=False

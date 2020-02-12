@@ -14,7 +14,7 @@ Infills all required data for MAGICC and FAIR emulators with minimal configurati
 """
 
 
-def InfillAllRequiredVariables(
+def infill_all_required_variables(
     to_fill,
     database,
     variable_leaders,
@@ -26,7 +26,8 @@ def InfillAllRequiredVariables(
     check_data_returned=False,
 ):
     """
-
+    This is function designed to infill all required data given a minimal amount of
+    input.
 
     Parameters
     ----------
@@ -159,7 +160,7 @@ def InfillAllRequiredVariables(
         if variab not in database.variables().values
     ]
     if unavailable_variables:
-        raise UserWarning("No data for {}".format(unavailable_variables))
+        warnings.warn(UserWarning("No data for {}".format(unavailable_variables)))
         # Infill the required variables with 0s.
         kwarg_dict = {"ratio": 0, "units": "Mt CO2-equiv/yr"}
         to_fill = _perform_crunch_and_check(

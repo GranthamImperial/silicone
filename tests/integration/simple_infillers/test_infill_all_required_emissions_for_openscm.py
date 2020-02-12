@@ -4,7 +4,7 @@ import warnings
 import pandas as pd
 import pytest
 from silicone.multiple_infillers.infill_all_required_emissions_for_openscm import (
-    InfillAllRequiredVariables,
+    infill_all_required_variables,
 )
 
 
@@ -34,7 +34,7 @@ class TestGasDecomposeTimeDepRatio:
         if test_db.time_col == "year":
             required_variables_list = ["Emissions|HFC|C5F12"]
             to_fill = test_db.filter(variable=required_variables_list, keep=False)
-            output_df = InfillAllRequiredVariables(
+            output_df = infill_all_required_variables(
                 to_fill, test_db, ["Emissions|HFC|C2F6"], required_variables_list
             )
             output_df.filter(variable=required_variables_list, keep=False).data.equals(
@@ -46,7 +46,7 @@ class TestGasDecomposeTimeDepRatio:
         if test_db.time_col == "year":
             required_variables_list = ["Emissions|HFC|C5F12"]
             to_fill = test_db.copy()
-            infilled = InfillAllRequiredVariables(
+            infilled = infill_all_required_variables(
                 to_fill,
                 larger_df,
                 variable_leaders=["Emissions|HFC|C2F6"],
@@ -67,8 +67,8 @@ class TestGasDecomposeTimeDepRatio:
             err_msg = re.escape("Missing some requested variables: {}".format(
                 required_variables_list[0]
             ))
-            with pytest.raises(UserWarning):
-                InfillAllRequiredVariables(
+            with pytest.warns(UserWarning):
+                infill_all_required_variables(
                     to_fill,
                     database,
                     variable_leaders=["Emissions|HFC|C2F6"],
@@ -77,8 +77,8 @@ class TestGasDecomposeTimeDepRatio:
                 )
             # We should also get the same warning if we do not set an explicit
             # required_variables_list
-            with pytest.raises(UserWarning):
-                InfillAllRequiredVariables(
+            with pytest.warns(UserWarning):
+                infill_all_required_variables(
                     to_fill,
                     database,
                     variable_leaders=["Emissions|HFC|C2F6"],
@@ -97,7 +97,7 @@ class TestGasDecomposeTimeDepRatio:
             to_fill = modified_test_db.filter(
                 variable=required_variables_list, keep=False
             )
-            output_df = InfillAllRequiredVariables(
+            output_df = infill_all_required_variables(
                 to_fill,
                 modified_test_db,
                 ["HFC|C2F6"],
@@ -123,7 +123,7 @@ class TestGasDecomposeTimeDepRatio:
             to_fill = modified_test_db.filter(
                 variable=required_variables_list, keep=False
             )
-            output_df = InfillAllRequiredVariables(
+            output_df = infill_all_required_variables(
                 to_fill,
                 modified_test_db,
                 ["HFC|C2F6"],
@@ -147,7 +147,7 @@ class TestGasDecomposeTimeDepRatio:
                 "variable"
             ].str.replace(re.escape(infilled_data_prefix + "|"), "")
             to_fill = test_db.filter(variable=required_variables_list, keep=False)
-            output_df = InfillAllRequiredVariables(
+            output_df = infill_all_required_variables(
                 to_fill,
                 modified_test_db,
                 ["HFC|C2F6"],
@@ -177,7 +177,7 @@ class TestGasDecomposeTimeDepRatio:
             )
             err_msg = re.escape("We do not have data for all required timesteps")
             with pytest.raises(AssertionError, match=err_msg):
-                InfillAllRequiredVariables(
+                infill_all_required_variables(
                     to_fill,
                     modified_test_db,
                     ["HFC|C2F6"],
@@ -203,7 +203,7 @@ class TestGasDecomposeTimeDepRatio:
             ).append(test_db)
             err_msg = re.escape("Not all of the data begins with the expected prefix")
             with pytest.raises(ValueError, match=err_msg):
-                output_df = InfillAllRequiredVariables(
+                output_df = infill_all_required_variables(
                     to_fill,
                     modified_test_db,
                     ["HFC|C2F6"],
@@ -235,7 +235,7 @@ class TestGasDecomposeTimeDepRatio:
                 "prefix. This suggests that some of it has already been infilled."
             )
             with pytest.raises(ValueError, match=err_msg):
-                InfillAllRequiredVariables(
+                infill_all_required_variables(
                     to_fill,
                     modified_test_db,
                     ["HFC|C2F6"],
@@ -250,7 +250,7 @@ class TestGasDecomposeTimeDepRatio:
             required_variables_list = ["Emissions|HFC|C5F12"]
             leader = ["Emissions|HFC|C2F6"]
             to_fill = test_db.filter(variable=leader)
-            output_df = InfillAllRequiredVariables(
+            output_df = infill_all_required_variables(
                 to_fill,
                 test_db,
                 leader,
