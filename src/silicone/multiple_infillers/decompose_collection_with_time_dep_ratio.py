@@ -3,11 +3,9 @@ A wrapper for the 'time-dependent ratio' database cruncher designed for breaking
 composite gas mix into its constituents.
 """
 
-import pandas as pd
 import pyam
-from silicone.utils import convert_units_to_MtCO2_equiv
-
 from silicone.database_crunchers import DatabaseCruncherTimeDepRatio
+from silicone.utils import convert_units_to_MtCO2_equiv
 
 
 class DecomposeCollectionTimeDepRatio:
@@ -63,27 +61,17 @@ class DecomposeCollectionTimeDepRatio:
             raise ValueError(
                 "Too many units found to make a consistent {}".format(aggregate_name)
             )
-        combinations = relevant_db.data[
-            ["model", "scenario", "region"]
-        ].drop_duplicates()
-        append_db = []
-        for ind in range(len(combinations)):
-            model, scenario, region = combinations.iloc[ind]
-            case_df = relevant_db.filter(model=model, scenario=scenario, region=region)
-            data_to_add = case_df.data.groupby(case_df.time_col).agg("sum")
-            for data in data_to_add.iterrows():
-                append_db.append(
-                    {
-                        "model": model,
-                        "scenario": scenario,
-                        "region": region,
-                        "variable": aggregate_name,
-                        data_to_add.index.name: data[0],
-                        "unit": units.iloc[0],
-                        "value": data[1]["value"],
-                    }
-                )
-        return pyam.IamDataFrame(pd.DataFrame(append_db))
+        use = (
+            relevant_db.data.groupby(
+                ["model", "scenario", "region", relevant_db.time_col]
+            )
+            .agg("sum")
+            .reset_index()
+        )
+        # These are sorted in alphabetical order so we choose the first
+        use["unit"] = units.iloc[0]
+        use["variable"] = aggregate_name
+        return pyam.IamDataFrame(use)
 
     def infill_components(
         self, aggregate, components, to_infill_df, use_ar4_data=False
@@ -114,7 +102,7 @@ class DecomposeCollectionTimeDepRatio:
         Returns
         -------
         :obj:`pyam.IamDataFrame`
-            The data for the
+            The infilled data resulting from the calculation.
 
         Raises
         ------
@@ -128,9 +116,25 @@ class DecomposeCollectionTimeDepRatio:
         assert all(
             y not in components for y in to_infill_df.variables().values
         ), "The database to infill already has some component variables"
-        convert_base = convert_units_to_MtCO2_equiv(
-            self._db.filter(variable=components), use_AR4_data=use_ar4_data
+        assert len(to_infill_df.data.columns) == len(self._db.data.columns) and all(
+            to_infill_df.data.columns == self._db.data.columns
+        ), (
+            "The database and to_infill_db fed into this have inconsistent columns, "
+            "which will prevent adding the data together properly."
         )
+        self._db.filter(variable=components, inplace=True)
+        # We only want to reference cases where all the required components are found
+        combinations = self._db.data[["model", "scenario", "region"]].drop_duplicates()
+        for ind in range(len(combinations)):
+            model, scenario, region = combinations.iloc[ind]
+            found_vars = self._db.filter(
+                model=model, scenario=scenario, region=region
+            ).variables()
+            if any(comp not in found_vars.values for comp in components):
+                self._db.filter(
+                    model=model, scenario=scenario, keep=False, inplace=True
+                )
+        convert_base = convert_units_to_MtCO2_equiv(self._db, use_AR4_data=use_ar4_data)
         db_to_generate = convert_units_to_MtCO2_equiv(
             convert_base, use_AR4_data=use_ar4_data
         )
@@ -142,5 +146,8 @@ class DecomposeCollectionTimeDepRatio:
         df_to_append = []
         for leader in components:
             to_add = cruncher.derive_relationship(leader, [aggregate])(to_infill_df)
-            df_to_append.append(to_add)
+            if df_to_append:
+                df_to_append.append(to_add)
+            else:
+                df_to_append = to_add
         return df_to_append

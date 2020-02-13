@@ -58,6 +58,27 @@ class TestGasDecomposeTimeDepRatio:
         ],
         columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2050],
     )
+    larger_df = pd.DataFrame(
+        [
+            ["model_C", "scen_C", "World", "Emissions|BC", "Mt BC/yr", "", 1.0, 1, 1],
+            ["model_C", "scen_C", "World", "Emissions|CH4", "Mt CH4/yr", "", 1.0, 1, 1],
+            ["model_D", "scen_C", "World", "Emissions|CO2", "Mt CO2/yr", "", 2, 2, 2],
+            ["model_D", "scen_C", "World", "Emissions|CH4", "Mt CH4/yr", "", 2, 2, 2],
+            ["model_D", "scen_F", "World", "Emissions|CO2", "Mt CO2/yr", "", 4, 4, 4],
+            ["model_D", "scen_F", "World", "Emissions|CH4", "Mt CH4/yr", "", 2, 2, 2],
+        ],
+        columns=[
+            "model",
+            "scenario",
+            "region",
+            "variable",
+            "unit",
+            "meta",
+            2010,
+            2015,
+            2050,
+        ],
+    )
 
     def test__construct_consistent_values(self, test_db):
         test_db_co2 = convert_units_to_MtCO2_equiv(test_db)
@@ -107,8 +128,8 @@ class TestGasDecomposeTimeDepRatio:
         )
         # We also require that the output units are '-equiv'
         assert all(
-            y == "Mt CO2-equiv/yr" for y in
-            consistent_vals.index.get_level_values("unit")
+            y == "Mt CO2-equiv/yr"
+            for y in consistent_vals.index.get_level_values("unit")
         )
 
     def test_infill_components_error_no_lead_vars(self, test_db):
@@ -189,22 +210,39 @@ class TestGasDecomposeTimeDepRatio:
             "Emissions|HFC|C2F6", components, test_downscale_df
         )
         # The value returned should include only one entry with
-        assert len(filled) == 1
-        assert all(y == components[0] for y in filled[0].variables())
-        assert np.allclose(filled[0].data["value"], test_downscale_df.data["value"])
+        assert len(filled.data) == 4
+        assert all(y == components[0] for y in filled.variables())
+        assert np.allclose(filled.data["value"], test_downscale_df.data["value"])
 
+    def test_relationship_rejects_inconsistent_columns(self, larger_df, test_db):
+        aggregate = "Emissions|KyotoTotal"
+        test_db.data["variable"] = aggregate
+        larger_df = _adjust_time_style_to_match(larger_df, test_db)
+        tcruncher = self.tclass(larger_df)
+        if test_db.time_col == "year":
+            larger_df.filter(year=test_db.data[test_db.time_col].values, inplace=True)
+        else:
+            larger_df.filter(time=test_db.data[test_db.time_col], inplace=True)
+        components = ["Emissions|CH4", "Emissions|CO2"]
+        err_msg = re.escape(
+            "The database and to_infill_db fed into this have "
+            "inconsistent columns, which will prevent adding the data together properly."
+        )
+        with pytest.raises(AssertionError, match=err_msg):
+            tcruncher.infill_components(aggregate, components, test_db)
 
-    def test_deleteme(self):
-        SR15_SCENARIOS = "./sr15_scenarios.csv"
-        sr15_data = pyam.IamDataFrame(SR15_SCENARIOS)
-        database = sr15_data.filter(model="WITCH*", keep=False)
-        components = ["Emissions|CO2", "Emissions|CH4", "Emissions|N2O",
-                      "Emissions|F-Gases"]
-        aggregate = "Emissions|Kyoto Gases (AR4-GWP100)"
-        to_infill = sr15_data.filter(model="WITCH*", variable=aggregate)
-        unit_consistant_db = convert_units_to_MtCO2_equiv(
-            database.filter(variable=components))
-        unit_consistant_db.variables(True)
-        decomposer = DecomposeCollectionTimeDepRatio(unit_consistant_db)
-        results = decomposer.infill_components(aggregate, components, to_infill)
-        results.head()
+    def test_relationship_ignores_incomplete_data(self, larger_df, test_db):
+        aggregate = "Emissions|KyotoTotal"
+        test_db.data["variable"] = aggregate
+        test_db.data["unit"] = "Mt CO2/yr"
+        # We remove the extra column from the larger_df as it's not found in test_df
+        larger_df.data.drop("meta", axis=1, inplace=True)
+        larger_df = pyam.IamDataFrame(larger_df.data)
+        larger_df = _adjust_time_style_to_match(larger_df, test_db)
+        tcruncher = self.tclass(larger_df)
+        if test_db.time_col == "year":
+            larger_df.filter(year=test_db.data[test_db.time_col].values, inplace=True)
+        else:
+            larger_df.filter(time=test_db.data[test_db.time_col], inplace=True)
+        components = ["Emissions|CH4", "Emissions|CO2"]
+        tcruncher.infill_components(aggregate, components, test_db)
