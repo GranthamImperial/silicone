@@ -51,7 +51,7 @@ class TestGasDecomposeTimeDepRatio:
                 larger_df,
                 variable_leaders=["Emissions|HFC|C2F6"],
                 output_timesteps=[2010, 2015],
-                required_variables_list=required_variables_list
+                required_variables_list=required_variables_list,
             )
             assert infilled.data.equals(test_db.data)
 
@@ -64,16 +64,18 @@ class TestGasDecomposeTimeDepRatio:
             database.data["variable"].loc[
                 database.data["variable"] == required_variables_list[0]
             ] = "Emissions|odd"
-            err_msg = re.escape("Missing some requested variables: {}".format(
-                required_variables_list[0]
-            ))
+            err_msg = re.escape(
+                "Missing some requested variables: {}".format(
+                    required_variables_list[0]
+                )
+            )
             with pytest.warns(UserWarning):
                 infill_all_required_variables(
                     to_fill,
                     database,
                     variable_leaders=["Emissions|HFC|C2F6"],
                     output_timesteps=[2010, 2015],
-                    required_variables_list=required_variables_list
+                    required_variables_list=required_variables_list,
                 )
             # We should also get the same warning if we do not set an explicit
             # required_variables_list

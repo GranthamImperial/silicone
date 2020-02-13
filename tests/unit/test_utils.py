@@ -316,7 +316,7 @@ def test_return_cases_which_consistently_split_numerical_error(check_aggregate_d
 
 
 def test_return_cases_which_consistently_split_returns_nothing_with_no_data(
-    check_aggregate_df
+    check_aggregate_df,
 ):
     cases = return_cases_which_consistently_split(
         check_aggregate_df, "not_here", ["also_not_here"]

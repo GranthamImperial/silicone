@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pandas as pd
 import scipy.interpolate
@@ -296,7 +298,10 @@ def return_cases_which_consistently_split(
     for ind in range(len(combinations)):
         model, scenario, region = combinations.iloc[ind]
         model_df = df.filter(model=model, scenario=scenario, region=region)
-        to_split_df = model_df.filter(variable=to_split)
+        # The following will often release a warning for empty data
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            to_split_df = model_df.filter(variable=to_split)
         if to_split_df.data.empty:
             continue
         sum_all = model_df.data.groupby(model_df.time_col).agg("sum")

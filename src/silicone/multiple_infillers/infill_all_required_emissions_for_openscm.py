@@ -244,8 +244,10 @@ def _perform_crunch_and_check(
         :obj:IamDataFrame
             The infilled dataframe
         """
-    if not all(x in df.variables().values for x in required_variables) \
-            and type_of_cruncher != DatabaseCruncherConstantRatio:
+    if (
+        not all(x in df.variables().values for x in required_variables)
+        and type_of_cruncher != DatabaseCruncherConstantRatio
+    ):
         not_present = [x for x in required_variables if x not in df.variables().values]
         raise Warning("Missing some requested variables: {}".format(not_present))
     cruncher = type_of_cruncher(df)
