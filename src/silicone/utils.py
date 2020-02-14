@@ -344,9 +344,9 @@ def convert_units_to_MtCO2_equiv(df, use_AR4_data=False):
     if all(y[0:6] == "Mt CO2" for y in df.variables(True)["unit"]):
         return df
     if use_AR4_data:
-        file = "..\..\Input\GWP100_unit_conversion_AR4.csv"
+        file = "../../Input/GWP100_unit_conversion_AR4.csv"
     else:
-        file = "..\..\Input\GWP100_unit_conversion_AR5.csv"
+        file = "../../Input/GWP100_unit_conversion_AR5.csv"
     conversion_factors = pd.read_csv(
         os.path.join(os.path.dirname(__file__), file), sep=";", header=3
     )
