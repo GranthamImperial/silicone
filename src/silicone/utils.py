@@ -1,4 +1,4 @@
-import warnings
+import logging
 
 import numpy as np
 import pandas as pd
@@ -6,6 +6,8 @@ import scipy.interpolate
 import os.path
 import pyam
 import datetime as dt
+
+logger = logging.getLogger(__name__)
 
 """
 Utils contains a number of helpful functions that don't belong elsewhere.
@@ -132,8 +134,8 @@ def find_matching_scenarios(
             )
             if scenario_db.data.empty:
                 scen_model_rating[model, scenario] = np.inf
-                print(
-                    "Warning: data with scenario {} and model {} not found in data".format(
+                logger.warning(
+                    "Data with scenario {} and model {} not found in data".format(
                         scenario, model
                     )
                 )
@@ -299,9 +301,9 @@ def return_cases_which_consistently_split(
         model, scenario, region = combinations.iloc[ind]
         model_df = df.filter(model=model, scenario=scenario, region=region)
         # The following will often release a warning for empty data
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            to_split_df = model_df.filter(variable=to_split)
+        logging.getLogger("pyam.core").setLevel(logging.CRITICAL)
+        to_split_df = model_df.filter(variable=to_split)
+        logging.getLogger("pyam.core").setLevel(logging.WARNING)
         if to_split_df.data.empty:
             continue
         sum_all = model_df.data.groupby(model_df.time_col).agg("sum")
