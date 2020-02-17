@@ -294,6 +294,17 @@ def test_return_cases_which_consistently_split_works(check_aggregate_df):
         .reset_index(drop=True)
     )
 
+def test_return_cases_which_consistently_split_bad_to_split(check_aggregate_df):
+    limited_check_agg = check_aggregate_df.filter(
+        variable="Primary Energy*", keep=False
+    )
+    cases = return_cases_which_consistently_split(limited_check_agg, "Junk", ["*CO2*"])
+    assert pd.DataFrame(cases, columns=["model", "scenario", "region"]).equals(
+        limited_check_agg.data[["model", "scenario", "region"]]
+        .drop_duplicates()
+        .reset_index(drop=True)
+    )
+
 
 def test_return_cases_which_consistently_split_numerical_error(check_aggregate_df):
     limited_check_agg = check_aggregate_df.filter(
@@ -412,8 +423,7 @@ def test_convert_units_to_MtCO2_equiv_doesnt_change(check_aggregate_df):
 def test_get_files_and_use_them():
     SR15_SCENARIOS = "./sr15_scenarios.csv"
     valid_model_ids = ["GCAM*"]
-    if not os.path.isfile(SR15_SCENARIOS):
-        get_sr15_scenarios(SR15_SCENARIOS, valid_model_ids)
+    get_sr15_scenarios(SR15_SCENARIOS, valid_model_ids)
     sr15_data = pyam.IamDataFrame(SR15_SCENARIOS)
     min_expected_var = [
         "Emissions|N2O", "Emissions|CO2", "Emissions|CH4", "Emissions|F-Gases"
