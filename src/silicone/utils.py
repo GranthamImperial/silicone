@@ -1,6 +1,13 @@
+import logging
+
 import numpy as np
 import pandas as pd
 import scipy.interpolate
+import os.path
+import pyam
+import datetime as dt
+
+logger = logging.getLogger(__name__)
 
 """
 Utils contains a number of helpful functions that don't belong elsewhere.
@@ -61,7 +68,7 @@ def find_matching_scenarios(
     return_all_info : bool
         If True, instead of simply returning the strings specifying the closest
         scenario/model match, we return all scenario/model combinations in order of
-        preference, along with
+        preference, along with the rms distance, quantifying the closeness.
 
     use_change_not_abs : bool
         If True, the code looks for the trend with the closest *derivatives* rather
@@ -76,8 +83,8 @@ def find_matching_scenarios(
         Strings specifying the model (first) and scenario (second) classifications
         that best match the data.
 
-     if return_all_info == True:
-     dict
+    if return_all_info == True:
+    dict
         Maps the model and scenario classification strings to the measure of
         closeness.
 
@@ -127,8 +134,8 @@ def find_matching_scenarios(
             )
             if scenario_db.data.empty:
                 scen_model_rating[model, scenario] = np.inf
-                print(
-                    "Warning: data with scenario {} and model {} not found in data".format(
+                logger.warning(
+                    "Data with scenario {} and model {} not found in data".format(
                         scenario, model
                     )
                 )
@@ -250,3 +257,170 @@ def _get_unit_of_variable(df, variable, multiple_units="raise"):
         return units
 
     return units
+
+
+def return_cases_which_consistently_split(
+    df, to_split, components, how_close=None, use_AR4_data=False
+):
+    """
+    Returns model-scenario tuples which correctly split up the to_split into the various
+    components. Components may contain wildcard "*"s to match several variables.
+    Parameters
+    ----------
+    df: :obj:`pyam.IamDataFrame`
+        The input dataframe.
+
+    to_split : str
+        Name of the variable that should split into the others
+
+    components : list[str]
+        List of the variable names whose sum should equal the to_split value (if
+        expressed in common units).
+
+    how_close : dict
+        This is a dictionary of numpy.isclose options specifying how exact the match
+        must be for the case to be included as passing. By default we specify a relative
+        tolerance of 1% ('rtol': 1e-2). The syntax for this can be found in the numpy
+        documentation.
+
+    use_AR4_data : bool
+        Determines whether the unit conversion takes place using GWP100 values from
+        the UNFCCC AR5 (if false, default) or AR4 (if true).
+
+    :return: list[(str, str, str)]
+        List of consistent (Model name, scenario name, region name) tuples.
+    """
+    if not how_close:
+        how_close = {"equal_nan": True, "rtol": 1e-02}
+    valid_model_scenario = []
+    df = convert_units_to_MtCO2_equiv(
+        df.filter(variable=[to_split] + components), use_AR4_data
+    )
+    combinations = df.data[["model", "scenario", "region"]].drop_duplicates()
+    for ind in range(len(combinations)):
+        model, scenario, region = combinations.iloc[ind]
+        model_df = df.filter(model=model, scenario=scenario, region=region)
+        # The following will often release a warning for empty data
+        logging.getLogger("pyam.core").setLevel(logging.CRITICAL)
+        to_split_df = model_df.filter(variable=to_split)
+        logging.getLogger("pyam.core").setLevel(logging.WARNING)
+        if to_split_df.data.empty:
+            continue
+        sum_all = model_df.data.groupby(model_df.time_col).agg("sum")
+        sum_to_split = to_split_df.data.groupby(model_df.time_col).agg("sum")
+        if all(
+            [
+                np.isclose(
+                    sum_all["value"].loc[time],
+                    sum_to_split["value"].loc[time] * 2,
+                    **how_close
+                )
+                for time in sum_to_split.index
+            ]
+        ):
+            valid_model_scenario.append((model, scenario, region))
+    return valid_model_scenario
+
+
+def convert_units_to_MtCO2_equiv(df, use_AR4_data=False):
+    """
+    Converts the units of gases reported in kt into Mt CO2 equivalent, using GWP100
+    values from either (by default) AR5 or AR4 UNFCCC reports.
+
+    Parameters
+    ----------
+    df : :obj:`pyam.IamDataFrame`
+        The input dataframe whose units need conversion.
+
+    use_AR4_data : bool
+        If true, use the AR4 conversion figures, else  use the AR5
+
+    Return
+    ------
+    :obj:`pyam.IamDataFrame`
+        The input data with units converted.
+    """
+    # Check things need converting
+    if all(y[0:6] == "Mt CO2" for y in df.variables(True)["unit"]):
+        return df
+    if use_AR4_data:
+        file = "../../Input/GWP100_unit_conversion_AR4.csv"
+    else:
+        file = "../../Input/GWP100_unit_conversion_AR5.csv"
+    conversion_factors = pd.read_csv(
+        os.path.join(os.path.dirname(__file__), file), sep=";", header=3
+    )
+    # This string is found at the start of all correct units:
+    convert_to_str = "Mt CO2"
+    to_convert_df = df.copy()
+    to_convert_var = to_convert_df.filter(
+        unit=convert_to_str + "*", keep=False
+    ).variables(True)
+    to_convert_units = to_convert_var["unit"]
+    not_found = [
+        y
+        for y in to_convert_units.map(
+            lambda x: x.split(" ")[-1][:-3].replace("-equiv", "")
+        ).values
+        if y not in conversion_factors["Gas"].values
+    ]
+    assert (
+        not not_found
+    ), "Not all units are found in the conversion table. We lack {}".format(not_found)
+    assert all(
+        y == "/yr" for y in to_convert_units.map(lambda x: x.split(" ")[-1][-3:]).values
+    ), "The units are unexpectedly not per year"
+    for ind in range(len(to_convert_units)):
+        unit = to_convert_units[ind]
+        gas_name = to_convert_units[ind].split(" ")[-1][:-3].replace("-equiv", "")
+        # We divide by 1000 if we convert Mt to kt
+        if unit[0] == "M":
+            order_of_magnitude = 1
+        elif unit[0] == "k":
+            order_of_magnitude = 1 / 1000
+        else:
+            raise ValueError("Unclear how to parse the units for {}.".format(unit))
+        conv_factor = (
+            order_of_magnitude
+            * conversion_factors[conversion_factors["Gas"] == gas_name]["GWP100"].iloc[
+                0
+            ]
+        )
+        to_convert_df.convert_unit(
+            {unit: [convert_to_str + "-equiv/yr", conv_factor]}, inplace=True
+        )
+    return to_convert_df
+
+
+def get_sr15_scenarios(output_file, valid_model_ids):
+    conn = pyam.iiasa.Connection("iamc15")
+    variables_to_fetch = ["Emissions*"]
+    for model in valid_model_ids:
+        print("Fetching data for {}".format(model))
+        for variable in variables_to_fetch:
+            print("Fetching {}".format(variable))
+            var_df = conn.query(model=model, variable=variable, region="World")
+            try:
+                df.append(var_df, inplace=True)
+            except NameError:
+                df = pyam.IamDataFrame(var_df)
+
+    print("Writing to {}".format(output_file))
+    df.to_csv(output_file)
+
+
+def _adjust_time_style_to_match(in_df, target_df):
+    if in_df.time_col != target_df.time_col:
+        in_df = in_df.timeseries()
+        if target_df.time_col == "time":
+            target_df_year_map = {v.year: v for v in target_df.timeseries().columns}
+            in_df.columns = in_df.columns.map(
+                lambda x: target_df_year_map[x]
+                if x in target_df_year_map
+                else dt.datetime(x, 1, 1)
+            )
+        else:
+            in_df.columns = in_df.columns.map(lambda x: x.year)
+        return pyam.IamDataFrame(in_df)
+
+    return in_df
