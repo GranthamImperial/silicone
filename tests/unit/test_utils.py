@@ -299,11 +299,7 @@ def test_return_cases_which_consistently_split_bad_to_split(check_aggregate_df):
         variable="Primary Energy*", keep=False
     )
     cases = return_cases_which_consistently_split(limited_check_agg, "Junk", ["*CO2*"])
-    assert pd.DataFrame(cases, columns=["model", "scenario", "region"]).equals(
-        limited_check_agg.data[["model", "scenario", "region"]]
-        .drop_duplicates()
-        .reset_index(drop=True)
-    )
+    assert len(cases) == 0
 
 
 def test_return_cases_which_consistently_split_numerical_error(check_aggregate_df):
