@@ -287,7 +287,9 @@ def return_cases_which_consistently_split(
         Determines whether the unit conversion takes place using GWP100 values from
         the UNFCCC AR5 (if false, default) or AR4 (if true).
 
-    :return: list[(str, str, str)]
+    Returns
+    -------
+     list[(str, str, str)]
         List of consistent (Model name, scenario name, region name) tuples.
     """
     if not how_close:
@@ -333,7 +335,7 @@ def convert_units_to_MtCO2_equiv(df, use_AR4_data=False):
         The input dataframe whose units need conversion.
 
     use_AR4_data : bool
-        If true, use the AR4 conversion figures, else  use the AR5
+        If true, use the AR4 GWP100 conversion figures, else use the AR5.
 
     Return
     ------
@@ -393,6 +395,19 @@ def convert_units_to_MtCO2_equiv(df, use_AR4_data=False):
 
 
 def get_sr15_scenarios(output_file, valid_model_ids):
+    """
+       Collects world-level data from the IIASA database for the named models and saves
+       them to a given location.
+
+        Parameters
+        ----------
+        output_file : str
+            File name and location for data to be saved
+
+        valid_model_ids : list[str]
+            Names of models that are to be fetched.
+
+    """
     conn = pyam.iiasa.Connection("iamc15")
     variables_to_fetch = ["Emissions*"]
     for model in valid_model_ids:
