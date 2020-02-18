@@ -1,6 +1,6 @@
 """
-A wrapper for the 'time-dependent ratio' database cruncher designed for breaking a
-composite gas mix into its constituents.
+Uses the 'time-dependent ratio' database cruncher designed for constructing an
+aggregate variable and breaking this mix into its constituents.
 """
 
 import pyam
@@ -68,7 +68,7 @@ class DecomposeCollectionTimeDepRatio:
             .agg("sum")
             .reset_index()
         )
-        # These are sorted in alphabetical order so we choose the first
+        # Units are sorted in alphabetical order so we choose the first to get -equiv
         use["unit"] = units.iloc[0]
         use["variable"] = aggregate_name
         return pyam.IamDataFrame(use)
