@@ -260,7 +260,7 @@ def _get_unit_of_variable(df, variable, multiple_units="raise"):
 
 
 def return_cases_which_consistently_split(
-    df, to_split, components, how_close=None, use_AR4_data=False
+    df, aggregate, components, how_close=None, use_AR4_data=False
 ):
     """
     Returns model-scenario tuples which correctly split up the to_split into the various
@@ -270,7 +270,7 @@ def return_cases_which_consistently_split(
     df: :obj:`pyam.IamDataFrame`
         The input dataframe.
 
-    to_split : str
+    aggregate : str
         Name of the variable that should split into the others
 
     components : list[str]
@@ -296,7 +296,7 @@ def return_cases_which_consistently_split(
         how_close = {"equal_nan": True, "rtol": 1e-02}
     valid_model_scenario = []
     df = convert_units_to_MtCO2_equiv(
-        df.filter(variable=[to_split] + components), use_AR4_data
+        df.filter(variable=[aggregate] + components), use_AR4_data
     )
     combinations = df.data[["model", "scenario", "region"]].drop_duplicates()
     for ind in range(len(combinations)):
@@ -304,7 +304,7 @@ def return_cases_which_consistently_split(
         model_df = df.filter(model=model, scenario=scenario, region=region)
         # The following will often release a warning for empty data
         logging.getLogger("pyam.core").setLevel(logging.CRITICAL)
-        to_split_df = model_df.filter(variable=to_split)
+        to_split_df = model_df.filter(variable=aggregate)
         logging.getLogger("pyam.core").setLevel(logging.WARNING)
         if to_split_df.data.empty:
             continue
