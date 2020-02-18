@@ -3,9 +3,9 @@ Changelog
 
 master
 ------
-- (`#46 <https://github.com/znicholls/silicone/pull/46>`_) Made infill_all_required_emissions_for_openscm, the second multiple-infiller function.
-- (`#45 <https://github.com/znicholls/silicone/pull/45>`_) Made decompose_collection_with_time_dep_ratio, the first multiple-infiller function.
-- (`#44 <https://github.com/znicholls/silicone/pull/44>`_) Implemented new util functions for downloading data, unit conversion and data checking.
+- (`#45 <https://github.com/znicholls/silicone/pull/45>`_) Made infill_all_required_emissions_for_openscm, the second multiple-infiller function.
+- (`#44 <https://github.com/znicholls/silicone/pull/44>`_) Made decompose_collection_with_time_dep_ratio, the first multiple-infiller function.
+- (`#43 <https://github.com/znicholls/silicone/pull/43>`_) Implemented new util functions for downloading data, unit conversion and data checking.
 - (`#41 <https://github.com/znicholls/silicone/pull/41>`_) Added a cruncher to interpolate values between data from specific scenarios. Only test notebooks with lax option.
 - (`#32 <https://github.com/znicholls/silicone/pull/32>`_) Raise `ValueError` when asking to infill a case with no data
 - (`#27 <https://github.com/znicholls/silicone/pull/27>`_) Developed the constant ratio cruncher
