@@ -44,6 +44,7 @@ REQUIREMENTS_INSTALL = [
     "python-dateutil",
     "pyam-iamc>=0.3.0",
     "click",
+    "tqdm",
 ]
 REQUIREMENTS_NOTEBOOKS = ["notebook", "seaborn", "statsmodels"]
 REQUIREMENTS_TESTS = [
