@@ -100,7 +100,6 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
 
     def test_relationship_usage_not_enough_time(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db)
-
         filler = tcruncher.derive_relationship(
             "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
         )
@@ -155,6 +154,63 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             res.timeseries().columns.values.squeeze(),
             test_downscale_df.timeseries().columns.values.squeeze(),
         )
+
+    @pytest.mark.parametrize("match_sign", [True, False])
+    def test_relationship_negative_specific(
+            self, unequal_df, test_downscale_df, match_sign
+    ):
+        # Test that match_sign results in the correct multipliers when negative values
+        # are added to the positive ones.
+        follow = "Emissions|HFC|C5F12"
+        lead = ["Emissions|HFC|C2F6"]
+        equal_df = unequal_df.filter(model="model_a")
+        invert_sign = equal_df.filter(variable=lead)
+        invert_sign.data["value"] = -1 * invert_sign.data["value"]
+        invert_sign.append(equal_df.filter(variable=follow), inplace=True)
+        invert_sign.data["model"] = "negative_model"
+        equal_df.append(invert_sign, inplace=True)
+        equal_df = IamDataFrame(equal_df.data)
+        tcruncher = self.tclass(equal_df)
+
+        # Invert the sign of the infillee too, as we haven't tested the formula for
+        # negative values
+        test_downscale_df.data["value"] = -1 * test_downscale_df.data["value"]
+        test_downscale_df = self._adjust_time_style_to_match(
+            test_downscale_df, equal_df
+        ).filter(year=[2010, 2015])
+        filler = tcruncher.derive_relationship(
+            variable_follower=follow, variable_leaders=lead, same_sign=match_sign
+        )
+        res = filler(test_downscale_df)
+
+        # if we have match sign on, this is identical to the above
+        if match_sign:
+            lead_iamdf = test_downscale_df.filter(variable="Emissions|HFC|C2F6")
+            exp = lead_iamdf.timeseries()
+            # The follower values are 1 and 9 (average 5), the leader values
+            # are all -1, hence we expect the input * -5 as output.
+            exp[exp.columns[0]] = exp[exp.columns[0]] * -5
+            exp[exp.columns[1]] = exp[exp.columns[1]] * -1
+            exp = exp.reset_index()
+            exp["variable"] = "Emissions|HFC|C5F12"
+            exp["unit"] = "kt C5F12/yr"
+            exp = IamDataFrame(exp)
+
+            pd.testing.assert_frame_equal(
+                res.timeseries(), exp.timeseries(), check_like=True
+            )
+
+            # comes back on input timepoints
+            np.testing.assert_array_equal(
+                res.timeseries().columns.values.squeeze(),
+                test_downscale_df.timeseries().columns.values.squeeze(),
+            )
+        else:
+            # If we combine all signs together, there is no net lead but a net follow,
+            # so we have have a multiplier of infinity.
+            assert all(res.data["value"] == -np.inf)
+
+
 
     @pytest.mark.parametrize("match_sign", [True, False])
     def test_relationship_usage_nans(self, unequal_df, test_downscale_df, match_sign):
