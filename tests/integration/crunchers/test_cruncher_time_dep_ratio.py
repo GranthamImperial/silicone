@@ -121,14 +121,17 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
                 "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
             )
 
-    def test_relationship_usage_multiple_data(self, unequal_df, test_downscale_df):
+    @pytest.mark.parametrize("match_sign", [True, False])
+    def test_relationship_usage_multiple_data(
+            self, unequal_df, test_downscale_df, match_sign
+    ):
         equal_df = unequal_df.filter(model="model_a")
         tcruncher = self.tclass(equal_df)
         test_downscale_df = self._adjust_time_style_to_match(
             test_downscale_df, equal_df
         ).filter(year=[2010, 2015])
         filler = tcruncher.derive_relationship(
-            "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
+            "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"], match_sign
         )
         res = filler(test_downscale_df)
 
@@ -153,7 +156,8 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             test_downscale_df.timeseries().columns.values.squeeze(),
         )
 
-    def test_relationship_usage_nans(self, unequal_df, test_downscale_df):
+    @pytest.mark.parametrize("match_sign", [True, False])
+    def test_relationship_usage_nans(self, unequal_df, test_downscale_df, match_sign):
         equal_df = unequal_df.filter(model="model_a")
         equal_df.data["value"].iloc[0] = np.nan
         tcruncher = self.tclass(equal_df)
@@ -161,10 +165,13 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             test_downscale_df, equal_df
         ).filter(year=[2010, 2015])
         filler = tcruncher.derive_relationship(
-            "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
+            "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"], match_sign
         )
         res = filler(test_downscale_df)
-        assert all(res.data["year"] == 2015)
+        if match_sign:
+            assert 2010 in res.data["year"].values
+        else:
+            assert all(res.data["year"] == 2015)
 
     def test_relationship_usage(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db)
