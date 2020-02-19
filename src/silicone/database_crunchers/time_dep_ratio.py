@@ -35,7 +35,7 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
 
     """
 
-    def derive_relationship(self, variable_follower, variable_leaders):
+    def derive_relationship(self, variable_follower, variable_leaders, same_sign=True):
         """
         Derive the relationship between two variables from the database.
 
@@ -48,6 +48,12 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
         variable_leaders : list[str]
             The variable we want to use in order to infer timeseries of
             ``variable_follower`` (e.g. ``["Emissions|CO2"]``).
+
+        same_sign : bool
+            Do we want to only use data where the leader has the same sign in the
+            infiller and infillee data? If so, we have a potential error from
+            not having data of the correct sign, but have more confidence in the
+            sign of the follower data.
 
         Returns
         -------
@@ -86,11 +92,24 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
             raise ValueError(error_msg)
         # Calculate the ratios to use
         all_times = np.unique(iamdf_leader.data[iamdf_leader.time_col])
-        scaling = pd.Series(index=all_times)
-        for year in all_times:
-            scaling[year] = np.mean(data_follower[year].values) / np.mean(
-                data_leader[year].values
-            )
+        scaling = pd.DataFrame(index=all_times, columns=["pos", "neg"])
+        if same_sign:
+            # We want to have separate positive and negative answers. We calculate a
+            # tuple, first for positive and then negative values.
+            for year in all_times:
+                pos_inds = data_leader[year].values > 0
+                scaling["pos"][year] = np.mean(
+                    data_follower[year].iloc[pos_inds].values) / np.mean(
+                        data_leader[year].iloc[pos_inds].values)
+                scaling["neg"][year] = np.mean(
+                    data_follower[year].iloc[~pos_inds].values) / np.mean(
+                        data_leader[year].iloc[~pos_inds].values)
+        else:
+            # The tuple is the same in both cases
+            for year in all_times:
+                scaling["pos"][year] = np.mean(data_follower[year].values) / np.mean(
+                    data_leader[year].values)
+            scaling["neg"] = scaling["pos"]
 
         def filler(in_iamdf):
             """
@@ -137,7 +156,9 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
             output_ts = lead_var.timeseries()
 
             for year in times_needed:
-                output_ts[year] = output_ts[year] * scaling[year]
+                output_ts[year] = output_ts[year].values * scaling.loc[year][
+                    output_ts[year].map(lambda x: "pos" if x>0 else "neg")
+                ].values
             output_ts.reset_index(inplace=True)
             output_ts["variable"] = variable_follower
             output_ts["unit"] = data_follower_unit
