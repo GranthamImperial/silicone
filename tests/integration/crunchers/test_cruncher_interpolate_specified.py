@@ -283,6 +283,14 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
                 variable_follower, ["Emissions|CO2"], required_scenario="scen_a"
             )
 
+    def test_relationship_no_data(self, test_db):
+        tcruncher = self.tclass(test_db)
+        err_mssg = "There is no data of the appropriate type in the database."
+        with pytest.raises(ValueError, match=err_mssg):
+            tcruncher.derive_relationship(
+                "Silly name", ["other silly name"], required_scenario="scen_a"
+            )
+
     def test_relationship_usage_wrong_unit(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db)
         res = tcruncher.derive_relationship(

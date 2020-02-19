@@ -417,12 +417,15 @@ def test_convert_units_to_MtCO2_equiv_doesnt_change(check_aggregate_df):
 
 
 def test_get_files_and_use_them():
-    SR15_SCENARIOS = "./sr15_scenarios.csv"
-    valid_model_ids = ["GCAM*"]
-    get_sr15_scenarios(SR15_SCENARIOS, valid_model_ids)
-    sr15_data = pyam.IamDataFrame(SR15_SCENARIOS)
-    min_expected_var = [
-        "Emissions|N2O", "Emissions|CO2", "Emissions|CH4", "Emissions|F-Gases"
-    ]
-    variables_in_result = sr15_data.variables()
-    assert all([y in variables_in_result.values for y in min_expected_var])
+    try:
+        SR15_SCENARIOS = "./sr15_scenarios.csv"
+        valid_model_ids = ["GCAM*"]
+        get_sr15_scenarios(SR15_SCENARIOS, valid_model_ids)
+        sr15_data = pyam.IamDataFrame(SR15_SCENARIOS)
+        min_expected_var = [
+            "Emissions|N2O", "Emissions|CO2", "Emissions|CH4", "Emissions|F-Gases"
+        ]
+        variables_in_result = sr15_data.variables()
+        assert all([y in variables_in_result.values for y in min_expected_var])
+    except ConnectionError:
+        pass
