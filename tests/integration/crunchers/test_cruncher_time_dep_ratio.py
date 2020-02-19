@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 from base import _DataBaseCruncherTester
 from pyam import IamDataFrame
+import logging
 
 from silicone.database_crunchers import DatabaseCruncherTimeDepRatio
 
@@ -157,7 +158,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
 
     @pytest.mark.parametrize("match_sign", [True, False])
     def test_relationship_negative_specific(
-            self, unequal_df, test_downscale_df, match_sign
+            self, unequal_df, test_downscale_df, match_sign, caplog
     ):
         # Test that match_sign results in the correct multipliers when negative values
         # are added to the positive ones.
@@ -181,9 +182,12 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         filler = tcruncher.derive_relationship(
             variable_follower=follow, variable_leaders=lead, same_sign=match_sign
         )
-        res = filler(test_downscale_df)
-
-        # if we have match sign on, this is identical to the above
+        with caplog.at_level(
+                logging.WARNING, logger="silicone.database_crunchers.time_dep_ratio"
+        ):
+            res = filler(test_downscale_df)
+        assert len(caplog.record_tuples) == 0
+        # if we have match sign on, this is identical to the above except for -ve.
         if match_sign:
             lead_iamdf = test_downscale_df.filter(variable="Emissions|HFC|C2F6")
             exp = lead_iamdf.timeseries()
@@ -195,7 +199,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             exp["variable"] = "Emissions|HFC|C5F12"
             exp["unit"] = "kt C5F12/yr"
             exp = IamDataFrame(exp)
-
+            # Test that our constructed value is the same as the result
             pd.testing.assert_frame_equal(
                 res.timeseries(), exp.timeseries(), check_like=True
             )
@@ -210,10 +214,10 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             # so we have have a multiplier of infinity.
             assert all(res.data["value"] == -np.inf)
 
-
-
     @pytest.mark.parametrize("match_sign", [True, False])
-    def test_relationship_usage_nans(self, unequal_df, test_downscale_df, match_sign):
+    def test_relationship_usage_nans(
+            self, unequal_df, test_downscale_df, match_sign, caplog
+    ):
         equal_df = unequal_df.filter(model="model_a")
         equal_df.data["value"].iloc[0] = np.nan
         tcruncher = self.tclass(equal_df)
@@ -223,44 +227,58 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         filler = tcruncher.derive_relationship(
             "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"], match_sign
         )
-        res = filler(test_downscale_df)
+        with caplog.at_level(
+                logging.WARNING, logger="silicone.database_crunchers.time_dep_ratio"
+        ):
+            res = filler(test_downscale_df)
         if match_sign:
+            assert len(caplog.record_tuples) == 0
             assert 2010 in res.data["year"].values
         else:
+            # We have a single nan in the code, resulting in a warning being thrown.
+            assert len(caplog.record_tuples) == 1
             assert all(res.data["year"] == 2015)
 
-    def test_relationship_usage(self, test_db, test_downscale_df):
+    @pytest.mark.parametrize("match_sign, input_sign",
+                             [(True, +1), (True, -1), (False, +1), (False, -1)])
+    def test_relationship_usage(
+            self, test_db, test_downscale_df, match_sign, input_sign, caplog
+    ):
         tcruncher = self.tclass(test_db)
-
         filler = tcruncher.derive_relationship(
-            "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
+            "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"], match_sign
         )
-
         test_downscale_df = self._adjust_time_style_to_match(
             test_downscale_df, test_db
         ).filter(year=[2010, 2015])
-        res = filler(test_downscale_df)
+        test_downscale_df["value"] = test_downscale_df["value"] * input_sign
+        with caplog.at_level(
+                logging.WARNING, logger="silicone.database_crunchers.time_dep_ratio"
+        ):
+            res = filler(test_downscale_df)
+        if match_sign and input_sign < 0:
+            assert len(caplog.record_tuples) == 2
+        else:
+            assert len(caplog.record_tuples) == 0
+            lead_iamdf = test_downscale_df.filter(variable="Emissions|HFC|C2F6")
+            # We have a ratio of (2/0.5) = 4 for 2010 and (3/1.5) = 2 for 2015
+            exp = lead_iamdf.timeseries()
+            exp[exp.columns[0]] = exp[exp.columns[0]] * 4
+            exp[exp.columns[1]] = exp[exp.columns[1]] * 2
+            exp = exp.reset_index()
+            exp["variable"] = "Emissions|HFC|C5F12"
+            exp["unit"] = "kt C5F12/yr"
+            exp = IamDataFrame(exp)
 
-        lead_iamdf = test_downscale_df.filter(variable="Emissions|HFC|C2F6")
+            pd.testing.assert_frame_equal(
+                res.timeseries(), exp.timeseries(), check_like=True
+            )
 
-        # We have a ratio of (2/0.5) = 4 for 2010 and (3/1.5) = 2 for 2015
-        exp = lead_iamdf.timeseries()
-        exp[exp.columns[0]] = exp[exp.columns[0]] * 4
-        exp[exp.columns[1]] = exp[exp.columns[1]] * 2
-        exp = exp.reset_index()
-        exp["variable"] = "Emissions|HFC|C5F12"
-        exp["unit"] = "kt C5F12/yr"
-        exp = IamDataFrame(exp)
-
-        pd.testing.assert_frame_equal(
-            res.timeseries(), exp.timeseries(), check_like=True
-        )
-
-        # comes back on input timepoints
-        np.testing.assert_array_equal(
-            res.timeseries().columns.values.squeeze(),
-            test_downscale_df.timeseries().columns.values.squeeze(),
-        )
+            # comes back on input timepoints
+            np.testing.assert_array_equal(
+                res.timeseries().columns.values.squeeze(),
+                test_downscale_df.timeseries().columns.values.squeeze(),
+            )
 
     def test_multiple_units_breaks_infillee(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db)

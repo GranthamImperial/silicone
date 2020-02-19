@@ -2,12 +2,14 @@
 Module for the database cruncher which uses the 'time-dependent ratio' technique.
 """
 
+import logging
 import numpy as np
 import pandas as pd
 from pyam import IamDataFrame
 
 from .base import _DatabaseCruncher
 
+logger = logging.getLogger(__name__)
 
 class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
     """
@@ -17,7 +19,11 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
     that the follower timeseries is equal to the lead timeseries multiplied by a
     time-dependent scaling factor. The scaling factor is the ratio of the
     follower variable to the lead variable. If the database contains many such pairs,
-    the scaling factor is the ratio between the means of the values.
+    the scaling factor is the ratio between the means of the values. By default, the
+    calculation will include only values where the lead variable takes the same sign
+    (+ or -) in the infilling database as in the case infilled. This prevents getting
+    negative values of emissions that cannot be negative. To allow cases where we
+    have no data of the correct sign, set `same_sign = False` in `derive_relationship`.
 
     Once the relationship is derived, the 'filler' function will infill following:
 
@@ -28,7 +34,8 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
     emissions of the lead variable.
 
     :math:`s(t)` is the scaling factor, calculated as the ratio of the means of the
-    the follower and the leader in the cruncher in the database.
+    the follower and the leader in the cruncher in the database (by default, for cases
+    where `sign(E_l(t))` is the same in both databases).
 
     .. math::
         s(t) = \\frac{mean( E_f(t) )}{mean( E_l(t) )})
@@ -159,6 +166,12 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
                 output_ts[year] = output_ts[year].values * scaling.loc[year][
                     output_ts[year].map(lambda x: "pos" if x>0 else "neg")
                 ].values
+            if output_ts.isnull().values.any():
+                logger.warning(
+                    "Attempt to infill data using the time_dep_ratio cruncher where the"
+                    " infillee data has a sign not seen in the infiller database, or "
+                    "there are nans in the infiller database."
+                )
             output_ts.reset_index(inplace=True)
             output_ts["variable"] = variable_follower
             output_ts["unit"] = data_follower_unit
