@@ -2,6 +2,7 @@
 Module for the database cruncher which uses the 'rolling windows' technique.
 """
 
+import logging
 import numpy as np
 import pandas as pd
 import scipy.interpolate
@@ -10,6 +11,7 @@ from pyam import IamDataFrame
 from .base import _DatabaseCruncher
 from ..utils import _get_unit_of_variable
 
+logger = logging.getLogger(__name__)
 
 class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
     """
@@ -53,6 +55,11 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
     a result, this cruncher limits itself to using data within the distribution and
     will not make any assumptions about the shape of the distribution.
 
+    If the option ``use_ratio`` is set to ``True``, instead of returning the absolute
+    value of the follow at this quantile, we return the quantile of the ratio between
+    the lead and follow data in the database, multiplied by the actual lead value of the
+    database being infilled.
+
     By varying the quantile, this cruncher can provide ranges of the relationship
     between different variables. For example, it can provide the 90th percentile (i.e.
     high end) of the relationship between e.g. ``Emissions|CH4`` and ``Emissions|CO2``
@@ -67,6 +74,7 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
         quantile=0.5,
         nwindows=10,
         decay_length_factor=1,
+        use_ratio=False,
     ):
         """
         Derive the relationship between two variables from the database.
@@ -93,6 +101,11 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
             should be weighted compared to points at the centre. Larger values give
             points further away increasingly less weight, smaller values give points
             further away increasingly more weight.
+
+        use_ratio : bool
+            If false, we use the quantile value of the weighted mean absolute value. If
+            true, we find the quantile weighted mean ratio between lead and follow,
+            then multiply the ratio by the input value.
 
         Returns
         -------
@@ -165,6 +178,16 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
             sort_order = np.argsort(ys)
             ys = ys[sort_order]
             xs = xs[sort_order]
+            if use_ratio:
+                # We want the ratio between x and y, not the actual values of y.
+                ys = ys / xs
+                 if np.isnan(ys).any():
+                    logging.warning(
+                        "Undefined values of ratio appear in the quantiles when "
+                        "infilling {}, setting some values to 0 (this may not affect "
+                        "results).".format(variable_follower)
+                    )
+                    ys[np.isnan(ys)] = 0
             if max(xs) == min(xs):
                 # We must prevent singularity behaviour if all the points are at the
                 # same x value.
@@ -267,7 +290,11 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
             # do infilling here
             infilled_ts = in_iamdf.filter(variable=variable_leaders).timeseries()
             for col in infilled_ts:
-                infilled_ts[col] = derived_relationships[col](infilled_ts[col])
+                if use_ratio:
+                    infilled_ts[col] = derived_relationships[col](infilled_ts[col]) \
+                                       * infilled_ts[col]
+                else:
+                    infilled_ts[col] = derived_relationships[col](infilled_ts[col])
 
             infilled_ts = infilled_ts.reset_index()
             infilled_ts["variable"] = variable_follower

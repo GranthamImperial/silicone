@@ -7,6 +7,7 @@ import pytest
 import scipy.interpolate
 from base import _DataBaseCruncherTester
 from pyam import IamDataFrame
+import logging
 
 import silicone.stats
 from silicone.database_crunchers import DatabaseCruncherQuantileRollingWindows
@@ -113,12 +114,22 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
                 "Emissions|CO2", ["Emissions|CH4", "Emissions|HFC|C5F12"]
             )
 
-    def test_relationship_usage(self, simple_df):
+    @pytest.mark.parametrize("use_ratio", [True, False])
+    def test_relationship_usage(self, simple_df, use_ratio, caplog):
         tcruncher = self.tclass(simple_df)
         res = tcruncher.derive_relationship(
-            "Emissions|CO2", ["Emissions|CH4"], quantile=0.833, nwindows=1
+            "Emissions|CO2", ["Emissions|CH4"], quantile=0.833,
+            nwindows=1, use_ratio=use_ratio
         )
-        expect_01 = res(simple_df)
+        with caplog.at_level(
+                logging.INFO, logger="silicone.database_crunchers."
+        ):
+            expect_01 = res(simple_df)
+        if use_ratio:
+            # We have 0/0*0, so no value appears.
+            assert len(caplog.record_tuples) == 1
+        else:
+            assert len(caplog.record_tuples) == 0
         assert expect_01.filter(scenario="scen_a", year=2010)["value"].iloc[0] == 0
         assert expect_01.filter(scenario="scen_b", year=2010)["value"].iloc[0] == 1
         assert all(expect_01.filter(year=2030)["value"] == 1000)
@@ -139,7 +150,15 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         res = tcruncher.derive_relationship(
             "Emissions|CO2", ["Emissions|CH4"], quantile=0.165, nwindows=1
         )
-        expect_00 = res(simple_df)
+        with caplog.at_level(
+                logging.INFO, logger="silicone.database_crunchers."
+        ):
+            expect_00 = res(simple_df)
+        if use_ratio:
+            # We have 0/0*0, so no value appears.
+            assert len(caplog.record_tuples) == 1
+        else:
+            assert len(caplog.record_tuples) == 0
         assert expect_00.filter(scenario="scen_a", year=2010)["value"].iloc[0] == 0
         assert expect_00.filter(scenario="scen_b", year=2010)["value"].iloc[0] == 0
         assert all(expect_00.filter(year=2030)["value"] == 1000)
