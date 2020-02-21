@@ -2,14 +2,12 @@
 Module for the database cruncher which uses the 'time-dependent ratio' technique.
 """
 
-import logging
 import numpy as np
 import pandas as pd
 from pyam import IamDataFrame
 
 from .base import _DatabaseCruncher
 
-logger = logging.getLogger(__name__)
 
 class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
     """
@@ -167,7 +165,7 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
                     output_ts[year].map(lambda x: "pos" if x>0 else "neg")
                 ].values
             if output_ts.isnull().values.any():
-                logger.warning(
+                raise ValueError(
                     "Attempt to infill data using the time_dep_ratio cruncher where the"
                     " infillee data has a sign not seen in the infiller database, or "
                     "there are nans in the infiller database."
