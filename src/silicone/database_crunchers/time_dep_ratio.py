@@ -32,8 +32,8 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
     emissions of the lead variable.
 
     :math:`s(t)` is the scaling factor, calculated as the ratio of the means of the
-    the follower and the leader in the cruncher in the database (by default, for cases
-    where `sign(E_l(t))` is the same in both databases).
+    the follower and the leader in the cruncher in the database (by default, including
+    only cases where `sign(E_l(t))` is the same in both databases).
 
     .. math::
         s(t) = \\frac{mean( E_f(t) )}{mean( E_l(t) )})
