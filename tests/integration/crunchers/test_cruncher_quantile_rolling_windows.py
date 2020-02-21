@@ -164,11 +164,14 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         assert all(expect_00.filter(year=2030)["value"] == 1000)
         assert all(expect_00.filter(year=2050)["value"] == 5000)
 
-    def test_numerical_relationship(self):
+    @pytest.mark.parametrize("use_ratio", [True, False])
+    def test_numerical_relationship(self, use_ratio):
         # Calculate the values using the cruncher for a fairly detailed dataset
         large_db = IamDataFrame(self.large_db.copy())
         tcruncher = self.tclass(large_db)
-        res = tcruncher.derive_relationship("Emissions|CH4", ["Emissions|CO2"])
+        res = tcruncher.derive_relationship(
+            "Emissions|CH4", ["Emissions|CO2"], use_ratio=use_ratio
+        )
         assert callable(res)
         to_find = IamDataFrame(self.small_db.copy())
         crunched = res(to_find)
@@ -176,14 +179,17 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         # Calculate the same values numerically
         xs = large_db.filter(variable="Emissions|CO2")["value"].values
         ys = large_db.filter(variable="Emissions|CH4")["value"].values
-        quantile_expected = silicone.stats.rolling_window_find_quantiles(xs, ys, [0.5])
+        if use_ratio:
+            ys = ys / xs
+        quantile_expected = silicone.stats.rolling_window_find_quantiles(xs, ys, [0.5], nwindows=9)
         interpolate_fn = scipy.interpolate.interp1d(
             np.array(quantile_expected.index), quantile_expected.values.squeeze()
         )
         xs_to_interp = to_find.filter(variable="Emissions|CO2")["value"].values
-
-        expected = interpolate_fn(xs_to_interp)
-
+        if use_ratio:
+            expected = interpolate_fn(xs_to_interp) * xs_to_interp
+        else:
+            expected = interpolate_fn(xs_to_interp)
         assert all(crunched["value"].values == expected)
 
     def test_extreme_values_relationship(self):
