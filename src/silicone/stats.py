@@ -54,8 +54,9 @@ def rolling_window_find_quantiles(
     decay_length = step / 2 * decay_length_factor
     # We re-form the arrays in case they were pandas series with integer labels that
     # would mess up the sorting.
-    xs = np.array(xs)
-    ys = np.array(ys)
+    if not xs.shape:
+        xs = np.array(xs)
+        ys = np.array(ys)
     sort_order = np.argsort(ys)
     ys = ys[sort_order]
     xs = xs[sort_order]
