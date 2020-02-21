@@ -174,20 +174,19 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
 
             step = (max(xs) - min(xs)) / nwindows
             decay_length = step / 2 * decay_length_factor
-
-            sort_order = np.argsort(ys)
-            ys = ys[sort_order]
-            xs = xs[sort_order]
             if use_ratio:
                 # We want the ratio between x and y, not the actual values of y.
                 ys = ys / xs
-                 if np.isnan(ys).any():
+                if np.isnan(ys).any():
                     logging.warning(
                         "Undefined values of ratio appear in the quantiles when "
                         "infilling {}, setting some values to 0 (this may not affect "
                         "results).".format(variable_follower)
                     )
                     ys[np.isnan(ys)] = 0
+            sort_order = np.argsort(ys)
+            ys = ys[sort_order]
+            xs = xs[sort_order]
             if max(xs) == min(xs):
                 # We must prevent singularity behaviour if all the points are at the
                 # same x value.
@@ -215,8 +214,8 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
                 for window_center in window_centers:
                     weights = 1.0 / (1.0 + ((xs - window_center) / decay_length) ** 2)
                     weights /= sum(weights)
-                    # We want to calculate the weights at the midpoint of step corresponding
-                    # to the y-value.
+                    # We want to calculate the weights at the midpoint of step
+                    # corresponding to the y-value.
                     cumsum_weights = np.cumsum(weights)
                     db_time_table.loc[(db_time, quantile), window_center] = min(
                         ys[cumsum_weights >= quantile]
