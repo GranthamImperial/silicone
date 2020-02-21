@@ -182,11 +182,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         filler = tcruncher.derive_relationship(
             variable_follower=follow, variable_leaders=lead, same_sign=match_sign
         )
-        with caplog.at_level(
-                logging.WARNING, logger="silicone.database_crunchers.time_dep_ratio"
-        ):
-            res = filler(test_downscale_df)
-        assert len(caplog.record_tuples) == 0
+        res = filler(test_downscale_df)
         # if we have match sign on, this is identical to the above except for -ve.
         if match_sign:
             lead_iamdf = test_downscale_df.filter(variable="Emissions|HFC|C2F6")
@@ -227,17 +223,18 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         filler = tcruncher.derive_relationship(
             "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"], match_sign
         )
-        with caplog.at_level(
-                logging.WARNING, logger="silicone.database_crunchers.time_dep_ratio"
-        ):
-            res = filler(test_downscale_df)
         if match_sign:
-            assert len(caplog.record_tuples) == 0
+            res = filler(test_downscale_df)
             assert 2010 in res.data["year"].values
         else:
+            err_msg = re.escape(
+                "Attempt to infill data using the time_dep_ratio cruncher where the"
+                " infillee data has a sign not seen in the infiller database, or "
+                "there are nans in the infiller database."
+            )
             # We have a single nan in the code, resulting in a warning being thrown.
-            assert len(caplog.record_tuples) == 1
-            assert all(res.data["year"] == 2015)
+            with pytest.raises(ValueError, match=err_msg):
+                res = filler(test_downscale_df)
 
     @pytest.mark.parametrize("match_sign, input_sign",
                              [(True, +1), (True, -1), (False, +1), (False, -1)])
@@ -252,14 +249,11 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             test_downscale_df, test_db
         ).filter(year=[2010, 2015])
         test_downscale_df["value"] = test_downscale_df["value"] * input_sign
-        with caplog.at_level(
-                logging.WARNING, logger="silicone.database_crunchers.time_dep_ratio"
-        ):
-            res = filler(test_downscale_df)
         if match_sign and input_sign < 0:
-            assert len(caplog.record_tuples) == 2
+            with pytest.raises(ValueError):
+                filler(test_downscale_df)
         else:
-            assert len(caplog.record_tuples) == 0
+            res = filler(test_downscale_df)
             lead_iamdf = test_downscale_df.filter(variable="Emissions|HFC|C2F6")
             # We have a ratio of (2/0.5) = 4 for 2010 and (3/1.5) = 2 for 2015
             exp = lead_iamdf.timeseries()

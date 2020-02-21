@@ -3,6 +3,7 @@ Changelog
 
 master
 ------
+- (`#46 <https://github.com/znicholls/silicone/pull/46>`_) Made the time-dependent ratio infiller only use data where the leader has the same sign.
 - (`#45 <https://github.com/znicholls/silicone/pull/45>`_) Made infill_all_required_emissions_for_openscm, the second multiple-infiller function.
 - (`#44 <https://github.com/znicholls/silicone/pull/44>`_) Made decompose_collection_with_time_dep_ratio, the first multiple-infiller function.
 - (`#43 <https://github.com/znicholls/silicone/pull/43>`_) Implemented new util functions for downloading data, unit conversion and data checking.
