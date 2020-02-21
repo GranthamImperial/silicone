@@ -294,6 +294,7 @@ def test_return_cases_which_consistently_split_works(check_aggregate_df):
         .reset_index(drop=True)
     )
 
+
 def test_return_cases_which_consistently_split_bad_to_split(check_aggregate_df):
     limited_check_agg = check_aggregate_df.filter(
         variable="Primary Energy*", keep=False
@@ -423,7 +424,10 @@ def test_get_files_and_use_them():
         get_sr15_scenarios(SR15_SCENARIOS, valid_model_ids)
         sr15_data = pyam.IamDataFrame(SR15_SCENARIOS)
         min_expected_var = [
-            "Emissions|N2O", "Emissions|CO2", "Emissions|CH4", "Emissions|F-Gases"
+            "Emissions|N2O",
+            "Emissions|CO2",
+            "Emissions|CH4",
+            "Emissions|F-Gases",
         ]
         variables_in_result = sr15_data.variables()
         assert all([y in variables_in_result.values for y in min_expected_var])

@@ -30,9 +30,7 @@ class DatabaseCruncherLinearInterpolation(_DatabaseCruncher):
     returned CH4 emissions will be 15 MtCH4/yr.
     """
 
-    def derive_relationship(
-        self, variable_follower, variable_leaders
-    ):
+    def derive_relationship(self, variable_follower, variable_leaders):
         """
         Derive the relationship between two variables from the database.
 
