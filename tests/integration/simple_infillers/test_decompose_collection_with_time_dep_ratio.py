@@ -214,6 +214,27 @@ class TestGasDecomposeTimeDepRatio:
         assert all(y == components[0] for y in filled.variables())
         assert np.allclose(filled.data["value"], test_downscale_df.data["value"])
 
+    def test_relationship_usage_works_multiple(self, test_db, test_downscale_df):
+        test_downscale_df = _adjust_time_style_to_match(test_downscale_df, test_db)
+        if test_db.time_col == "year":
+            test_downscale_df.filter(
+                year=test_db.data[test_db.time_col].values, inplace=True
+            )
+        else:
+            test_downscale_df.filter(time=test_db.data[test_db.time_col],
+                                     inplace=True)
+        components = ["Emissions|HFC|C5F12", "Emissions|HFC|C2F6"]
+        aggregate = "Emissions|HFC"
+        test_downscale_df.data["variable"] = aggregate
+        tcruncher = self.tclass(test_db)
+        filled = tcruncher.infill_components(
+            aggregate, components, test_downscale_df
+        )
+        # The value returned should be a dataframe with 2 entries per original entry (4)
+        assert len(filled.data) == 8
+        assert all(y in filled.variables().values for y in components)
+
+
     def test_relationship_rejects_inconsistent_columns(self, larger_df, test_db):
         aggregate = "Emissions|KyotoTotal"
         test_db.data["variable"] = aggregate

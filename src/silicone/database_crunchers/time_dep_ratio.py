@@ -103,11 +103,11 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
             # tuple, first for positive and then negative values.
             for year in all_times:
                 pos_inds = data_leader[year].values > 0
-                scaling["pos"][year] = np.mean(
-                    data_follower[year].iloc[pos_inds].values) / np.mean(
+                scaling["pos"][year] = np.nanmean(
+                    data_follower[year].iloc[pos_inds].values) / np.nanmean(
                         data_leader[year].iloc[pos_inds].values)
-                scaling["neg"][year] = np.mean(
-                    data_follower[year].iloc[~pos_inds].values) / np.mean(
+                scaling["neg"][year] = np.nanmean(
+                    data_follower[year].iloc[~pos_inds].values) / np.nanmean(
                         data_leader[year].iloc[~pos_inds].values)
         else:
             # The tuple is the same in both cases
@@ -161,15 +161,18 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
             output_ts = lead_var.timeseries()
 
             for year in times_needed:
+                if scaling.loc[year][
+                    output_ts[year].map(lambda x: "neg" if x < 0 else "pos")
+                ].isnull().values.any():
+                    raise ValueError(
+                        "Attempt to infill {} data using the time_dep_ratio cruncher "
+                        "where the infillee data has a sign not seen in the infiller "
+                        "database for year "
+                        "{}.".format(variable_leaders, year)
+                    )
                 output_ts[year] = output_ts[year].values * scaling.loc[year][
-                    output_ts[year].map(lambda x: "pos" if x>0 else "neg")
+                    output_ts[year].map(lambda x: "pos" if x > 0 else "neg")
                 ].values
-            if output_ts.isnull().values.any():
-                raise ValueError(
-                    "Attempt to infill data using the time_dep_ratio cruncher where the"
-                    " infillee data has a sign not seen in the infiller database, or "
-                    "there are nans in the infiller database."
-                )
             output_ts.reset_index(inplace=True)
             output_ts["variable"] = variable_follower
             output_ts["unit"] = data_follower_unit
