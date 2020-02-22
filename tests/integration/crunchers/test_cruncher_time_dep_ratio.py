@@ -212,6 +212,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
     def test_relationship_usage_nans(
             self, unequal_df, test_downscale_df, match_sign, caplog
     ):
+        leader = ["Emissions|HFC|C2F6"]
         equal_df = unequal_df.filter(model="model_a")
         equal_df.data["value"].iloc[0] = np.nan
         tcruncher = self.tclass(equal_df)
@@ -219,16 +220,17 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             test_downscale_df, equal_df
         ).filter(year=[2010, 2015])
         filler = tcruncher.derive_relationship(
-            "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"], match_sign
+            "Emissions|HFC|C5F12", leader, match_sign
         )
         if match_sign:
             res = filler(test_downscale_df)
             assert 2010 in res.data["year"].values
         else:
             err_msg = re.escape(
-                "Attempt to infill data using the time_dep_ratio cruncher where the"
-                " infillee data has a sign not seen in the infiller database, or "
-                "there are nans in the infiller database for year {}.".format("2010")
+                "Attempt to infill {} data using the time_dep_ratio cruncher "
+                "where the infillee data has a sign not seen in the infiller "
+                "database for year "
+                "{}.".format(leader, 2010)
             )
             # We have a single nan in the code, resulting in a warning being thrown.
             with pytest.raises(ValueError, match=err_msg):
