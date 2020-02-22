@@ -143,11 +143,10 @@ class DecomposeCollectionTimeDepRatio:
         )
         convert_base.append(consistent_composite, inplace=True)
         cruncher = DatabaseCruncherTimeDepRatio(convert_base)
-        df_to_append = []
         for leader in components:
             to_add = cruncher.derive_relationship(leader, [aggregate])(to_infill_df)
-            if df_to_append:
-                df_to_append.append(to_add)
-            else:
+            try:
+                df_to_append.append(to_add, inplace=True)
+            except NameError:
                 df_to_append = to_add
         return df_to_append

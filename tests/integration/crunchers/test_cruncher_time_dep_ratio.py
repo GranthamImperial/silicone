@@ -5,8 +5,6 @@ import pandas as pd
 import pytest
 from base import _DataBaseCruncherTester
 from pyam import IamDataFrame
-import logging
-
 from silicone.database_crunchers import DatabaseCruncherTimeDepRatio
 
 _msa = ["model_a", "scen_a"]
@@ -230,7 +228,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             err_msg = re.escape(
                 "Attempt to infill data using the time_dep_ratio cruncher where the"
                 " infillee data has a sign not seen in the infiller database, or "
-                "there are nans in the infiller database."
+                "there are nans in the infiller database for year {}.".format("2010")
             )
             # We have a single nan in the code, resulting in a warning being thrown.
             with pytest.raises(ValueError, match=err_msg):
