@@ -15,6 +15,7 @@ _msb = ["model_a", "scen_b"]
 
 class TestGasDecomposeTimeDepRatio:
     tclass = DecomposeCollectionTimeDepRatio
+    # tdb will generate test_db
     tdb = pd.DataFrame(
         [
             _msa + ["World", "Emissions|HFC|C5F12", "kt C5F12/yr", 2, 3],
@@ -172,7 +173,7 @@ class TestGasDecomposeTimeDepRatio:
             tcruncher.infill_components(variable_follower, variable_leaders, test_db)
 
     def test_construct_consistent_error_multiple_units(self, test_db):
-        # test that crunching fails if there's no data about the follower gas in the
+        # test that crunching fails if there's no bad units in the
         # database
         aggregate_name = "Emissions|HFC|C5F12"
         components = ["Emissions|HFC|C2F6"]
@@ -184,7 +185,9 @@ class TestGasDecomposeTimeDepRatio:
         with pytest.raises(ValueError, match=error_msg):
             tcruncher._construct_consistent_values(aggregate_name, components, test_db)
 
+
     def test_relationship_usage_not_enough_time(self, test_db, test_downscale_df):
+        test_db.data["unit"] = "kt C2F6-equiv/yr"
         tcruncher = self.tclass(test_db)
         test_downscale_df = _adjust_time_style_to_match(test_downscale_df, test_db)
         error_msg = re.escape(
@@ -197,6 +200,7 @@ class TestGasDecomposeTimeDepRatio:
             )
 
     def test_relationship_usage_works(self, test_db, test_downscale_df):
+        test_db.data["unit"] = "kt C2F6-equiv/yr"
         tcruncher = self.tclass(test_db)
         test_downscale_df = _adjust_time_style_to_match(test_downscale_df, test_db)
         if test_db.time_col == "year":
@@ -227,13 +231,30 @@ class TestGasDecomposeTimeDepRatio:
         aggregate = "Emissions|HFC"
         test_downscale_df.data["variable"] = aggregate
         tcruncher = self.tclass(test_db)
+        with pytest.raises(ValueError):
+            filled = tcruncher.infill_components(
+                aggregate, components, test_downscale_df
+            )
+        test_downscale_df = convert_units_to_MtCO2_equiv(test_downscale_df)
         filled = tcruncher.infill_components(
             aggregate, components, test_downscale_df
         )
         # The value returned should be a dataframe with 2 entries per original entry (4)
         assert len(filled.data) == 8
         assert all(y in filled.variables().values for y in components)
-
+        # We also expect the amount of the variables to be conserved
+        if test_db.time_col == "year":
+            assert np.allclose(
+                test_downscale_df.data.groupby("year").sum()["value"].values,
+                convert_units_to_MtCO2_equiv(
+                    filled).data.groupby("year").sum()["value"].values
+            )
+        else:
+            assert np.allclose(
+                test_downscale_df.data.groupby("time").sum()["value"].values,
+                convert_units_to_MtCO2_equiv(
+                    filled).data.groupby("time").sum()["value"].values
+            )
 
     def test_relationship_rejects_inconsistent_columns(self, larger_df, test_db):
         aggregate = "Emissions|KyotoTotal"
