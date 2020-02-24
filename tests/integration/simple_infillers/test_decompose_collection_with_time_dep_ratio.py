@@ -120,6 +120,7 @@ class TestGasDecomposeTimeDepRatio:
         with pytest.raises(AssertionError, match=error_msg):
             tcruncher.infill_components(variable_follower, variable_leaders, test_db)
 
+<<<<<<< HEAD
     def test_construct_consistent_error_multiple_units(self, test_db):
         # test construction fails if there's several different units in the database
         aggregate_name = "Emissions|HFC|C5F12"
@@ -132,6 +133,8 @@ class TestGasDecomposeTimeDepRatio:
         with pytest.raises(ValueError, match=error_msg):
             tcruncher._construct_consistent_values(aggregate_name, components, test_db)
 
+=======
+>>>>>>> Added more tests, moved a test to the right section
     def test_relationship_usage_not_enough_time(self, test_db, test_downscale_df):
         # Ensure that the process fails if not all times have data
         test_db.data["unit"] = "kt C2F6-equiv/yr"
