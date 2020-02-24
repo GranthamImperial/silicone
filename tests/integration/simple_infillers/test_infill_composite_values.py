@@ -26,13 +26,22 @@ class TestInfillCompositeValues:
         ],
     )
 
-    def test_infill_composite_values_works(self, larger_df, caplog):
+    def test_infill_composite_values_warns(self, larger_df, caplog):
         with caplog.at_level("DEBUG"):
-            infilled = infill_composite_values(larger_df)
-        # Warnings are reported in
+            infill_composite_values(
+                larger_df,
+                composite_dic={"Emissions|CO2": ["Emissions|CO2|*"]}
+            )
+        assert len(caplog.record_tuples) == 0
+        with caplog.at_level("DEBUG"):
+            infill_composite_values(larger_df)
+        # Warnings are reported by the system for non-available data.
         assert caplog.record_tuples[0][2] == "No data found for {}".format(
             ["Emissions|PFC|*"]
         )
+
+    def test_infill_composite_values_works(self, larger_df, caplog):
+        infilled = infill_composite_values(larger_df)
         assert np.allclose(
             infilled.filter(model="model_C", scenario="scen_C").data["value"],
             2.5
@@ -45,8 +54,8 @@ class TestInfillCompositeValues:
         )
         assert np.allclose(
             infilled.filter(
-                model="model_D", scenario="scen_C",
+                model="model_D", scenario="scen_F",
                 variable="Emissions|Kyoto Gases (AR5-GWP100)"
             ).data["value"],
-            2 + 2*28  # The 2*28 c
+            4 + 2*28  # The 2*28 comes from the CH4, converted to CO2 equiv using AR5.
         )
