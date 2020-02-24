@@ -3,9 +3,9 @@ Uses the 'time-dependent ratio' database cruncher designed for constructing an
 aggregate variable and breaking this mix into its constituents.
 """
 
-import pyam
+
 from silicone.database_crunchers import DatabaseCruncherTimeDepRatio
-from silicone.utils import convert_units_to_MtCO2_equiv
+from silicone.utils import convert_units_to_MtCO2_equiv, _construct_consistent_values
 
 
 class DecomposeCollectionTimeDepRatio:
@@ -24,54 +24,6 @@ class DecomposeCollectionTimeDepRatio:
             The database for infilling.
         """
         self._db = db.copy()
-
-    def _construct_consistent_values(self, aggregate_name, components, db_to_generate):
-        """
-            Calculates the sum of the components and creates an IamDataFrame with this
-            value under variable type `aggregate_name`.
-
-            Parameters
-            ----------
-            aggregate_name : str
-                The name of the aggregate variable.
-
-            components : [str]
-                List of the names of the variables to be summed.
-
-            db_to_generate : :obj:`pyam.IamDataFrame`
-                Input data from which to construct consistent values.
-
-            Return
-            ------
-            :obj:`pyam.IamDataFrame`
-                Consistently calculated aggregate data.
-            """
-        assert (
-            aggregate_name not in db_to_generate.variables().values
-        ), "We already have a variable of this name"
-        relevant_db = db_to_generate.filter(variable=components)
-        units = relevant_db.data["unit"].drop_duplicates().sort_values()
-        unit_equivs = units.map(lambda x: x.replace("-equiv", "")).drop_duplicates()
-        if len(unit_equivs) == 0:
-            raise ValueError(
-                "Attempting to construct a consistent {} but none of the components "
-                "present".format(aggregate_name)
-            )
-        elif len(unit_equivs) > 1:
-            raise ValueError(
-                "Too many units found to make a consistent {}".format(aggregate_name)
-            )
-        use = (
-            relevant_db.data.groupby(
-                ["model", "scenario", "region", relevant_db.time_col]
-            )
-            .agg("sum")
-            .reset_index()
-        )
-        # Units are sorted in alphabetical order so we choose the first to get -equiv
-        use["unit"] = units.iloc[0]
-        use["variable"] = aggregate_name
-        return pyam.IamDataFrame(use)
 
     def infill_components(
         self, aggregate, components, to_infill_df, use_ar4_data=False
@@ -138,7 +90,7 @@ class DecomposeCollectionTimeDepRatio:
         db_to_generate = convert_units_to_MtCO2_equiv(
             convert_base, use_AR4_data=use_ar4_data
         )
-        consistent_composite = self._construct_consistent_values(
+        consistent_composite = _construct_consistent_values(
             aggregate, components, db_to_generate
         )
         convert_base.append(consistent_composite, inplace=True)
