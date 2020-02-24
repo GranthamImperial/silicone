@@ -493,3 +493,16 @@ def test__construct_consistent_values_with_equiv():
         y == "Mt CO2-equiv/yr"
         for y in consistent_vals.index.get_level_values("unit")
     )
+
+def test_construct_consistent_error_multiple_units():
+    # test that crunching fails if there's no data about the follower gas in the
+    # database
+    aggregate_name = "Emissions|HFC|C5F12"
+    components = ["Emissions|HFC|C2F6"]
+    test_db_units = test_db.copy()
+    test_db_units.data["variable"] = components[0]
+    error_msg = re.escape(
+        "Too many units found to make a consistent {}".format(aggregate_name)
+    )
+    with pytest.raises(ValueError, match=error_msg):
+        _construct_consistent_values(aggregate_name, components, test_db_units)

@@ -119,19 +119,6 @@ class TestGasDecomposeTimeDepRatio:
         with pytest.raises(AssertionError, match=error_msg):
             tcruncher.infill_components(variable_follower, variable_leaders, test_db)
 
-    def test_construct_consistent_error_multiple_units(self, test_db):
-        # test that crunching fails if there's no data about the follower gas in the
-        # database
-        aggregate_name = "Emissions|HFC|C5F12"
-        components = ["Emissions|HFC|C2F6"]
-        test_db.data["variable"] = components[0]
-        tcruncher = self.tclass(test_db)
-        error_msg = re.escape(
-            "Too many units found to make a consistent {}".format(aggregate_name)
-        )
-        with pytest.raises(ValueError, match=error_msg):
-            tcruncher._construct_consistent_values(aggregate_name, components, test_db)
-
     def test_relationship_usage_not_enough_time(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db)
         test_downscale_df = _adjust_time_style_to_match(test_downscale_df, test_db)
