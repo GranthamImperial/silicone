@@ -81,58 +81,6 @@ class TestGasDecomposeTimeDepRatio:
         ],
     )
 
-    def test__construct_consistent_values(self, test_db):
-        test_db_co2 = convert_units_to_MtCO2_equiv(test_db)
-        tcruncher = self.tclass(test_db_co2)
-        aggregate_name = "agg"
-        assert aggregate_name not in tcruncher._db.variables().values
-        component_ratio = ["Emissions|HFC|C2F6", "Emissions|HFC|C5F12"]
-        consistent_vals = tcruncher._construct_consistent_values(
-            aggregate_name, component_ratio, test_db_co2
-        )
-        assert aggregate_name in consistent_vals["variable"].values
-        consistent_vals = consistent_vals.timeseries()
-        timeseries_data = tcruncher._db.timeseries()
-        assert all(
-            [
-                np.allclose(
-                    consistent_vals.iloc[0].iloc[ind],
-                    timeseries_data.iloc[0].iloc[ind]
-                    + timeseries_data.iloc[1].iloc[ind],
-                )
-                for ind in range(len(timeseries_data.iloc[0]))
-            ]
-        )
-
-    def test__construct_consistent_values_with_equiv(self, test_db):
-        test_db_co2 = convert_units_to_MtCO2_equiv(test_db)
-        test_db_co2.data["unit"].loc[0:1] = "Mt CO2/yr"
-        tcruncher = self.tclass(test_db_co2)
-        aggregate_name = "agg"
-        assert aggregate_name not in tcruncher._db.variables().values
-        component_ratio = ["Emissions|HFC|C2F6", "Emissions|HFC|C5F12"]
-        consistent_vals = tcruncher._construct_consistent_values(
-            aggregate_name, component_ratio, test_db_co2
-        )
-        assert aggregate_name in consistent_vals["variable"].values
-        consistent_vals = consistent_vals.timeseries()
-        timeseries_data = tcruncher._db.timeseries()
-        assert all(
-            [
-                np.allclose(
-                    consistent_vals.iloc[0].iloc[ind],
-                    timeseries_data.iloc[0].iloc[ind]
-                    + timeseries_data.iloc[1].iloc[ind],
-                )
-                for ind in range(len(timeseries_data.iloc[0]))
-            ]
-        )
-        # We also require that the output units are '-equiv'
-        assert all(
-            y == "Mt CO2-equiv/yr"
-            for y in consistent_vals.index.get_level_values("unit")
-        )
-
     def test_infill_components_error_no_lead_vars(self, test_db):
         tcruncher = self.tclass(test_db)
         error_msg = re.escape(

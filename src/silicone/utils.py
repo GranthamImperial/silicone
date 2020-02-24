@@ -439,3 +439,52 @@ def _adjust_time_style_to_match(in_df, target_df):
         return pyam.IamDataFrame(in_df)
 
     return in_df
+
+
+def _construct_consistent_values(aggregate_name, components, db_to_generate):
+    """
+        Calculates the sum of the components and creates an IamDataFrame with this
+        value under variable type `aggregate_name`.
+
+        Parameters
+        ----------
+        aggregate_name : str
+            The name of the aggregate variable.
+
+        components : [str]
+            List of the names of the variables to be summed.
+
+        db_to_generate : :obj:`pyam.IamDataFrame`
+            Input data from which to construct consistent values.
+
+        Return
+        ------
+        :obj:`pyam.IamDataFrame`
+            Consistently calculated aggregate data.
+        """
+    assert (
+        aggregate_name not in db_to_generate.variables().values
+    ), "We already have a variable of this name"
+    relevant_db = db_to_generate.filter(variable=components)
+    units = relevant_db.data["unit"].drop_duplicates().sort_values()
+    unit_equivs = units.map(lambda x: x.replace("-equiv", "")).drop_duplicates()
+    if len(unit_equivs) == 0:
+        raise ValueError(
+            "Attempting to construct a consistent {} but none of the components "
+            "present".format(aggregate_name)
+        )
+    elif len(unit_equivs) > 1:
+        raise ValueError(
+            "Too many units found to make a consistent {}".format(aggregate_name)
+        )
+    use = (
+        relevant_db.data.groupby(
+            ["model", "scenario", "region", relevant_db.time_col]
+        )
+        .agg("sum")
+        .reset_index()
+    )
+    # Units are sorted in alphabetical order so we choose the first to get -equiv
+    use["unit"] = units.iloc[0]
+    use["variable"] = aggregate_name
+    return pyam.IamDataFrame(use)
