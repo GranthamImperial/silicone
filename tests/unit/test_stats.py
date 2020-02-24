@@ -45,3 +45,14 @@ def test_rolling_window_find_quantiles_same_points():
         calculated_quantiles.append(min(ys[cumsum_weights >= quant]))
 
     assert all(quantiles.values.squeeze() == calculated_quantiles)
+
+
+def test_rolling_window_find_quantiles_one():
+    # If all the x-values are the same, this should just be our interpretation of
+    # quantiles at all points
+    xs = np.array([1])
+    ys = np.array([2])
+    desired_quantiles = [0, 0.4, 0.5, 0.6, 0.85, 1]
+    quantiles = stats.rolling_window_find_quantiles(xs, ys, desired_quantiles, 9, 2 * 9)
+
+    assert np.allclose(quantiles.values.squeeze(), 2)
