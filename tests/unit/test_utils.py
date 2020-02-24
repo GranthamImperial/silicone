@@ -1,11 +1,9 @@
 import re
-import os.path
 
-import pyam
 import numpy as np
 import pandas as pd
+import pyam
 import pytest
-
 from silicone.utils import (
     _get_unit_of_variable,
     find_matching_scenarios,
@@ -13,6 +11,7 @@ from silicone.utils import (
     return_cases_which_consistently_split,
     convert_units_to_MtCO2_equiv,
     get_sr15_scenarios,
+    _construct_consistent_values,
 )
 
 _mc = "model_c"
@@ -33,6 +32,15 @@ simple_df = pd.DataFrame(
     columns=_msrvu + [2010, 2030, 2050],
 )
 simple_df = pyam.IamDataFrame(simple_df)
+_msa = ["model_a", "scen_a"]
+tdb = pd.DataFrame(
+        [
+            _msa + ["World", "Emissions|HFC|C5F12", "kt C5F12/yr", 2, 3],
+            _msa + ["World", "Emissions|HFC|C2F6", "kt C2F6/yr", 0.5, 1.5],
+        ],
+        columns=["model", "scenario", "region", "variable", "unit", 2010, 2015],
+    )
+test_db = pyam.IamDataFrame(tdb)
 
 df_low = simple_df.copy()
 df_low.data["scenario"].loc[df_low.data["scenario"] == "scen_a"] = "right_scenario"
@@ -433,3 +441,55 @@ def test_get_files_and_use_them():
         assert all([y in variables_in_result.values for y in min_expected_var])
     except ConnectionError:
         pass
+
+
+def test__construct_consistent_values():
+    test_db_co2 = convert_units_to_MtCO2_equiv(test_db)
+    aggregate_name = "agg"
+    assert aggregate_name not in test_db_co2.variables().values
+    component_ratio = ["Emissions|HFC|C2F6", "Emissions|HFC|C5F12"]
+    consistent_vals = _construct_consistent_values(
+        aggregate_name, component_ratio, test_db_co2
+    )
+    assert aggregate_name in consistent_vals["variable"].values
+    consistent_vals = consistent_vals.timeseries()
+    timeseries_data = test_db_co2.timeseries()
+    assert all(
+        [
+            np.allclose(
+                consistent_vals.iloc[0].iloc[ind],
+                timeseries_data.iloc[0].iloc[ind]
+                + timeseries_data.iloc[1].iloc[ind],
+            )
+            for ind in range(len(timeseries_data.iloc[0]))
+        ]
+    )
+
+
+def test__construct_consistent_values_with_equiv():
+    test_db_co2 = convert_units_to_MtCO2_equiv(test_db)
+    test_db_co2.data["unit"].loc[0:1] = "Mt CO2/yr"
+    aggregate_name = "agg"
+    assert aggregate_name not in test_db_co2.variables().values
+    component_ratio = ["Emissions|HFC|C2F6", "Emissions|HFC|C5F12"]
+    consistent_vals = _construct_consistent_values(
+        aggregate_name, component_ratio, test_db_co2
+    )
+    assert aggregate_name in consistent_vals["variable"].values
+    consistent_vals = consistent_vals.timeseries()
+    timeseries_data = test_db_co2.timeseries()
+    assert all(
+        [
+            np.allclose(
+                consistent_vals.iloc[0].iloc[ind],
+                timeseries_data.iloc[0].iloc[ind]
+                + timeseries_data.iloc[1].iloc[ind],
+            )
+            for ind in range(len(timeseries_data.iloc[0]))
+        ]
+    )
+    # We also require that the output units are '-equiv'
+    assert all(
+        y == "Mt CO2-equiv/yr"
+        for y in consistent_vals.index.get_level_values("unit")
+    )
