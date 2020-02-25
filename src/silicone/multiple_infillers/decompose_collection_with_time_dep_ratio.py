@@ -82,10 +82,11 @@ class DecomposeCollectionTimeDepRatio:
 
         Returns
         -------
-        Set
-            The set of units
+        Set(str)
+            The set of units from the dataframe with "-equiv" removed
         """
         return set(df.data["unit"].map(lambda x: x.replace("-equiv", "")))
+
     def infill_components(
         self, aggregate, components, to_infill_df, use_ar4_data=False
     ):
