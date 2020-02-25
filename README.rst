@@ -20,8 +20,13 @@ Silicone
 .. sec-begin-long-description
 .. sec-begin-index
 
-Silicone is a Python package which can be used to automatically fill in detail in emissions scenarios.
-For example, adding emissions of aerosol precurors and methane based on carbon dioxide and nitrous oxide emissions pathways or adding regional emissions based on a global emissions pathway.
+Silicone is a Python package which can be used to infer predictions about certain types
+of emissions from other predicted emissions. It is intended to ensure more integrated
+assessment models (IAMs) have predictions of all climate-relevant emissions.
+It does this by comparing the incomplete emissions set to completed data.
+For example, it can add emissions of aerosol precurors based on carbon dioxide emissions
+and infilling nitrous oxide emissions based on methane, or splitting HFC emissions
+pathways into emissions of different specific HFC gases.
 
 .. sec-end-index
 
@@ -30,7 +35,8 @@ License
 
 .. sec-begin-license
 
-Silicone is free software under a BSD 3-Clause License, see `LICENSE <https://github.com/znicholls/silicone/blob/master/LICENSE>`_.
+Silicone is free software under a BSD 3-Clause License, see
+`LICENSE <https://github.com/znicholls/silicone/blob/master/LICENSE>`_.
 
 .. sec-end-license
 .. sec-end-long-description
@@ -40,14 +46,26 @@ Silicone is free software under a BSD 3-Clause License, see `LICENSE <https://gi
 Installation
 ------------
 
-Instructions to be written.
+This Python package can be installed directly from github. The release version is hosted at
+https://github.com/GranthamImperial/silicone
+with the development version at https://github.com/znicholls/silicone.
+If your machine has a bash shell (linux/Mac) or Anaconda (any operating system)
+Silicone can be installed by running:
+
+`pip install git+git://github.com/GranthamImperial/silicone.git`
+
+Alternatively to clone the repository for editing and convenient viewing,
+navigate to the folder you wish to install in and run:
+
+`git clone https://github.com/GranthamImperial/silicone.git`
 
 .. sec-end-installation
 
 Documentation
 -------------
 
-Documentation can be found at our `documentation pages <https://silicone.readthedocs.io/en/latest/>`_ (we are thankful to `Read the Docs <https://readthedocs.org/>`_ for hosting us).
+Documentation can be found at our `documentation pages <https://silicone.readthedocs.io/en/latest/>`_
+(we are thankful to `Read the Docs <https://readthedocs.org/>`_ for hosting us).
 
 Contributing
 ------------
