@@ -116,6 +116,9 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
 
     @pytest.mark.parametrize("use_ratio", [True, False])
     def test_relationship_usage(self, simple_df, use_ratio, caplog):
+        # This tests that using the cruncher for a simple case (no averages, just
+        # choosing one of two values) produces the expected results. We test the
+        # quantiles that should result in a flip between the two states.
         tcruncher = self.tclass(simple_df)
         res = tcruncher.derive_relationship(
             "Emissions|CO2", ["Emissions|CH4"], quantile=0.833,
@@ -126,7 +129,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         ):
             expect_01 = res(simple_df)
         if use_ratio:
-            # We have 0/0*0, so no value appears.
+            # We have a 0/0*0 in the calculation, so no value appears.
             assert len(caplog.record_tuples) == 1
         else:
             assert len(caplog.record_tuples) == 0
@@ -181,7 +184,9 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         ys = large_db.filter(variable="Emissions|CH4")["value"].values
         if use_ratio:
             ys = ys / xs
-        quantile_expected = silicone.stats.rolling_window_find_quantiles(xs, ys, [0.5], nwindows=9)
+        quantile_expected = silicone.stats.rolling_window_find_quantiles(
+            xs, ys, [0.5], nwindows=9
+        )
         interpolate_fn = scipy.interpolate.interp1d(
             np.array(quantile_expected.index), quantile_expected.values.squeeze()
         )
