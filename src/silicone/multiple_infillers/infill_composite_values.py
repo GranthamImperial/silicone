@@ -48,7 +48,7 @@ def infill_composite_values(df, composite_dic=None):
             to_delete.append(composite)
     logging.getLogger("pyam.core").setLevel(logging.WARNING)
     [composite_dic.pop(x) for x in to_delete]
-    df.filter(variable=composite_dic.keys(), keep=False, inplace=True)
+    df = df.filter(variable=composite_dic.keys(), keep=False)
     for composite in composite_dic.keys():
         composite_df = _construct_consistent_values(
             composite, composite_dic.get(composite), df

@@ -41,6 +41,8 @@ class TestInfillCompositeValues:
         )
 
     def test_infill_composite_values_works(self, larger_df, caplog):
+        # Ensure that the code performs correctly
+        larger_df_copy = larger_df.copy()
         infilled = infill_composite_values(larger_df)
         assert np.allclose(
             infilled.filter(model="model_C", scenario="scen_C").data["value"],
@@ -59,3 +61,5 @@ class TestInfillCompositeValues:
             ).data["value"],
             4 + 2*28  # The 2*28 comes from the CH4, converted to CO2 equiv using AR5.
         )
+        # Ensure that the original is undisturbed by this operation
+        assert larger_df_copy.equals(larger_df)
