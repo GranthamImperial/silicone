@@ -478,9 +478,7 @@ def _construct_consistent_values(aggregate_name, components, db_to_generate):
             "Too many units found to make a consistent {}".format(aggregate_name)
         )
     use = (
-        relevant_db.data.groupby(
-            ["model", "scenario", "region", relevant_db.time_col]
-        )
+        relevant_db.data.groupby(["model", "scenario", "region", relevant_db.time_col])
         .agg("sum")
         .reset_index()
     )

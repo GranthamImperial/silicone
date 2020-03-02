@@ -152,14 +152,16 @@ class DecomposeCollectionTimeDepRatio:
             db_to_generate = convert_units_to_MtCO2_equiv(
                 self._db, use_AR4_data=use_ar4_data
             )
-        else: db_to_generate = self._db
+        else:
+            db_to_generate = self._db
         consistent_composite = self._construct_consistent_values(
             aggregate, components, db_to_generate
         )
         self._db.append(consistent_composite, inplace=True)
         cruncher = DatabaseCruncherTimeDepRatio(self._db)
-        if self._set_of_units_without_equiv(to_infill_df) != \
-                self._set_of_units_without_equiv(consistent_composite):
+        if self._set_of_units_without_equiv(
+            to_infill_df
+        ) != self._set_of_units_without_equiv(consistent_composite):
             raise ValueError(
                 "The units of the aggregate variable are inconsistent between the "
                 "input and constructed data. We input {} and constructed {}.".format(

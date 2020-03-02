@@ -13,6 +13,7 @@ from ..utils import _get_unit_of_variable
 
 logger = logging.getLogger(__name__)
 
+
 class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
     """
     Database cruncher which uses the 'rolling windows' technique.
@@ -290,8 +291,9 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
             infilled_ts = in_iamdf.filter(variable=variable_leaders).timeseries()
             for col in infilled_ts:
                 if use_ratio:
-                    infilled_ts[col] = derived_relationships[col](infilled_ts[col]) \
-                                       * infilled_ts[col]
+                    infilled_ts[col] = (
+                        derived_relationships[col](infilled_ts[col]) * infilled_ts[col]
+                    )
                 else:
                     infilled_ts[col] = derived_relationships[col](infilled_ts[col])
 

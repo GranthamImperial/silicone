@@ -34,12 +34,12 @@ simple_df = pd.DataFrame(
 simple_df = pyam.IamDataFrame(simple_df)
 _msa = ["model_a", "scen_a"]
 tdb = pd.DataFrame(
-        [
-            _msa + ["World", "Emissions|HFC|C5F12", "kt C5F12/yr", 2, 3],
-            _msa + ["World", "Emissions|HFC|C2F6", "kt C2F6/yr", 0.5, 1.5],
-        ],
-        columns=["model", "scenario", "region", "variable", "unit", 2010, 2015],
-    )
+    [
+        _msa + ["World", "Emissions|HFC|C5F12", "kt C5F12/yr", 2, 3],
+        _msa + ["World", "Emissions|HFC|C2F6", "kt C2F6/yr", 0.5, 1.5],
+    ],
+    columns=["model", "scenario", "region", "variable", "unit", 2010, 2015],
+)
 test_db = pyam.IamDataFrame(tdb)
 
 df_low = simple_df.copy()
@@ -458,8 +458,7 @@ def test__construct_consistent_values():
         [
             np.allclose(
                 consistent_vals.iloc[0].iloc[ind],
-                timeseries_data.iloc[0].iloc[ind]
-                + timeseries_data.iloc[1].iloc[ind],
+                timeseries_data.iloc[0].iloc[ind] + timeseries_data.iloc[1].iloc[ind],
             )
             for ind in range(len(timeseries_data.iloc[0]))
         ]
@@ -482,16 +481,14 @@ def test__construct_consistent_values_with_equiv():
         [
             np.allclose(
                 consistent_vals.iloc[0].iloc[ind],
-                timeseries_data.iloc[0].iloc[ind]
-                + timeseries_data.iloc[1].iloc[ind],
+                timeseries_data.iloc[0].iloc[ind] + timeseries_data.iloc[1].iloc[ind],
             )
             for ind in range(len(timeseries_data.iloc[0]))
         ]
     )
     # We also require that the output units are '-equiv'
     assert all(
-        y == "Mt CO2-equiv/yr"
-        for y in consistent_vals.index.get_level_values("unit")
+        y == "Mt CO2-equiv/yr" for y in consistent_vals.index.get_level_values("unit")
     )
 
 
@@ -514,10 +511,10 @@ def test_construct_consistent_error_no_data():
     # database
     aggregate_name = "Emissions|HFC|C5F12"
     components = ["Emissions|HFC|C2F6"]
-    test_db_ag = test_db.filter(variable="not there") # This generates an empty df
+    test_db_ag = test_db.filter(variable="not there")  # This generates an empty df
     error_msg = re.escape(
         "Attempting to construct a consistent {} but none of the components "
-            "present".format(aggregate_name)
+        "present".format(aggregate_name)
     )
     with pytest.raises(ValueError, match=error_msg):
         _construct_consistent_values(aggregate_name, components, test_db_ag)

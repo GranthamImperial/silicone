@@ -121,12 +121,13 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         # quantiles that should result in a flip between the two states.
         tcruncher = self.tclass(simple_df)
         res = tcruncher.derive_relationship(
-            "Emissions|CO2", ["Emissions|CH4"], quantile=0.833,
-            nwindows=1, use_ratio=use_ratio
+            "Emissions|CO2",
+            ["Emissions|CH4"],
+            quantile=0.833,
+            nwindows=1,
+            use_ratio=use_ratio,
         )
-        with caplog.at_level(
-                logging.INFO, logger="silicone.database_crunchers."
-        ):
+        with caplog.at_level(logging.INFO, logger="silicone.database_crunchers."):
             expect_01 = res(simple_df)
         if use_ratio:
             # We have a 0/0*0 in the calculation, so no value appears.
@@ -153,9 +154,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         res = tcruncher.derive_relationship(
             "Emissions|CO2", ["Emissions|CH4"], quantile=0.165, nwindows=1
         )
-        with caplog.at_level(
-                logging.INFO, logger="silicone.database_crunchers."
-        ):
+        with caplog.at_level(logging.INFO, logger="silicone.database_crunchers."):
             expect_00 = res(simple_df)
         if use_ratio:
             # We have 0/0*0, so no value appears.
