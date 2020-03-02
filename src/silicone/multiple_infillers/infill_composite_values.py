@@ -24,11 +24,7 @@ def infill_composite_values(df, composite_dic=None):
         composite_dic = {
             "Emissions|PFC": ["Emissions|PFC|*"],
             "Emissions|HFC": ["Emissions|HFC|*"],
-            "Emissions|F-Gases": [
-                "Emissions|PFC",
-                "Emissions|HFC",
-                "Emissions|SF6",
-            ],
+            "Emissions|F-Gases": ["Emissions|PFC", "Emissions|HFC", "Emissions|SF6",],
             "Emissions|CO2": ["Emissions|CO2|*"],
             "Emissions|Kyoto Gases (AR5-GWP100)": [
                 "Emissions|CO2",

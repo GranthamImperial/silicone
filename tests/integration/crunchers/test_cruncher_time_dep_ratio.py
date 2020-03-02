@@ -121,7 +121,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
 
     @pytest.mark.parametrize("match_sign", [True, False])
     def test_relationship_usage_multiple_data(
-            self, unequal_df, test_downscale_df, match_sign
+        self, unequal_df, test_downscale_df, match_sign
     ):
         equal_df = unequal_df.filter(model="model_a")
         tcruncher = self.tclass(equal_df)
@@ -156,7 +156,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
 
     @pytest.mark.parametrize("match_sign", [True, False])
     def test_relationship_negative_specific(
-            self, unequal_df, test_downscale_df, match_sign, caplog
+        self, unequal_df, test_downscale_df, match_sign, caplog
     ):
         # Test that match_sign results in the correct multipliers when negative values
         # are added to the positive ones.
@@ -210,7 +210,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
 
     @pytest.mark.parametrize("match_sign", [True, False])
     def test_relationship_usage_nans(
-            self, unequal_df, test_downscale_df, match_sign, caplog
+        self, unequal_df, test_downscale_df, match_sign, caplog
     ):
         leader = ["Emissions|HFC|C2F6"]
         equal_df = unequal_df.filter(model="model_a")
@@ -236,10 +236,11 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             with pytest.raises(ValueError, match=err_msg):
                 res = filler(test_downscale_df)
 
-    @pytest.mark.parametrize("match_sign, input_sign",
-                             [(True, +1), (True, -1), (False, +1), (False, -1)])
+    @pytest.mark.parametrize(
+        "match_sign, input_sign", [(True, +1), (True, -1), (False, +1), (False, -1)]
+    )
     def test_relationship_usage(
-            self, test_db, test_downscale_df, match_sign, input_sign, caplog
+        self, test_db, test_downscale_df, match_sign, input_sign, caplog
     ):
         tcruncher = self.tclass(test_db)
         filler = tcruncher.derive_relationship(

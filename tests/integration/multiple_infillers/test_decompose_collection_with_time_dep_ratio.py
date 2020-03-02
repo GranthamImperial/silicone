@@ -168,8 +168,7 @@ class TestGasDecomposeTimeDepRatio:
                 year=test_db.data[test_db.time_col].values, inplace=True
             )
         else:
-            test_downscale_df.filter(time=test_db.data[test_db.time_col],
-                                     inplace=True)
+            test_downscale_df.filter(time=test_db.data[test_db.time_col], inplace=True)
         # Make the variables work for our case
         components = ["Emissions|HFC|C5F12", "Emissions|HFC|C2F6"]
         aggregate = "Emissions|HFC"
@@ -180,9 +179,7 @@ class TestGasDecomposeTimeDepRatio:
                 aggregate, components, test_downscale_df
             )
         test_downscale_df = convert_units_to_MtCO2_equiv(test_downscale_df)
-        filled = tcruncher.infill_components(
-            aggregate, components, test_downscale_df
-        )
+        filled = tcruncher.infill_components(aggregate, components, test_downscale_df)
         # The value returned should be a dataframe with 2 entries per original entry (4)
         assert len(filled.data) == 8
         assert all(y in filled.variables().values for y in components)
@@ -190,14 +187,18 @@ class TestGasDecomposeTimeDepRatio:
         if test_db.time_col == "year":
             assert np.allclose(
                 test_downscale_df.data.groupby("year").sum()["value"].values,
-                convert_units_to_MtCO2_equiv(
-                    filled).data.groupby("year").sum()["value"].values
+                convert_units_to_MtCO2_equiv(filled)
+                .data.groupby("year")
+                .sum()["value"]
+                .values,
             )
         else:
             assert np.allclose(
                 test_downscale_df.data.groupby("time").sum()["value"].values,
-                convert_units_to_MtCO2_equiv(
-                    filled).data.groupby("time").sum()["value"].values
+                convert_units_to_MtCO2_equiv(filled)
+                .data.groupby("time")
+                .sum()["value"]
+                .values,
             )
 
     def test_relationship_rejects_inconsistent_columns(self, larger_df, test_db):
