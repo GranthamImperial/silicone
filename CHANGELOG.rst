@@ -3,6 +3,7 @@ Changelog
 
 master
 ------
+- (`#49 <https://github.com/znicholls/silicone/pull/49>`_) Rewrote the documentation and notebooks to update, split up information and clarify.
 - (`#48 <https://github.com/znicholls/silicone/pull/48>`_) Introduced multiple_infiller function to calculate the composite values from the constituents.
 - (`#47 <https://github.com/znicholls/silicone/pull/47>`_) Made an option for quantile_rolling_windows to infill using the ratio of lead to follow data.
 - (`#46 <https://github.com/znicholls/silicone/pull/46>`_) Made the time-dependent ratio infiller only use data where the leader has the same sign.
