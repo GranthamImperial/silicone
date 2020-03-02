@@ -1,7 +1,7 @@
 import statistics
 
 import pyam
-import silicone.database_crunchers
+import silicone.database_crunchers as dc
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -14,21 +14,27 @@ This script measures how accurate the different crunchers are at recreating know
 input_data = "../Input/SSP_CMIP6_201811.csv"
 # A list of all crunchers to investigate, here a reference to the actual cruncher
 crunchers_list = [
-    silicone.database_crunchers.DatabaseCruncherQuantileRollingWindows,
-    silicone.database_crunchers.DatabaseCruncherRMSClosest,
+    # dc.DatabaseCruncherConstantRatio,
+    # dc.DatabaseCruncherLeadGas,
+    dc.DatabaseCruncherTimeDepRatio,
+    dc.DatabaseCruncherQuantileRollingWindows,
+    dc.DatabaseCruncherRMSClosest,
+    dc.DatabaseCruncherLinearInterpolation,
 ]
 # This list must agree with the above list, but is the name of the crunchers
-crunchers_name_list = ["QuantileRolling", "RMSClosest"]
-# Leader is a single data class for the moment, but presented as a list.
+crunchers_name_list = [
+    x.__name__.replace("DatabaseCruncher", "") for x in crunchers_list
+]
+# Leader is a single data class presented as a list.
 leaders = ["CMIP6 Emissions|CO2"]
 # Place to save the infilled data as a csvn
 save_file = "../Output/CruncherResults/CruncherComparison.csv"
 # Do we want to save plots? If not, leave as None, else the location to save them.
 # Note that these are not filter-dependent and so only the results of the last filter will persist
-save_plots = None  # "../Output/CruncherResults/"
+save_plots = None #  "../Output/CruncherResults/plots/"
 # Do we want to run this for all possible filters? If so, choose none,
 # otherwise specify the filter here
-to_compare_filter = None  # e.g. ("GCAM4","SSP4-34")
+to_compare_filter = ("GCAM4", "SSP4-34")
 # __________________________________end options_________________________________________
 
 assert len(crunchers_list) == len(crunchers_name_list)
@@ -36,7 +42,7 @@ assert len(crunchers_list) == len(crunchers_name_list)
 db_all = pyam.IamDataFrame(input_data).filter(region="World")
 # This is the model/scenario combination to compare.
 if to_compare_filter:
-    all_possible_filters = to_compare_filter
+    all_possible_filters = [to_compare_filter]
 else:
     all_possible_filters = (
         db_all.data[["model", "scenario"]]
@@ -78,7 +84,7 @@ for one_filter in all_possible_filters:
                 interpolated["year"].size == interpolated["year"].unique().size
             ), "The wrong number of years have returned values"
             results_db[crunchers_name_list[cruncher_ind]][var_inst] = (
-                statistics.mean((interp_values - originals) ** 2) ** 0.5 / mean_abs
+                statistics.mean((interp_values / originals - 1) ** 2) ** 0.5
             )
             if save_plots:
                 plt.close()
@@ -112,6 +118,6 @@ for one_filter in all_possible_filters:
                     )
                 )
     overall_results = (
-        overall_results.fillna(0) + results_db.fillna(0) / all_possible_filters.size
+        overall_results.fillna(0) + results_db.fillna(0) / len(all_possible_filters)
     )
 overall_results.to_csv(save_file)
