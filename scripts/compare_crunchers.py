@@ -6,8 +6,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 """
-This script measures how accurate the different crunchers are at recreating known data
-
+This script measures how accurate the different crunchers are at recreating known data.
+We remove the data of interest, infill to find it and compare the true and infilled 
+values. 
 """
 # __________________________________Input options_______________________________________
 # Where is the file stored for data used to fill in the sheet?
@@ -27,14 +28,18 @@ crunchers_name_list = [
 ]
 # Leader is a single data class presented as a list.
 leaders = ["CMIP6 Emissions|CO2"]
-# Place to save the infilled data as a csvn
+# Place to save the infilled data as a csv
 save_file = "../Output/CruncherResults/CruncherComparison.csv"
 # Do we want to save plots? If not, leave as None, else the location to save them.
-# Note that these are not filter-dependent and so only the results of the last filter will persist
-save_plots = None #  "../Output/CruncherResults/plots/"
+# Note that these are not filter-dependent and so only the results of the last filter
+# will persist
+save_plots = None  #  "../Output/CruncherResults/plots/"
 # Do we want to run this for all possible filters? If so, choose none,
-# otherwise specify the filter here
-to_compare_filter = ("GCAM4", "SSP4-34")
+# otherwise specify the filter here as a list of tuples
+to_compare_filter = [
+    ("GCAM4", "SSP4-34"),
+    ("AIM/CGE", "SSP3-LowNTCF"),
+]
 # __________________________________end options_________________________________________
 
 assert len(crunchers_list) == len(crunchers_name_list)
@@ -42,7 +47,7 @@ assert len(crunchers_list) == len(crunchers_name_list)
 db_all = pyam.IamDataFrame(input_data).filter(region="World")
 # This is the model/scenario combination to compare.
 if to_compare_filter:
-    all_possible_filters = [to_compare_filter]
+    all_possible_filters = to_compare_filter
 else:
     all_possible_filters = (
         db_all.data[["model", "scenario"]]
@@ -57,7 +62,7 @@ overall_results = pd.DataFrame(index=vars_to_crunch, columns=crunchers_name_list
 for one_filter in all_possible_filters:
     combo_filter = {"model": one_filter[0], "scenario": one_filter[1]}
     input_to_fill = db_all.filter(**combo_filter)
-
+    # Remove all items that overlap directly with this
     db = db_all.filter(**combo_filter, keep=False)
     # Initialise the object that holds the results
     results_db = pd.DataFrame(index=vars_to_crunch, columns=crunchers_name_list)
@@ -74,8 +79,7 @@ for one_filter in all_possible_filters:
             originals = input_to_fill.filter(variable=var_inst).data.set_index("year")[
                 "value"
             ]
-            # Currently I am normalising by the mean absolute value
-            mean_abs = statistics.mean(abs(originals))
+            # Currently I am normalising by the actual value
             interp_values = interpolated.data.set_index("year")["value"]
             assert (
                 originals.size == interp_values.size
