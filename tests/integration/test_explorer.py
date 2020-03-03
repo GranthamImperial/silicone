@@ -167,6 +167,7 @@ def test_plot_emission_correlations_no_co2_emms(check_aggregate_df, tmpdir, capl
     quantile_boxes = 3
     quantile_decay_factor = 1
     legend_fraction = 0.65
+    x_gas = "Emissions|CO2"
 
     # caplog can capture any logging calls (if we add any in future)
     with caplog.at_level("DEBUG"):
@@ -178,6 +179,8 @@ def test_plot_emission_correlations_no_co2_emms(check_aggregate_df, tmpdir, capl
                 output_dir,
                 "--years",
                 years_of_interest,
+                "--x_gas",
+                x_gas,
                 "--quantile-boxes",
                 quantile_boxes,
                 "--quantile-decay-factor",

@@ -13,18 +13,53 @@ def _plot_emission_correlations_quantile_rolling_windows(
     emms_df,
     output_dir,
     years,
-    quantiles,
-    quantile_boxes,
-    quantile_decay_factor,
-    model_colours,
-    legend_fraction=0.65,
     x_gas="Emissions|CO2",
-    region = "World"
+    quantiles=None,
+    quantile_boxes=20,
+    quantile_decay_factor=1,
+    model_colours=True,
+    legend_fraction=0.65,
+    region="World",
 ):
     """
+    Calculates the relationship between different sorts of emissions at pre-specified
+    times. Saves csv files of the correlation coefficients and the rank correlation
+    coefficients between emissions at specified locations.
 
+    Parameters
+    ----------
+    emms_df : :obj:`pyam.IamDataFrame`
+        The database to search for correlations between named values
+
+    output_dir : str
+        The folder location to save the files.
+
+    years : list[int]
+        The years upon which to calculate correlations.
+
+    x_gas : str
+        The name of the gas to
+
+    quantiles : list[float]
+        If not none, the function will also calculate the quantiles specified by this
+        list, using rolling windows as documented in rolling_window_find_quantiles. If
+        none, the following four values are irrelevant.
+
+    quantile_boxes : int
+        The number of points at which quantiles should be evaluated. For details see
+        rolling_window_find_quantiles documentation.
+
+    quantile_decay_factor : float
+        This determines how strong the local weighting is for the quantiles. 1 is the
+        standard value. For details see rolling_window_find_quantiles documentation.
+
+    model_colours : bool
+        If true, the plot of quantiles will include a legend and differently coloured
+        trends.
+
+    legend_fraction : float
+        The size of the legend, if plotted.
     """
-    # TODO: split this function into smaller bits
     for year_of_interest in years:
         # Obtain the list of gases to examine
         df_gases = (
