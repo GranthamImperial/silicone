@@ -78,10 +78,12 @@ def rolling_window_find_quantiles(
     return quantmatrix
 
 
-def calc_all_correlations(emms_df, years, output_dir):
+def calc_all_emissions_correlations(emms_df, years, output_dir):
     """
    Saves csv files of the correlation coefficients and the rank correlation
-    coefficients between emissions at specified locations.
+    coefficients between emissions at specified locations. This function includes all
+    undivided emissions (i.e. results recorded as `Emissions|X`) and CO2 emissions
+    split once (i.e. `Emissions|CO2|X`). It does not include Kyoto gases.
 
     Parameters
     ----------
@@ -101,6 +103,7 @@ def calc_all_correlations(emms_df, years, output_dir):
         df_gases = (
             emms_df.filter(year=year_of_interest, level=1)
             .filter(variable="Emissions|*")
+            .filter(variable="Emissions|Kyoto*", keep=False)
             .append(
                 emms_df.filter(year=year_of_interest, level=2)
                 .filter(variable="Emissions|CO2*")
@@ -113,7 +116,9 @@ def calc_all_correlations(emms_df, years, output_dir):
         rank_corr_df = pd.DataFrame(index=df_gases.index, columns=df_gases.index)
         # Check that the list has only one entry for each gas
         assert not any(df_gases.index.duplicated()), "Index contains duplicated entries"
-        formatted_df = emms_df.filter(year=year_of_interest).pivot_table(
+        formatted_df = emms_df.filter(
+            variable=df_gases.index, year=year_of_interest
+        ).pivot_table(
             ["year", "model", "scenario", "region"],
             ["variable"],
             aggfunc="mean"
@@ -121,18 +126,19 @@ def calc_all_correlations(emms_df, years, output_dir):
         formatted_df.replace(r"^\s*$", np.nan, regex=True, inplace=True)
         for x_gas_ind in range(df_gases.count()[0]):
             x_gas = df_gases.index[x_gas_ind]
-            for y_gas_ind in range(df_gases.count()[0]):
+            for y_gas_ind in range(x_gas_ind+1, df_gases.count()[0]):
                 y_gas = df_gases.index[y_gas_ind]
                 # Calculate the correlations. This requires removing NAs
-                specific_df = formatted_df[
-                    [y_gas, x_gas]
-                ].astype(float).dropna()
-                correlations_df.at[y_gas, x_gas] = specific_df.corr("pearson").loc[
+                correlations_df.at[y_gas, x_gas] = formatted_df.corr("pearson").loc[
                     x_gas, y_gas
                 ]
-                rank_corr_df.at[y_gas, x_gas] = specific_df.corr("spearman").loc[
+                rank_corr_df.at[y_gas, x_gas] = formatted_df.corr("spearman").loc[
                     x_gas, y_gas
                 ]
+                # the other parts follow by symmetry
+                correlations_df.at[x_gas, y_gas] = correlations_df.at[y_gas, x_gas]
+                rank_corr_df.at[x_gas, y_gas] = rank_corr_df.at[y_gas, x_gas]
+            print("Finished x_gas {} in year {}.".format(x_gas, year_of_interest))
         if output_dir is not None:
             correlations_df.to_csv(
                 os.path.join(

@@ -1,5 +1,5 @@
 import silicone.stats
-from download_sr15_emissions import download_or_load_sr15
+import pyam
 
 
 # This script shows how to use the investigatory script, _plot_emission_correlations_
@@ -8,13 +8,25 @@ from download_sr15_emissions import download_or_load_sr15
 # ________________________________________________________
 # We must indicate the main gas of interest
 years = [2030, 2050, 2100]
+# Folder to save results:
 output_dir = "../Output/Correlations"
-# if non-null, also plot these quantiles.
-
-# ________________________________________________________
-# where do we get the data from?
+# Location of data:
+input_data = "./sr15_scenarios_more_regions.csv"
+# If there is any prefix on the names of variables (before 'Emissions') it goes here
+prefix = None  # "CMIP6 "
+# We may need to run the following lines in order to download data:
+"""
+from download_sr15_emissions import download_or_load_sr15
 SR15_SCENARIOS = "./sr15_scenarios_more_regions.csv"
-sr15_data = download_or_load_sr15(SR15_SCENARIOS)
-sr15_data = sr15_data.filter(region="World")
+download_or_load_sr15(SR15_SCENARIOS)
+input_data = SR15_SCENARIOS
+"""
+# ________________________________________________________
 
-silicone.stats.calc_all_correlations(sr15_data, years, output_dir)
+sr15_data = pyam.IamDataFrame(input_data).filter(region="World")
+if prefix:
+    sr15_data.data["variable"] = sr15_data.data["variable"].apply(
+        lambda x: x.replace(prefix, "")
+    )
+
+silicone.stats.calc_all_emissions_correlations(sr15_data, years, output_dir)
