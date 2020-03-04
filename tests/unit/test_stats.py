@@ -1,7 +1,31 @@
 import numpy as np
+import pyam
+import pandas as pd
 
 import silicone.stats as stats
+import os
 
+_mc = "model_c"
+_sa = "scen_a"
+_sb = "scen_b"
+_sc = "scen_c"
+_eco2 = "Emissions|CO2"
+_gtc = "Gt C/yr"
+_ech4 = "Emissions|CH4"
+_mtch4 = "Mt CH4/yr"
+_msrvu = ["model", "scenario", "region", "variable", "unit"]
+simple_df = pd.DataFrame(
+    [
+        [_mc, _sa, "World", _eco2, _gtc, 0, 2000, 1],
+        [_mc, _sb, "World", _eco2, _gtc, 1, 1000, -1],
+        [_mc, _sa, "World", _ech4, _mtch4, 0, 300, 1],
+        [_mc, _sb, "World", _ech4, _mtch4, 1, 600, -1],
+        [_mc, _sc, "World", _eco2, _gtc, np.nan, np.nan, 0],
+        [_mc, _sc, "World", _ech4, _mtch4, np.nan, np.nan, 0],
+    ],
+    columns=_msrvu + [2010, 2030, 2050],
+)
+simple_df = pyam.IamDataFrame(simple_df)
 
 def test_rolling_window_find_quantiles():
     xs = np.array([0, 0, 1, 1])
@@ -56,3 +80,21 @@ def test_rolling_window_find_quantiles_one():
     quantiles = stats.rolling_window_find_quantiles(xs, ys, desired_quantiles, 9, 2 * 9)
 
     assert np.allclose(quantiles.values.squeeze(), 2)
+
+
+def test_calc_all_emissions_correlations_works():
+    # We test that this saves a file in the correct place, with the correct results
+    test_folder = "./"
+    stats.calc_all_emissions_correlations(
+        simple_df, list(set(simple_df["year"])), test_folder
+    )
+    expected = {2010: 1, 2030: -1, 2050: 1}
+    for year in list(set(simple_df["year"])):
+        for file_string in ["gases_correlation", "gases_rank_correlation"]:
+            test_file = test_folder + file_string + "_{}.csv".format(year)
+            assert os.path.isfile(test_file)
+            test_results = pd.read_csv(test_file)
+            assert np.isnan(test_results.iloc[0].iloc[1])
+            assert test_results.iloc[1].iloc[1] == expected.get(year)
+            os.remove(test_file)
+            assert not os.path.isfile(test_file)

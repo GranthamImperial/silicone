@@ -97,7 +97,6 @@ def calc_all_emissions_correlations(emms_df, years, output_dir):
         The years upon which to calculate correlations.
     """
     assert len(emms_df.regions()) == 1, "Calculation is for only one region"
-    region = emms_df.regions()[0]
     for year_of_interest in years:
         # Obtain the list of gases to examine
         df_gases = (
