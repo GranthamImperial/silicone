@@ -23,7 +23,9 @@ def _plot_emission_correlations_quantile_rolling_windows(
 ):
     """
     Calculates the relationship between different sorts of emissions at pre-specified
-    times. Saves csv files of the correlation coefficients and the rank correlation
+    times. Plots graphs of the relationships between each of the variables and
+    optionally plots given quantiles on top of this.
+    Saves csv files of the correlation coefficients and the rank correlation
     coefficients between emissions at specified locations.
 
     Parameters
@@ -38,14 +40,14 @@ def _plot_emission_correlations_quantile_rolling_windows(
         The years upon which to calculate correlations.
 
     x_gas : str
-        The name of the gas to
+        The name of the gas to plot on the x-axis.
 
-    quantiles : list[float]
+    quantiles : list[float], None
         If not none, the function will also calculate the quantiles specified by this
         list, using rolling windows as documented in rolling_window_find_quantiles. If
         none, the following four values are irrelevant.
 
-    quantile_boxes : int
+    quantile_boxes : int, None
         The number of points at which quantiles should be evaluated. For details see
         rolling_window_find_quantiles documentation.
 
@@ -75,10 +77,6 @@ def _plot_emission_correlations_quantile_rolling_windows(
         # Check that the list has only one entry for each gas
         assert not any(df_gases.index.duplicated()), "Index contains duplicated entries"
         x_units = emms_df.filter(variable=x_gas)['unit'].iloc[0]
-
-        # Initialise the tables to hold all parameters between runs
-        correlations_df = pd.DataFrame(index=df_gases.index, columns=[x_gas])
-        rank_corr_df = pd.DataFrame(index=df_gases.index, columns=[x_gas])
 
         for y_gas_ind in range(df_gases.count()[0]):
             plt.close()
@@ -141,29 +139,12 @@ def _plot_emission_correlations_quantile_rolling_windows(
                 plt.savefig(
                     os.path.join(
                         output_dir,
-                        "{}_{}_{}.png".format(x_gas.split('|')[-1], y_gas.split('|')[-1], year_of_interest),
+                        "{}_{}_{}.png".format(
+                            x_gas.split('|')[-1], y_gas.split('|')[-1], year_of_interest
+                        ),
                     )
                 )
-
-            correlations_df.at[y_gas, x_gas] = seaborn_df.corr("pearson").loc[
-                x_gas, y_gas
-            ]
-            rank_corr_df.at[y_gas, x_gas] = seaborn_df.corr("spearman").loc[
-                x_gas, y_gas
-            ]
             print("Finished {} vs {} in {}".format(x_gas, y_gas, year_of_interest))
-
-        if output_dir is not None:
-            correlations_df.to_csv(
-                os.path.join(
-                    output_dir, "gases_correlation_{}.csv".format(year_of_interest)
-                )
-            )
-            rank_corr_df.to_csv(
-                os.path.join(
-                    output_dir, "gases_rank_correlation_{}.csv".format(year_of_interest)
-                )
-            )
 
 
 def _plot_emissions(legend_fraction, seaborn_df, x_gas, y_gas, x_units, y_units):
