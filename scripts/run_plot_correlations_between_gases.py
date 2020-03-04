@@ -2,14 +2,20 @@ from download_sr15_emissions import download_or_load_sr15
 
 import silicone.plotting
 
-# This script shows how to use the investigatory script, _plot_emission_correlations_quantile_rolling_windows.
-# It saves plots of the relationship between carbon dioxide and other emissions to the '../Output' folder,
-# along with CSV files indicating statistics of correlation coefficients.
+# This script shows how to use the investigatory script, _plot_emission_correlations_
+# quantile_rolling_windows. It saves plots of the relationship between carbon dioxide
+# and other emissions to the '../Output' folder
 # ________________________________________________________
 # We must indicate the main gas of interest
-x_gases = ["Emissions|CO2", "Emissions|CH4", "Emissions|CO", "Emissions|HFC"]
+x_gases = [
+            "Emissions|PFC",
+            "Emissions|CH4",
+            "Emissions|CO2|AFOLU",
+            "Emissions|CO2|Energy and Industrial Processes",
+            "Emissions|CO2",
+        ]
 years_of_interest = [2030, 2050, 2100]
-save_results = "../Output/CarbonPrice"
+save_results = "../Output/LotsOfPlotsOfRelations"
 # if non-null, also plot these quantiles.
 plot_quantiles = None  # [0.05, 0.33, 0.5, 0.67, 0.95]
 # if non-null, save data on the quantiles too
@@ -20,7 +26,8 @@ quantile_boxes = 20
 quantile_decay_factor = 1
 # Color different models different colours?
 model_colours = True
-# In the model-coloured version, how much does the figure need to be reduced by to leave room for the legend?
+# In the model-coloured version, how much does the figure need to be reduced by to leave
+# room for the legend?
 legend_fraction = 0.65
 # ________________________________________________________
 # where do we get the data from?
