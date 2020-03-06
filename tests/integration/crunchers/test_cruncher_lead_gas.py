@@ -78,10 +78,9 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
             tcruncher.derive_relationship(variable_follower, ["Emissions|HFC|C2F6"])
 
     @pytest.mark.parametrize(
-        "extra_info",
-        (
+        "extra_info", (
             pd.DataFrame(
-                [["ma", "sb", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1, 2]],
+                [["ma", "sb", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 5, 2]],
                 columns=["model", "scenario", "region", "variable", "unit", 2010, 2015],
             ),
             pd.DataFrame(
@@ -89,24 +88,44 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
                     ["ma", "sa", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1],
                     ["ma", "sb", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 3],
                 ],
-                columns=["model", "scenario", "region", "variable", "unit", 2010],
+                columns=["model", "scenario", "region", "variable", "unit", 2015],
             ),
         ),
     )
-    def test_derive_relationship_error_too_much_info(self, test_db, extra_info):
+    def test_derive_relationship_averaging_info(self, test_db, extra_info):
         # test that crunching fails if there's more than a single point (whether year
         # or scenario) for the gas to downscale to in the database
         tdb = test_db.filter(variable="Emissions|HFC|C5F12", keep=False)
         tcruncher = self.tclass(
             self._join_iamdfs_time_wrangle(tdb, IamDataFrame(extra_info))
         )
+        variable_follower = "Emissions|HFC|C5F12"
+        variable_leader = ["Emissions|HFC|C2F6"]
+        cruncher = tcruncher.derive_relationship(
+            variable_follower, variable_leader
+        )
+        lead_db = test_db.filter(variable=variable_leader)
+        infilled = cruncher(lead_db)
+        # In both cases, the average follower value at the latest time is 2. We divide
+        # by the value in 2015, which we have data for in both cases.
+        assert np.allclose(
+            infilled.data["value"],
+            2 * lead_db.data["value"] / lead_db.data["value"].loc[
+                lead_db.data[lead_db.time_col] == max(lead_db.data[lead_db.time_col])
+            ].values
+        )
+
+    def test_derive_relationship_error_no_info(self, test_db):
+        # test that crunching fails if there's more than a single point (whether year
+        # or scenario) for the gas to downscale to in the database
+        tdb = test_db.filter(variable="Emissions|HFC|C5F12", keep=False)
+        tcruncher = self.tclass(tdb)
+        variable_follower = "Emissions|HFC|C5F12"
         error_msg = re.escape(
-            "More than one data point for `variable_follower` ({}) in database".format(
-                "Emissions|HFC|C5F12"
-            )
+            "No data for `variable_follower` ({}) in database".format(variable_follower)
         )
         with pytest.raises(ValueError, match=error_msg):
-            tcruncher.derive_relationship("Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"])
+            tcruncher.derive_relationship(variable_follower, ["Emissions|HFC|C2F6"])
 
     def test_relationship_usage(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db)
