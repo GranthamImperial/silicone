@@ -7,13 +7,13 @@ logger = logging.getLogger(__name__)
 def infill_composite_values(df, composite_dic=None):
     """
     Constructs a series of aggregate variables, calculated as the sums of variables
-    that have been reported. This will overwrite the original values if they exist.
+    that have been reported.
 
     Parameters
     ----------
     df : :obj:`pyam.IamDataFrame`
         Input data from which to construct consistent values. This is assumed to be
-        fully infilled. This will not be thoroughly checked.
+        fully infilled. This will not be checked.
 
     composite_dic : dict {str: list[str]}
         Key: The variable names of the composite. Value: The variable names of the
@@ -23,9 +23,9 @@ def infill_composite_values(df, composite_dic=None):
     if not composite_dic:
         composite_dic = {
             "Emissions|PFC": [
-                "Emissions|CF4",
-                "Emissions|C2F6",
-                "Emissions|C6F14",
+                "Emissions*|CF4",
+                "Emissions*|C2F6",
+                "Emissions*|C6F14",
             ],
             "Emissions|HFC": ["Emissions|HFC*"],
             "Emissions|F-Gases": [

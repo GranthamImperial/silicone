@@ -1,4 +1,5 @@
 from silicone.multiple_infillers.infill_composite_values import infill_composite_values
+from silicone.utils import convert_units_to_MtCO2_equiv
 import numpy as np
 import pandas as pd
 
@@ -7,51 +8,29 @@ class TestInfillCompositeValues:
     larger_df = pd.DataFrame(
         [
             [
-                "model_C",
-                "scen_C",
-                "World",
-                "Emissions|CO2|AFOLU",
-                "Mt CO2/yr",
-                "",
-                1.5,
-                1.5,
-                1.5,
+                "model_C", "scen_C", "World", "Emissions|CO2|AFOLU",
+                "Mt CO2/yr",  1.5, 1.5, 1.5
             ],
             [
-                "model_C",
-                "scen_C",
-                "World",
-                "Emissions|CO2|Industry",
-                "Mt CO2/yr",
-                "",
-                1,
-                1,
-                1,
+                "model_C", "scen_C", "World", "Emissions|CO2|Industry",
+                "Mt CO2/yr", 1, 1, 1
             ],
             [
-                "model_D",
-                "scen_C",
-                "World",
-                "Emissions|CO2|Industry",
-                "Mt CO2/yr",
-                "",
-                2,
-                2,
-                2,
+                "model_D", "scen_C", "World", "Emissions|CO2|Industry",
+                "Mt CO2/yr", 2, 2, 2
             ],
-            ["model_D", "scen_C", "World", "Emissions|CH4", "Mt CH4/yr", "", 2, 2, 2],
             [
-                "model_D",
-                "scen_F",
-                "World",
-                "Emissions|CO2|Industry",
-                "Mt CO2/yr",
-                "",
-                4,
-                4,
-                4,
+                "model_D", "scen_C", "World", "Emissions|CH4",
+                "Mt CH4/yr", 2, 2, 2
             ],
-            ["model_D", "scen_F", "World", "Emissions|CH4", "Mt CH4/yr", "", 2, 2, 2],
+            [
+                "model_D", "scen_F", "World", "Emissions|CO2|Industry",
+                "Mt CO2/yr", 4, 4, 4
+            ],
+            [
+                "model_D", "scen_F", "World", "Emissions|CH4",
+                "Mt CH4/yr", 2, 2, 2
+             ],
         ],
         columns=[
             "model",
@@ -59,7 +38,6 @@ class TestInfillCompositeValues:
             "region",
             "variable",
             "unit",
-            "meta",
             2010,
             2015,
             2050,
@@ -76,13 +54,21 @@ class TestInfillCompositeValues:
             infill_composite_values(larger_df)
         # Warnings are reported by the system for non-available data.
         assert caplog.record_tuples[0][2] == "No data found for {}".format(
-            ["Emissions|PFC|*"]
+            ['Emissions*|CF4', 'Emissions*|C2F6', 'Emissions*|C6F14']
         )
 
     def test_infill_composite_values_works(self, larger_df, caplog):
         # Ensure that the code performs correctly
         larger_df_copy = larger_df.copy()
-        infilled = infill_composite_values(larger_df)
+        larger_df_copy.append(
+            infill_composite_values(
+                larger_df_copy,
+                composite_dic={"Emissions|CO2": ["Emissions|CO2|*"]}
+            ),
+            inplace=True
+        )
+        larger_df_copy = convert_units_to_MtCO2_equiv(larger_df_copy)
+        infilled = infill_composite_values(larger_df_copy)
         assert np.allclose(
             infilled.filter(model="model_C", scenario="scen_C").data["value"], 2.5
         )
@@ -101,5 +87,3 @@ class TestInfillCompositeValues:
             4
             + 2 * 28,  # The 2*28 comes from the CH4, converted to CO2 equiv using AR5.
         )
-        # Ensure that the original is undisturbed by this operation
-        assert larger_df_copy.equals(larger_df)
