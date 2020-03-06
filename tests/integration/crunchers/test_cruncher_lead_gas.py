@@ -114,6 +114,8 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
                 lead_db.data[lead_db.time_col] == max(lead_db.data[lead_db.time_col])
             ].values
         )
+        # Test that the result can be appended without problems.
+        lead_db.append(infilled)
 
     def test_derive_relationship_error_no_info(self, test_db):
         # test that crunching fails if there's more than a single point (whether year
