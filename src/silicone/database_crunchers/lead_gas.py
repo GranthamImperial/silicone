@@ -16,9 +16,8 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
     This cruncher derives the relationship between two variables by simply assuming
     that the follower timeseries is equal to the lead timeseries multiplied by a
     scaling factor. The scaling factor is derived by calculating the ratio of the
-    follower variable to the lead variable in the only year in which the follower
-    variable is available in the database. As a result, if the follower variable has
-    more than one point in the database, this cruncher cannot be used. Additionally,
+    follower variable to the lead variable in the latest year in which the follower
+    variable is available in the database. Additionally, since
     the derived relationship only depends on a single point in the database, no
     regressions or other calculations are performed.
 
@@ -35,7 +34,7 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
     .. math::
         s = \\frac{ E_f(t_{\\text{fdb}}) }{ E_l(t_{\\text{fdb}}) }
 
-    where :math:`t_{\\text{fdb}}` is the only time at which the follower gas
+    where :math:`t_{\\text{fdb}}` is the latest time at which the follower gas
     appears in the database.
     """
 
@@ -52,7 +51,7 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
         variable_leaders : list[str]
             The variable we want to use in order to infer timeseries of
             ``variable_follower`` (e.g. ``["Emissions|CO2"]``). Note that the 'lead
-            gas' methodology gives the same result, indepent of the value of
+            gas' methodology gives the same result, independent of the value of
             ``variable_leaders`` in the database.
 
         Returns
@@ -73,17 +72,20 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
             There is no data for ``variable_leaders`` or ``variable_follower`` in the
             database.
 
-        ValueError
-            There is more than one value for ``variable_follower`` in the database.
         """
         iamdf_follower = self._get_iamdf_follower(variable_follower, variable_leaders)
         data_follower = iamdf_follower.data
 
-        data_follower_key_year_val = data_follower["value"].values.squeeze()
+        data_follower_time_col = iamdf_follower.time_col
+        data_follower_key_timepoint = max(data_follower[data_follower_time_col])
+        key_timepoint_filter = {
+            data_follower_time_col: [data_follower_key_timepoint]
+        }
+        data_follower_key_year_val = np.nanmean(
+            iamdf_follower.filter(**key_timepoint_filter)["value"].values
+        )
         data_follower_unit = data_follower["unit"].values[0]
 
-        data_follower_time_col = iamdf_follower.time_col
-        data_follower_key_timepoint = data_follower[data_follower_time_col].iloc[0]
         if data_follower_time_col == "time":
             data_follower_key_timepoint = data_follower_key_timepoint.to_pydatetime()
 
@@ -120,10 +122,6 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
                         data_follower_time_col
                     )
                 )
-
-            key_timepoint_filter = {
-                data_follower_time_col: [data_follower_key_timepoint]
-            }
 
             def get_values_in_key_timepoint(idf):
                 # filter warning about empty data frame as we handle it ourselves
@@ -186,8 +184,8 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
 
         iamdf_follower = self._db.filter(variable=variable_follower)
         data_follower = iamdf_follower.data
-        if data_follower.shape[0] != 1:
-            error_msg = "More than one data point for `variable_follower` ({}) in database".format(
+        if data_follower.shape[0] < 1:
+            error_msg = "No data for `variable_follower` ({}) in database".format(
                 variable_follower
             )
             raise ValueError(error_msg)
