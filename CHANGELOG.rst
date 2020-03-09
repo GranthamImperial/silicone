@@ -3,6 +3,7 @@ Changelog
 
 master
 ------
+- (`#50 <https://github.com/znicholls/silicone/pull/50>`_) Split the notebooks into chapters with minor changes to the text. Moved a script function into utilities to download data.
 - (`#49 <https://github.com/znicholls/silicone/pull/49>`_) Rewrote the documentation and notebooks to update, split up information and clarify.
 - (`#48 <https://github.com/znicholls/silicone/pull/48>`_) Introduced multiple_infiller function to calculate the composite values from the constituents.
 - (`#47 <https://github.com/znicholls/silicone/pull/47>`_) Made an option for quantile_rolling_windows to infill using the ratio of lead to follow data.
