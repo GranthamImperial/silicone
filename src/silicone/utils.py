@@ -414,7 +414,7 @@ def get_sr15_scenarios(output_file, valid_model_ids):
             Names of models that are to be fetched.
 
     """
-    conn = pyam.iiasa.Connection("iamc15")
+    conn = pyam.iiasa.Connection("IXSE_SR15")
     variables_to_fetch = ["Emissions*"]
     for model in valid_model_ids:
         print("Fetching data for {}".format(model))

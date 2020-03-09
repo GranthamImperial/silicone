@@ -430,7 +430,8 @@ def test_get_files_and_use_them():
     try:
         # Remove any pre-exising files to check we make new ones
         SR15_SCENARIOS = "./sr15_scenarios.csv"
-        os.remove(SR15_SCENARIOS)
+        if os.path.isfile(SR15_SCENARIOS):
+            os.remove(SR15_SCENARIOS)
         valid_model_ids = ["GCAM*"]
         sr15_data = download_or_load_sr15(SR15_SCENARIOS, valid_model_ids)
         min_expected_var = [
