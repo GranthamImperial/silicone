@@ -140,7 +140,6 @@ def infill_all_required_variables(
     to_fill_times_missing = to_fill.timeseries().isna().sum() > 0
     for time in output_timesteps:
         if time not in database[timecol].tolist() or df_times_missing[time]:
-            # TODO: ensure that this works with date-times too.
             database.interpolate(time)
         if time not in to_fill[timecol].tolist() or to_fill_times_missing[time]:
             to_fill.interpolate(time)
@@ -325,10 +324,8 @@ def _infill_variable(cruncher_i, req_variable, leader_i, to_fill_i, **kwargs):
     filler = cruncher_i.derive_relationship(req_variable, leader_i, **kwargs)
     # only fill for scenarios who don't have that variable
     # quieten logging about empty data frame as it doesn't matter here
-    # TODO: make pyam not use the root logger
-    logging.getLogger().setLevel(logging.CRITICAL)
+    logging.getLogger("pyam.core").setLevel(logging.CRITICAL)
     not_to_fill = to_fill_i.filter(variable=req_variable)
-    logging.getLogger().setLevel(logging.WARNING)
 
     to_fill_var = to_fill_i.copy()
     if not not_to_fill.data.empty:
@@ -337,4 +334,5 @@ def _infill_variable(cruncher_i, req_variable, leader_i, to_fill_i, **kwargs):
     if not to_fill_var.data.empty:
         interpolated = filler(to_fill_var)
         return interpolated
+    logging.getLogger("pyam.core").setLevel(logging.WARNING)
     return None
