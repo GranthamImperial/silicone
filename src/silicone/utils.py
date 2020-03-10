@@ -227,7 +227,6 @@ def _make_wide_db(use_db):
     return use_db
 
 
-# TODO: put this in pyam
 def _get_unit_of_variable(df, variable, multiple_units="raise"):
     """
     Get the unit of a variable in ``df``
@@ -238,7 +237,8 @@ def _get_unit_of_variable(df, variable, multiple_units="raise"):
         String to use to filter variables
 
     multiple_units : str
-        If ``"raise"``, check that the variable only has one unit and raise an ``AssertionError`` if it has more than one unit.
+        If ``"raise"``, check that the variable only has one unit and raise an
+        ``AssertionError`` if it has more than one unit.
 
     Returns
     -------

@@ -6,6 +6,7 @@ import warnings
 import pyam
 
 from .base import _DatabaseCruncher
+from ..utils import _get_unit_of_variable
 
 
 class DatabaseCruncherRMSClosest(_DatabaseCruncher):
@@ -63,8 +64,7 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
         iamdf_follower = self._get_iamdf_section(variable_follower)
         iamdf_lead = self._db.filter(variable=variable_leaders)
 
-        leader_unit = iamdf_lead["unit"].unique()
-        assert len(leader_unit) == 1  # TODO: use functionality in #13
+        leader_unit = _get_unit_of_variable(iamdf_lead, variable_leaders)
         leader_unit = leader_unit[0]
 
         data_follower_time_col = iamdf_follower.time_col
