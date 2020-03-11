@@ -24,18 +24,19 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
     Once the relationship is derived, the 'filler' function will infill following:
 
     .. math::
-        E_f(t) = s * E_l(t)
+        E_f(t) = R * E_l(t)
 
     where :math:`E_f(t)` is emissions of the follower variable and :math:`E_l(t)` is
-    emissions of the lead variable.
+    emissions of the lead variable, both in the infillee database.
 
-    :math:`s` is the scaling factor, calculated as
+    :math:`R` is the scaling factor, calculated as
 
     .. math::
-        s = \\frac{ E_f(t_{\\text{fdb}}) }{ E_l(t_{\\text{fdb}}) }
+        R = \\frac{ E_f(t_{\\text{last}}) }{ e_l(t_{\\text{last}}) }
 
-    where :math:`t_{\\text{fdb}}` is the latest time at which the follower gas
-    appears in the database.
+    where :math:`t_{\\text{last}}` is the latest time at which the follower gas
+    appears in the database, and the lower case :math:`e` represents the infiller
+    database.
     """
 
     def derive_relationship(self, variable_follower, variable_leaders):
