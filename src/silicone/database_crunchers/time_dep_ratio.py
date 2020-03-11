@@ -26,17 +26,18 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
     Once the relationship is derived, the 'filler' function will infill following:
 
     .. math::
-        E_f(t) = s(t) * E_l(t)
+        E_f(t) = R(t) * E_l(t)
 
     where :math:`E_f(t)` is emissions of the follower variable and :math:`E_l(t)` is
     emissions of the lead variable.
 
-    :math:`s(t)` is the scaling factor, calculated as the ratio of the means of the
-    the follower and the leader in the cruncher in the database (by default, including
-    only cases where `sign(E_l(t))` is the same in both databases).
+    :math:`R(t)` is the scaling factor, calculated as the ratio of the means of the
+    the follower and the leader in the cruncher in the infiller database, denoted with
+    lower case e. By default, we include only cases where `sign(e_l(t))` is the same in
+    both databases).
 
     .. math::
-        s(t) = \\frac{mean( E_f(t) )}{mean( E_l(t) )})
+        R(t) = \\frac{mean( e_f(t) )}{mean( e_l(t) )})
 
     """
 

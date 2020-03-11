@@ -20,11 +20,11 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
     difference.
 
     .. math::
-        RMS = \\left ( \\frac{1}{n} \\sum_{t=0}^n (E_l(t) - E_l^{d}(t))^2 \\right )^{1/2}
+        RMS = \\left ( \\frac{1}{n} \\sum_{t=0}^n (E_l(t) - e_l(t))^2 \\right )^{1/2}
 
     where :math:`n` is the total number of timesteps in the lead gas' timeseries,
-    :math:`E_l(t)` is the lead gas emissions timeseries and :math:`E_l^d(t)` is a lead
-    gas emissions timeseries in the database.
+    :math:`E_l(t)` is the lead gas emissions timeseries and :math:`e_l(t)` is a lead
+    gas emissions timeseries in the infiller database.
     """
 
     def derive_relationship(self, variable_follower, variable_leaders):
