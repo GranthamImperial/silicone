@@ -15,10 +15,10 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
     tclass = DatabaseCruncherLeadGas
     tdb = pd.DataFrame(
         [
-            _msa + ["World", "Emissions|HFC|C5F12", "kt C5F12/yr", np.nan, 3.14],
-            _msa + ["World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1.2, 1.5],
+            _msa + ["World", "Emissions|HFC|C5F12", "kt C5F12/yr", "", np.nan, 3.14],
+            _msa + ["World", "Emissions|HFC|C2F6", "kt C2F6/yr", "", 1.2, 1.5],
         ],
-        columns=["model", "scenario", "region", "variable", "unit", 2010, 2015],
+        columns=["model", "scenario", "region", "variable", "unit", "meta", 2010, 2015],
     )
     tdownscale_df = pd.DataFrame(
         [
@@ -80,15 +80,20 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
     @pytest.mark.parametrize(
         "extra_info", (
             pd.DataFrame(
-                [["ma", "sb", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 5, 2]],
-                columns=["model", "scenario", "region", "variable", "unit", 2010, 2015],
+                [["ma", "sb", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", "", 5, 2]],
+                columns=[
+                    "model", "scenario", "region",
+                    "variable", "unit", "meta", 2010, 2015
+                ],
             ),
             pd.DataFrame(
                 [
-                    ["ma", "sa", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 1],
-                    ["ma", "sb", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", 3],
+                    ["ma", "sa", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", "", 1],
+                    ["ma", "sb", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", "", 3],
                 ],
-                columns=["model", "scenario", "region", "variable", "unit", 2015],
+                columns=[
+                    "model", "scenario", "region", "variable", "unit", "meta", 2015]
+                ,
             ),
         ),
     )
@@ -118,8 +123,8 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
         lead_db.append(infilled)
 
     def test_derive_relationship_error_no_info(self, test_db):
-        # test that crunching fails if there's more than a single point (whether year
-        # or scenario) for the gas to downscale to in the database
+        # test that crunching fails if there's no data for the gas to downscale to in
+        # the database
         tdb = test_db.filter(variable="Emissions|HFC|C5F12", keep=False)
         tcruncher = self.tclass(tdb)
         variable_follower = "Emissions|HFC|C5F12"

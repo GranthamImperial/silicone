@@ -187,10 +187,4 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
 
         iamdf_follower = self._db.filter(variable=variable_follower)
         data_follower = iamdf_follower.data
-        if data_follower.shape[0] < 1:
-            error_msg = "No data for `variable_follower` ({}) in database".format(
-                variable_follower
-            )
-            raise ValueError(error_msg)
-
         return iamdf_follower
