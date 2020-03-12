@@ -98,8 +98,8 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
         ),
     )
     def test_derive_relationship_averaging_info(self, test_db, extra_info):
-        # test that crunching fails if there's more than a single point (whether year
-        # or scenario) for the gas to downscale to in the database
+        # test that crunching uses average values if there's more than a single point
+        # in the latest year for the lead gas in the database
         tdb = test_db.filter(variable="Emissions|HFC|C5F12", keep=False)
         tcruncher = self.tclass(
             self._join_iamdfs_time_wrangle(tdb, IamDataFrame(extra_info))
