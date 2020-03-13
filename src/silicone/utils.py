@@ -394,6 +394,12 @@ def convert_units_to_MtCO2_equiv(df, use_AR4_data=False):
     return to_convert_df
 
 
+def download_or_load_sr15(filename, valid_model_ids="*"):
+    if not os.path.isfile(filename):
+        get_sr15_scenarios(filename, valid_model_ids)
+    return pyam.IamDataFrame(filename).filter(model=valid_model_ids)
+
+
 def get_sr15_scenarios(output_file, valid_model_ids):
     """
        Collects world-level data from the IIASA database for the named models and saves
@@ -408,7 +414,7 @@ def get_sr15_scenarios(output_file, valid_model_ids):
             Names of models that are to be fetched.
 
     """
-    conn = pyam.iiasa.Connection("iamc15")
+    conn = pyam.iiasa.Connection("IXSE_SR15")
     variables_to_fetch = ["Emissions*"]
     for model in valid_model_ids:
         print("Fetching data for {}".format(model))

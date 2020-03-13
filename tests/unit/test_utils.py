@@ -1,4 +1,5 @@
 import re
+import os
 
 import numpy as np
 import pandas as pd
@@ -10,7 +11,7 @@ from silicone.utils import (
     _make_interpolator,
     return_cases_which_consistently_split,
     convert_units_to_MtCO2_equiv,
-    get_sr15_scenarios,
+    download_or_load_sr15,
     _construct_consistent_values,
 )
 
@@ -427,10 +428,12 @@ def test_convert_units_to_MtCO2_equiv_doesnt_change(check_aggregate_df):
 
 def test_get_files_and_use_them():
     try:
+        # Remove any pre-exising files to check we make new ones
         SR15_SCENARIOS = "./sr15_scenarios.csv"
+        if os.path.isfile(SR15_SCENARIOS):
+            os.remove(SR15_SCENARIOS)
         valid_model_ids = ["GCAM*"]
-        get_sr15_scenarios(SR15_SCENARIOS, valid_model_ids)
-        sr15_data = pyam.IamDataFrame(SR15_SCENARIOS)
+        sr15_data = download_or_load_sr15(SR15_SCENARIOS, valid_model_ids)
         min_expected_var = [
             "Emissions|N2O",
             "Emissions|CO2",
@@ -439,6 +442,17 @@ def test_get_files_and_use_them():
         ]
         variables_in_result = sr15_data.variables()
         assert all([y in variables_in_result.values for y in min_expected_var])
+        assert os.path.isfile(SR15_SCENARIOS)
+        # Now check that the function works correctly again
+        variables_in_result_2 = download_or_load_sr15(
+            SR15_SCENARIOS, valid_model_ids
+        ).variables()
+        assert all(variables_in_result_2 == variables_in_result)
+        blank_variables = download_or_load_sr15(
+            SR15_SCENARIOS, ["bad_model"]
+        ).variables()
+        assert all([y not in blank_variables.values for y in min_expected_var])
+        os.remove(SR15_SCENARIOS)
     except ConnectionError:
         pass
 
