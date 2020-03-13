@@ -1,8 +1,7 @@
-import statistics
-
 import pyam
 import silicone.database_crunchers as dc
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 
 """
@@ -15,12 +14,18 @@ values.
 input_data = "../Input/SSP_CMIP6_201811.csv"
 # A list of all crunchers to investigate, here a reference to the actual cruncher
 crunchers_list = [
-    # dc.DatabaseCruncherConstantRatio,
-    # dc.DatabaseCruncherLeadGas,
+    #  dc.DatabaseCruncherLeadGas,
     dc.DatabaseCruncherTimeDepRatio,
     dc.DatabaseCruncherQuantileRollingWindows,
     dc.DatabaseCruncherRMSClosest,
     dc.DatabaseCruncherLinearInterpolation,
+]
+options_list = [
+    #  {},
+    {"same_sign": True},
+    {},
+    {},
+    {}
 ]
 # This list must agree with the above list, but is the name of the crunchers
 crunchers_name_list = [
@@ -29,7 +34,9 @@ crunchers_name_list = [
 # Leader is a single data class presented as a list.
 leaders = ["CMIP6 Emissions|CO2"]
 # Place to save the infilled data as a csv
-save_file = "../Output/CruncherResults/CruncherComparison.csv"
+save_file = "../Output/CruncherResults/CruncherComparisonLead_{}.csv".format(
+    leaders[0].split("|")[-1]
+)
 # Do we want to save plots? If not, leave as None, else the location to save them.
 # Note that these are not filter-dependent and so only the results of the last filter
 # will persist
@@ -43,6 +50,7 @@ to_compare_filter = [
 # __________________________________end options_________________________________________
 
 assert len(crunchers_list) == len(crunchers_name_list)
+assert len(options_list) == len(crunchers_name_list)
 
 db_all = pyam.IamDataFrame(input_data).filter(region="World")
 # This is the model/scenario combination to compare.
@@ -66,7 +74,6 @@ for one_filter in all_possible_filters:
     db = db_all.filter(**combo_filter, keep=False)
     # Initialise the object that holds the results
     results_db = pd.DataFrame(index=vars_to_crunch, columns=crunchers_name_list)
-
     for cruncher_ind in range(len(crunchers_list)):
         cruncher_instance = crunchers_list[cruncher_ind](db)
         for var_inst in vars_to_crunch:
@@ -74,12 +81,13 @@ for one_filter in all_possible_filters:
             assert (
                 var_units.size == 1
             ), "Multiple units involved, this spoils the calculation"
-            filler = cruncher_instance.derive_relationship(var_inst, leaders)
+            filler = cruncher_instance.derive_relationship(
+                var_inst, leaders, **options_list[cruncher_ind]
+            )
             interpolated = filler(input_to_fill)
             originals = input_to_fill.filter(variable=var_inst).data.set_index("year")[
                 "value"
             ]
-            # Currently I am normalising by the actual value
             interp_values = interpolated.data.set_index("year")["value"]
             assert (
                 originals.size == interp_values.size
@@ -87,9 +95,20 @@ for one_filter in all_possible_filters:
             assert (
                 interpolated["year"].size == interpolated["year"].unique().size
             ), "The wrong number of years have returned values"
+            # Set up normalisation
+            norm_factor = pd.Series(index=interp_values.index, dtype=float)
+            for year in norm_factor.index:
+                norm_factor[year] = max(
+                    db_all.filter(year=year, variable=var_inst).data["value"]
+                ) - min(
+                    db_all.filter(year=year, variable=var_inst).data["value"]
+                )
+            # Calculate the RMS difference, Normalised by the spread of values
             results_db[crunchers_name_list[cruncher_ind]][var_inst] = (
-                statistics.mean((interp_values / originals - 1) ** 2) ** 0.5
-            )
+                np.nanmean(((interp_values - originals)[norm_factor > 0] / norm_factor[norm_factor > 0]) ** 2)
+            ) ** 0.5
+            if not np.isfinite(results_db[crunchers_name_list[cruncher_ind]][var_inst]):
+                print("year: ".format(year))
             if save_plots:
                 plt.close()
                 ax = plt.subplot(111)

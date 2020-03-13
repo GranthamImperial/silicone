@@ -4,6 +4,7 @@ Module for the database cruncher which uses the 'time-dependent ratio' technique
 
 import numpy as np
 import pandas as pd
+import warnings
 from pyam import IamDataFrame
 
 from .base import _DatabaseCruncher
@@ -102,14 +103,16 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
         if same_sign:
             # We want to have separate positive and negative answers. We calculate a
             # tuple, first for positive and then negative values.
-            for year in all_times:
-                pos_inds = data_leader[year].values > 0
-                scaling["pos"][year] = np.nanmean(
-                    data_follower[year].iloc[pos_inds].values
-                ) / np.nanmean(data_leader[year].iloc[pos_inds].values)
-                scaling["neg"][year] = np.nanmean(
-                    data_follower[year].iloc[~pos_inds].values
-                ) / np.nanmean(data_leader[year].iloc[~pos_inds].values)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                for year in all_times:
+                    pos_inds = data_leader[year].values > 0
+                    scaling["pos"][year] = np.nanmean(
+                        data_follower[year].iloc[pos_inds].values
+                    ) / np.nanmean(data_leader[year].iloc[pos_inds].values)
+                    scaling["neg"][year] = np.nanmean(
+                        data_follower[year].iloc[~pos_inds].values
+                    ) / np.nanmean(data_leader[year].iloc[~pos_inds].values)
         else:
             # The tuple is the same in both cases
             for year in all_times:
