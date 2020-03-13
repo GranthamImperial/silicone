@@ -25,6 +25,9 @@ def infill_composite_values(df, composite_dic=None):
             "Emissions|PFC": [
                 "Emissions*|CF4",
                 "Emissions*|C2F6",
+                "Emissions*|C3F8",
+                "Emissions*|C4F10",
+                "Emissions*|C5F12",
                 "Emissions*|C6F14",
             ],
             "Emissions|HFC": ["Emissions|HFC*"],
