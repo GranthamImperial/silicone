@@ -83,7 +83,8 @@ def calc_all_emissions_correlations(emms_df, years, output_dir):
    Saves csv files of the correlation coefficients and the rank correlation
     coefficients between emissions at specified locations. This function includes all
     undivided emissions (i.e. results recorded as `Emissions|X`) and CO2 emissions
-    split once (i.e. `Emissions|CO2|X`). It does not include Kyoto gases.
+    split once (i.e. `Emissions|CO2|X`). It does not include Kyoto gases. It will also
+    save the average absolute value of the coefficients.
 
     Parameters
     ----------
@@ -140,10 +141,10 @@ def calc_all_emissions_correlations(emms_df, years, output_dir):
                 ]
                 all_correlations_df.loc[y_gas, x_gas] = all_correlations_df.at[
                                                            y_gas, x_gas
-                    ] + correlations_df.loc[y_gas, x_gas] / len(years)
+                    ] + abs(correlations_df.loc[y_gas, x_gas]) / len(years)
                 all_rank_corr_df.loc[y_gas, x_gas] = all_rank_corr_df.at[
                                                         y_gas, x_gas
-                    ] + rank_corr_df.at[y_gas, x_gas] / len(years)
+                    ] + abs(rank_corr_df.at[y_gas, x_gas]) / len(years)
                 # the other parts follow by symmetry
                 correlations_df.at[x_gas, y_gas] = correlations_df.at[y_gas, x_gas]
                 rank_corr_df.at[x_gas, y_gas] = rank_corr_df.at[y_gas, x_gas]
@@ -173,14 +174,14 @@ def calc_all_emissions_correlations(emms_df, years, output_dir):
     if output_dir is not None:
         all_correlations_df.to_csv(
             os.path.join(
-                output_dir, "time_av_gases_correlation_{}_to_{}.csv".format(
+                output_dir, "time_av_absolute_correlation_{}_to_{}.csv".format(
                     min(years), max(years)
                 )
             )
         )
         all_rank_corr_df.to_csv(
             os.path.join(
-                output_dir, "time_av_gases_rank_correlation_{}_to_{}.csv".format(
+                output_dir, "time_av_absolute_rank_correlation_{}_to_{}.csv".format(
                     min(years), max(years)
                 )
             )
