@@ -1,4 +1,5 @@
 import silicone.stats
+import numpy as np
 import pyam
 
 
@@ -7,7 +8,7 @@ import pyam
 # coefficients to a specified folder.
 # ________________________________________________________
 # We must indicate the main gas of interest
-years = [2030, 2050, 2100]
+years = range(2020, 2101, 10)
 # Folder to save results:
 output_dir = "../Output/Correlations"
 # Location of data:
