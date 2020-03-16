@@ -96,8 +96,20 @@ def test_calc_all_emissions_correlations_works():
             test_results = pd.read_csv(test_file)
             assert np.isnan(test_results.iloc[0].iloc[1])
             assert test_results.iloc[1].iloc[1] == expected.get(year)
+            assert test_results.iloc[0].iloc[2] == expected.get(year)
             os.remove(test_file)
             assert not os.path.isfile(test_file)
+    for file_string in ["time_av_gases_correlation", "time_av_gases_rank_correlation"]:
+        test_file = test_folder + file_string + "_{}_to_{}.csv".format(
+            min(set(simple_df["year"])), max(set(simple_df["year"]))
+        )
+        assert os.path.isfile(test_file)
+        test_results = pd.read_csv(test_file)
+        assert np.isnan(test_results.iloc[0].iloc[1])
+        assert np.allclose(test_results.iloc[1].iloc[1], 1/3)
+        assert np.allclose(test_results.iloc[0].iloc[2], 1 / 3)
+        os.remove(test_file)
+        assert not os.path.isfile(test_file)
 
 def test_calc_all_emissions_numerical():
     # We construct a specific situation and check that the numerical answers are correct

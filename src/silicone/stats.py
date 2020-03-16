@@ -97,19 +97,23 @@ def calc_all_emissions_correlations(emms_df, years, output_dir):
         The years upon which to calculate correlations.
     """
     assert len(emms_df.regions()) == 1, "Calculation is for only one region"
-    for year_of_interest in years:
-        # Obtain the list of gases to examine
-        df_gases = (
-            emms_df.filter(year=year_of_interest, level=1)
+    # Obtain the list of gases to examine
+    df_gases = (
+        emms_df.filter(level=1)
             .filter(variable="Emissions|*")
             .filter(variable="Emissions|Kyoto*", keep=False)
             .append(
-                emms_df.filter(year=year_of_interest, level=2)
+            emms_df.filter(level=2)
                 .filter(variable="Emissions|CO2*")
-            )
-            .variables(True)
-            .set_index("variable")
-        )
+        ).variables(True).set_index("variable")
+    )
+    all_correlations_df = pd.DataFrame(
+        index=df_gases.index, columns=df_gases.index, data=0
+    )
+    all_rank_corr_df = pd.DataFrame(
+        index=df_gases.index, columns=df_gases.index, data=0
+    )
+    for year_of_interest in years:
         # Initialise the tables to hold all parameters between runs
         correlations_df = pd.DataFrame(index=df_gases.index, columns=df_gases.index)
         rank_corr_df = pd.DataFrame(index=df_gases.index, columns=df_gases.index)
@@ -134,9 +138,19 @@ def calc_all_emissions_correlations(emms_df, years, output_dir):
                 rank_corr_df.at[y_gas, x_gas] = formatted_df.corr("spearman").loc[
                     x_gas, y_gas
                 ]
+                all_correlations_df.loc[y_gas, x_gas] = all_correlations_df.at[
+                                                           y_gas, x_gas
+                    ] + correlations_df.loc[y_gas, x_gas] / len(years)
+                all_rank_corr_df.loc[y_gas, x_gas] = all_rank_corr_df.at[
+                                                        y_gas, x_gas
+                    ] + rank_corr_df.at[y_gas, x_gas] / len(years)
                 # the other parts follow by symmetry
                 correlations_df.at[x_gas, y_gas] = correlations_df.at[y_gas, x_gas]
                 rank_corr_df.at[x_gas, y_gas] = rank_corr_df.at[y_gas, x_gas]
+                all_correlations_df.loc[x_gas, y_gas] = all_correlations_df.at[
+                    y_gas, x_gas
+                ]
+                all_rank_corr_df.loc[x_gas, y_gas] = all_rank_corr_df.at[y_gas, x_gas]
             print("Finished x_gas {} in year {}.".format(x_gas, year_of_interest))
         if output_dir is not None:
             correlations_df.to_csv(
@@ -153,3 +167,21 @@ def calc_all_emissions_correlations(emms_df, years, output_dir):
                     )
                 )
             )
+    for gas in df_gases.index:
+        all_correlations_df.loc[gas, gas] = np.nan
+        all_rank_corr_df.loc[gas, gas] = np.nan
+    if output_dir is not None:
+        all_correlations_df.to_csv(
+            os.path.join(
+                output_dir, "time_av_gases_correlation_{}_to_{}.csv".format(
+                    min(years), max(years)
+                )
+            )
+        )
+        all_rank_corr_df.to_csv(
+            os.path.join(
+                output_dir, "time_av_gases_rank_correlation_{}_to_{}.csv".format(
+                    min(years), max(years)
+                )
+            )
+        )
