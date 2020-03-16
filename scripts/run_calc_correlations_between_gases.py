@@ -1,5 +1,4 @@
 import silicone.stats
-import numpy as np
 import pyam
 
 
