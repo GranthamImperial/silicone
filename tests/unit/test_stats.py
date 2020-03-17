@@ -112,13 +112,22 @@ def test_calc_all_emissions_correlations_works():
         assert np.allclose(test_results.iloc[0].iloc[2], 1)
         os.remove(test_file)
         assert not os.path.isfile(test_file)
+    # Check that the variable counts are correct too.
+    test_file = test_folder + "/variable_counts.csv"
+    assert os.path.isfile(test_file)
+    test_results = pd.read_csv(test_file)
+    assert np.allclose(test_results["0"].iloc[0], 3)
+    assert np.allclose(test_results["0"].iloc[1], 3)
+    os.remove(test_file)
+    assert not os.path.isfile(test_file)
 
 def test_calc_all_emissions_numerical():
     # We construct a specific situation and check that the numerical answers are correct
     test_folder = "./test_created_files/"
     # We establish a more complicated set of values
     numerical_df = simple_df
-    numerical_df.data["model"] = numerical_df.data["model"] + numerical_df.data["year"].map(lambda x: str(x))
+    numerical_df.data["model"] = numerical_df.data["model"] + \
+                                 numerical_df.data["year"].map(lambda x: str(x))
     numerical_df.data["year"] = 2010
     numerical_df = pyam.IamDataFrame(numerical_df.data)
     # Perform the calculations
@@ -158,3 +167,10 @@ def test_calc_all_emissions_numerical():
         some_cor = rank_correl if file_string.__contains__("rank") else correl
         assert np.isclose(test_results.iloc[1].iloc[1], some_cor, rtol=1e-4)
         os.remove(test_file)
+    test_file = test_folder + "/variable_counts.csv"
+    assert os.path.isfile(test_file)
+    test_results = pd.read_csv(test_file)
+    assert np.allclose(test_results["0"].iloc[0], 7)
+    assert np.allclose(test_results["0"].iloc[1], 7)
+    os.remove(test_file)
+    assert not os.path.isfile(test_file)
