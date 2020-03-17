@@ -85,6 +85,19 @@ def calc_all_emissions_correlations(emms_df, years, output_dir):
     undivided emissions (i.e. results recorded as `Emissions|X`) and CO2 emissions
     split once (i.e. `Emissions|CO2|X`). It does not include Kyoto gases. It will also
     save the average absolute value of the coefficients.
+    Files created:
+    "variable_counts.csv" :
+        the number of scenario/model pairs where the emissions data occurs.
+    "gases_correlation_{year}.csv" :
+        The Pearson's correlation between gases emissions in a given year.
+    "gases_rank_correlation_{year}.csv" :
+        The Spearman's rank correlation between gases in a given year
+    "time_av_absolute_correlation_{}_to_{}.csv" :
+        The magnitude of the Pearson's correlation between emissions, averaged over the
+        years requested.
+    "time_av_absolute_rank_correlation_{}_to_{}.csv" :
+        The magnitude of the Spearman's rank correlation between emissions, averaged
+        over the years requested.
 
     Parameters
     ----------
@@ -114,6 +127,17 @@ def calc_all_emissions_correlations(emms_df, years, output_dir):
     all_rank_corr_df = pd.DataFrame(
         index=df_gases.index, columns=df_gases.index, data=0
     )
+
+    # Calculate the total amount of data
+    var_count_file = "variable_counts.csv"
+    var_count = pd.Series(index=df_gases.index, dtype=int)
+    for var in df_gases.index:
+        var_db = emms_df.filter(variable=var)
+        var_count[var] = len(var_db.timeseries())
+    var_save_loc = output_dir + "/" + var_count_file
+    var_count.to_csv(var_save_loc)
+    print("Counted the number of each variable and saved to ".format(var_save_loc))
+
     for year_of_interest in years:
         # Initialise the tables to hold all parameters between runs
         correlations_df = pd.DataFrame(index=df_gases.index, columns=df_gases.index)
