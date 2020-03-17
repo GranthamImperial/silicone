@@ -11,7 +11,7 @@ values.
 """
 # __________________________________Input options_______________________________________
 # Where is the file stored for data used to fill in the sheet?
-input_data = "../Input/SSP_CMIP6_201811.csv"
+input_data = "./sr15_scenarios_more_regions.csv"
 # A list of all crunchers to investigate, here a reference to the actual cruncher
 crunchers_list = [
     #  dc.DatabaseCruncherLeadGas,
@@ -23,7 +23,7 @@ crunchers_list = [
 options_list = [
     #  {},
     {"same_sign": True},
-    {},
+    {"use_ratio": False},
     {},
     {}
 ]
@@ -32,7 +32,7 @@ crunchers_name_list = [
     x.__name__.replace("DatabaseCruncher", "") for x in crunchers_list
 ]
 # Leader is a single data class presented as a list.
-leaders = ["CMIP6 Emissions|CO2"]
+leaders = ["Emissions|CO2"]
 # Place to save the infilled data as a csv
 save_file = "../Output/CruncherResults/CruncherComparisonLead_{}.csv".format(
     leaders[0].split("|")[-1]
@@ -43,16 +43,14 @@ save_file = "../Output/CruncherResults/CruncherComparisonLead_{}.csv".format(
 save_plots = None  #  "../Output/CruncherResults/plots/"
 # Do we want to run this for all possible filters? If so, choose none,
 # otherwise specify the filter here as a list of tuples
-to_compare_filter = [
-    ("GCAM4", "SSP4-34"),
-    ("AIM/CGE", "SSP3-LowNTCF"),
-]
+to_compare_filter = None #  [("AIM/CGE 2.0", "SSP1-19"), ("MESSAGE-GLOBIOM 1.0", "SSP3-45")]
+years = range(2020, 2101, 10)
 # __________________________________end options_________________________________________
 
 assert len(crunchers_list) == len(crunchers_name_list)
 assert len(options_list) == len(crunchers_name_list)
 
-db_all = pyam.IamDataFrame(input_data).filter(region="World")
+db_all = pyam.IamDataFrame(input_data).filter(region="World", year=years)
 # This is the model/scenario combination to compare.
 if to_compare_filter:
     all_possible_filters = to_compare_filter
@@ -67,16 +65,25 @@ vars_to_crunch = [
     req for req in db_all.filter(level=1).variables() if req not in leaders
 ]
 overall_results = pd.DataFrame(index=vars_to_crunch, columns=crunchers_name_list)
+results_count = pd.DataFrame(index=vars_to_crunch, columns=crunchers_name_list, data=0)
 for one_filter in all_possible_filters:
     combo_filter = {"model": one_filter[0], "scenario": one_filter[1]}
     input_to_fill = db_all.filter(**combo_filter)
     # Remove all items that overlap directly with this
-    db = db_all.filter(**combo_filter, keep=False)
-    # Initialise the object that holds the results
+    db_filter = db_all.filter(**combo_filter, keep=False)
     results_db = pd.DataFrame(index=vars_to_crunch, columns=crunchers_name_list)
     for cruncher_ind in range(len(crunchers_list)):
-        cruncher_instance = crunchers_list[cruncher_ind](db)
         for var_inst in vars_to_crunch:
+            originals = input_to_fill.filter(variable=var_inst).data.set_index("year")[
+                "value"
+            ]
+            if originals.empty:
+                print("No data available for {}".format(var_inst))
+                break
+            valid_scenarios = db_filter.filter(variable=var_inst).scenarios()
+            db = db_filter.filter(scenario=valid_scenarios)
+            # Initialise the object that holds the results
+            cruncher_instance = crunchers_list[cruncher_ind](db)
             var_units = db.filter(variable=var_inst).variables(True)["unit"]
             assert (
                 var_units.size == 1
@@ -85,13 +92,13 @@ for one_filter in all_possible_filters:
                 var_inst, leaders, **options_list[cruncher_ind]
             )
             interpolated = filler(input_to_fill)
-            originals = input_to_fill.filter(variable=var_inst).data.set_index("year")[
-                "value"
-            ]
             interp_values = interpolated.data.set_index("year")["value"]
-            assert (
-                originals.size == interp_values.size
-            ), "Wrong number of values returned"
+            if originals.size != interp_values.size:
+                print("Wrong number of values from cruncher {}: {}, not {}".format(
+                    crunchers_name_list[cruncher_ind],
+                    interp_values.size, originals.size
+                ))
+                break
             assert (
                 interpolated["year"].size == interpolated["year"].unique().size
             ), "The wrong number of years have returned values"
@@ -105,7 +112,8 @@ for one_filter in all_possible_filters:
                 )
             # Calculate the RMS difference, Normalised by the spread of values
             results_db[crunchers_name_list[cruncher_ind]][var_inst] = (
-                np.nanmean(((interp_values - originals)[norm_factor > 0] / norm_factor[norm_factor > 0]) ** 2)
+                np.nanmean(((interp_values - originals)[norm_factor > 0] /
+                            norm_factor[norm_factor > 0]) ** 2)
             ) ** 0.5
             if not np.isfinite(results_db[crunchers_name_list[cruncher_ind]][var_inst]):
                 print("year: ".format(year))
@@ -140,7 +148,10 @@ for one_filter in all_possible_filters:
                         crunchers_name_list[cruncher_ind], var_inst.split("|")[-1]
                     )
                 )
+        print("Completed cruncher {}".format(crunchers_name_list[cruncher_ind]))
+    results_count = results_count + results_db.notnull()
     overall_results = (
-        overall_results.fillna(0) + results_db.fillna(0) / len(all_possible_filters)
+        overall_results.fillna(0) + results_db.fillna(0)
     )
+overall_results = overall_results / results_count
 overall_results.to_csv(save_file)
