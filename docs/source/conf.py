@@ -21,7 +21,7 @@ from silicone._version import get_versions
 # -- Project information -----------------------------------------------------
 
 project = "silicone"
-authors = ", ".join(["Robin Lamboll", "Zebedee Nicholls"])
+authors = ", ".join(["Robin Lamboll", "Zebedee Nicholls", "Jarmo Kikstra"])
 # copyright_year = datetime.date.today().year
 copyright_year = "2019"
 copyright = "{}, {}".format(copyright_year, authors)
