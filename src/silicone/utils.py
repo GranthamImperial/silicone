@@ -57,12 +57,12 @@ def find_matching_scenarios(
 
     classify_scenarios : list[str]
         The names of scenarios or groups of scenarios that are possible matches.
-        This may have *s to represent wild cards, hence multiple scenarios will have
+        This may have "\*"s to represent wild cards, hence multiple scenarios will have
         all their data combined to make the interpolator.
 
     classify_models : list[str]
         The names of models or groups of models that are possible matches.
-        This may have *s to represent wild cards, hence multiple models will have
+        This may have "\*"s to represent wild cards, hence multiple models will have
         all their data combined to make the interpolator.
 
     return_all_info : bool
@@ -264,7 +264,8 @@ def return_cases_which_consistently_split(
 ):
     """
     Returns model-scenario tuples which correctly split up the to_split into the various
-    components. Components may contain wildcard "*"s to match several variables.
+    components. Components may contain wildcard "\*"s to match several variables.
+
     Parameters
     ----------
     df: :obj:`pyam.IamDataFrame`
@@ -289,7 +290,7 @@ def return_cases_which_consistently_split(
 
     Returns
     -------
-     list[(str, str, str)]
+    list[(str, str, str)]
         List of consistent (Model name, scenario name, region name) tuples.
     """
     if not how_close:

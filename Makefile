@@ -73,7 +73,7 @@ test-notebooks: $(VENV_DIR)  ## test the notebooks
 
 .PHONY: docs
 docs:  ## make docs
-	make $(DOCS_DIR)/build/html/index.html
+	$(VENV_DIR)/bin/sphinx-build -M html docs/source docs/build
 
 $(DOCS_DIR)/build/html/index.html: $(DOCS_DIR)/source/*.py $(DOCS_DIR)/source/_templates/*.html $(DOCS_DIR)/source/*.rst src/silicone/**.py README.rst CHANGELOG.rst $(VENV_DIR)
 	cd $(DOCS_DIR); make html
