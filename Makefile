@@ -49,6 +49,10 @@ flake8: $(VENV_DIR)  ## check compliance with pep8
 isort: $(VENV_DIR)  ## format the imports in the source and tests
 	$(VENV_DIR)/bin/isort -y --recursive $(FILES_TO_FORMAT_PYTHON)
 
+.PHONY: pydocstyle
+pydocstyle: $(VENV_DIR)  ## check documentation style
+	$(VENV_DIR)/bin/pydocstyle src
+
 .PHONY: black
 black: $(VENV_DIR)  ## use black to autoformat code
 	@status=$$(git status --porcelain); \
