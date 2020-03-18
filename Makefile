@@ -12,7 +12,7 @@ SR15_EMISSIONS_DIR = $(DATA_DIR)/sr15_emissions
 SR15_EMISSIONS_FILE = $(SR15_EMISSIONS_DIR)/sr15_emissions.csv
 
 NOTEBOOKS_DIR=./notebooks
-NOTEBOOKS_SANITIZE_FILE=$(NOTEBOOKS_DIR)/tests_sanitize.cfg
+NOTEBOOKS_SANITIZE_FILE=./tests/notebook-tests.cfg
 
 define PRINT_HELP_PYSCRIPT
 import re, sys
@@ -73,7 +73,7 @@ test: $(VENV_DIR) ## run the full testsuite
 
 .PHONY: test-notebooks
 test-notebooks: $(VENV_DIR)  ## test the notebooks
-	$(VENV_DIR)/bin/pytest -r a --nbval $(NOTEBOOKS_DIR) --sanitize $(NOTEBOOKS_SANITIZE_FILE)
+	$(VENV_DIR)/bin/pytest -r a --nbval $(NOTEBOOKS_DIR) --sanitize-with $(NOTEBOOKS_SANITIZE_FILE)
 
 .PHONY: docs
 docs:  ## make docs
