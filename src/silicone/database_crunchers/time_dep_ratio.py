@@ -32,7 +32,7 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
     emissions of the lead variable.
 
     :math:`R(t)` is the scaling factor, calculated as the ratio of the means of the
-    the follower and the leader in the cruncher in the infiller database, denoted with
+    the follower and the leader in the infiller database, denoted with
     lower case e. By default, we include only cases where `sign(e_l(t))` is the same in
     both databases).
 
