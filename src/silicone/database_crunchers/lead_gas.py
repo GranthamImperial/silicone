@@ -34,7 +34,7 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
     .. math::
         R = \\frac{ E_f(t_{\\text{last}}) }{ e_l(t_{\\text{last}}) }
 
-    where :math:`t_{\\text{last}}` is the latest time at which the follower gas
+    where :math:`t_{\\text{last}}` is the average of all values of the follower gas at the latest time it
     appears in the database, and the lower case :math:`e` represents the infiller
     database.
     """
