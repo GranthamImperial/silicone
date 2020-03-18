@@ -8,6 +8,7 @@ KEYWORDS = ["emissions", "automation", "filling", "detail", "climate"]
 AUTHORS = [
     ("Robin Lamboll", "r.lamboll@imperial.ac.uk"),
     ("Zebedee Nicholls", "zebedee.nicholls@climate-energy-college.org"),
+    ("Jarmo Kikstra", "kikstra@iiasa.ac.at"),
 ]
 URL = "https://github.com/znicholls/silicone"
 PROJECT_URLS = {
