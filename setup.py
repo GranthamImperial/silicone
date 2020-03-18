@@ -49,21 +49,20 @@ REQUIREMENTS_INSTALL = [
 REQUIREMENTS_NOTEBOOKS = ["notebook", "seaborn", "statsmodels"]
 REQUIREMENTS_TESTS = [
     "codecov",
+    "coverage",
     "nbval",
-    "coverage<5",  # nbval requirement, see https://github.com/computationalmodelling/nbval/issues/129
-    "pytest>=4.0,<5.0",
+    "pytest>=4.0",
     "pytest-console-scripts",
     "pytest-cov",
 ]
 REQUIREMENTS_DOCS = [
-    "sphinx>=1.4,<2.1",
+    "sphinx>=1.4",
     "sphinx_rtd_theme",
-    "sphinx-autodoc-typehints",
     "sphinx-click",
 ]
 REQUIREMENTS_DEPLOY = ["setuptools>=38.6.0", "twine>=1.11.0", "wheel>=0.31.0"]
 REQUIREMENTS_DEV = (
-    ["black", "bandit", "coverage", "flake8", "isort", "mypy", "pydocstyle", "pylint"]
+    ["bandit", "black", "coverage", "flake8", "isort", "mypy", "pydocstyle", "pylint"]
     + REQUIREMENTS_NOTEBOOKS
     + REQUIREMENTS_TESTS
     + REQUIREMENTS_DOCS

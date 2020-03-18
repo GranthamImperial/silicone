@@ -9,14 +9,13 @@
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
 
-# -- Import packages ---------------------------------------------------------
+import os
+import sys
 
-from silicone._version import get_versions
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+sys.path.append(os.path.join(os.path.dirname(__file__), "../../src/silicone"))
+from _version import get_versions  # isort:skip # append path before
 
 # -- Project information -----------------------------------------------------
 
@@ -39,14 +38,9 @@ release = get_versions()["version"]
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
-    "sphinx.ext.autosummary",
-    "sphinx.ext.doctest",
-    "sphinx.ext.intersphinx",
-    "sphinx.ext.todo",
     "sphinx.ext.coverage",
-    "sphinx.ext.ifconfig",
-    "sphinx.ext.viewcode",
-    "sphinx.ext.napoleon",  # pass numpy style docstrings
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.napoleon",
     "sphinx_click.ext",
 ]
 
@@ -58,13 +52,14 @@ autodoc_default_flags = [
     "show-inheritance",
 ]
 # change to below when upgrading to Sphinx >= 2.1
-# autodoc_default_options = {
-#     "undoc-members": False,
-#     "private-members": False,
-#     "special-members": False,
-#     "inherited-members": False,
-#     "show-inheritance": False,
-# }
+autodoc_default_options = {
+    "inherited-members": None,
+    "members": None,
+    "private-members": None,
+    "show-inheritance": None,
+    "undoc-members": None,
+}
+coverage_write_headline = False  # do not write headlines.
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -83,12 +78,12 @@ master_doc = "index"
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["build"]
+exclude_patterns = ["build", "Thumbs.db", ".DS_Store"]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
@@ -119,7 +114,7 @@ html_static_path = ["_static"]
 html_context = {
     "display_github": False,
     "github_user": "znicholls",
-    "github_repo": "netcdf-scm",
+    "github_repo": "silicone",
     "github_version": "master",
     "conf_py_path": "/docs/source",
 }
@@ -204,12 +199,19 @@ epub_exclude_files = ["search.html"]
 # -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {"https://docs.python.org/": None}
+intersphinx_mapping = {
+    "numpy": ("https://docs.scipy.org/doc/numpy", None),
+    "pandas": ("https://pandas.pydata.org/pandas-docs/stable", None),
+    "python": ("https://docs.python.org/3", None),
+}
 
 # -- Options for todo extension ----------------------------------------------
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
+napoleon_google_docstring = False
+napoleon_numpy_docstring = True
+set_type_checking_flag = False
 
 # # -- Logos -------------------------------------------------------------------
 
