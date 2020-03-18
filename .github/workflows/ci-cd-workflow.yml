@@ -20,25 +20,26 @@ jobs:
       run: |
         pip install --upgrade pip
         pip install -e .[dev]
-    - name: Formatting and linters
-      # add `pydocstyle src`, `bandit -c .bandit.yml -r src`, `flake8 src tests setup.py` and `pylint src` when addressing https://github.com/znicholls/silicone/issues/58
-      run: |
-        black --check src tests setup.py --exclude silicone/_version.py
-        isort --check-only --quiet --recursive src tests setup.py
-    - name: Build docs
-      # treat warnings as errors (-W)...
-      # ...but not when being nitpicky (-n)
-      run: |
-          sphinx-build -M html docs/source docs/build -qW
-          sphinx-build -M html docs/source docs/build -Eqn -b coverage
-          if [[ -s docs/build/html/python.txt ]]
-          then
-              echo
-              echo \"Error: Documentation missing:\"
-              echo
-              cat docs/build/html/python.txt
-              exit 1
-          fi
+    # To be activated in future
+    # - name: Formatting and linters
+    #   # add `pydocstyle src`, `bandit -c .bandit.yml -r src`, `flake8 src tests setup.py` and `pylint src` when addressing https://github.com/znicholls/silicone/issues/58
+    #   run: |
+    #     black --check src tests setup.py --exclude silicone/_version.py
+    #     isort --check-only --quiet --recursive src tests setup.py
+    # - name: Build docs
+    #   # treat warnings as errors (-W)...
+    #   # ...but not when being nitpicky (-n)
+    #   run: |
+    #       sphinx-build -M html docs/source docs/build -qW
+    #       sphinx-build -M html docs/source docs/build -Eqn -b coverage
+    #       if [[ -s docs/build/html/python.txt ]]
+    #       then
+    #           echo
+    #           echo \"Error: Documentation missing:\"
+    #           echo
+    #           cat docs/build/html/python.txt
+    #           exit 1
+    #       fi
 
   build:
     needs: linting-and-docs
