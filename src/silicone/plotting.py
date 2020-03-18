@@ -175,3 +175,51 @@ def _plot_multiple_models(legend_fraction, seaborn_df, x_gas, y_gas, x_units, y_
     ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
     plt.xlabel("Emissions of {} ({})".format(x_gas.split('|')[-1], x_units))
     plt.ylabel("Emissions of {} ({})".format(y_gas.split('|')[-1], y_units))
+
+
+
+def _plot_reconstruct_value_with_cruncher(
+    var_inst, var_units, interp_values, originals, crunchers_name, save_plots, db_all
+):
+    """
+    Plots the relationships between two variables in the database at a particular time,
+    the
+    :param var_inst:
+    :param var_units:
+    :param interp_values:
+    :param originals:
+    :param crunchers_name:
+    :param save_plots:
+    :param db_all:
+    :return:
+    """
+    plt.close()
+    plt.subplot(111)
+    plt.scatter(
+        x=originals.index, y=originals, label="True values", alpha=0.8
+    )
+    plt.scatter(
+        x=interp_values.index,
+        y=interp_values,
+        label="Model values",
+        marker="s",
+        alpha=0.5,
+    )
+    plt.xlabel("Year")
+    plt.ylabel("Emissions of {} ({})".format(var_inst, var_units[0]))
+    to_plot = db_all.filter(variable=var_inst)
+    plt.scatter(
+        to_plot["year"],
+        to_plot["value"],
+        label="Other values",
+        alpha=0.5,
+        marker="v",
+        s=8,
+    )
+    plt.legend()
+    plt.savefig(
+        save_plots
+        + "{}_{}.png".format(
+            crunchers_name, var_inst.split("|")[-1]
+        )
+    )
