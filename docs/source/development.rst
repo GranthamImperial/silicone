@@ -147,7 +147,7 @@ First step
 ~~~~~~~~~~
 
 #. Test installation with dependencies ``make test-install``
-#. Update ``CHANGELOG.rst``:
+#. Update ``CHANGELOG.rst``
 
     - add a header for the new version between ``master`` and the latest bullet point
     - this should leave the section underneath the master header empty

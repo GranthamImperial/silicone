@@ -50,18 +50,24 @@ Silicone is free software under a BSD 3-Clause License, see
 Installation
 ------------
 
-This Python package can be installed directly from github. The release version is hosted at
-https://github.com/GranthamImperial/silicone
-with the development version at https://github.com/znicholls/silicone.
-If your machine has a bash shell (linux/Mac) or Anaconda (any operating system)
-Silicone can be installed by running:
+Silicone can be installed with pip
 
-`pip install git+git://github.com/GranthamImperial/silicone.git`
+.. code:: bash
 
-Alternatively to clone the repository for editing and convenient viewing,
-navigate to the folder you wish to install in and run:
+    pip install silicone
 
-`git clone https://github.com/GranthamImperial/silicone.git`
+If you also want to run the example notebooks install additional
+dependencies using
+
+.. code:: bash
+
+    pip install silicone[notebooks]
+
+**Coming soon** Silicone can also be installed with conda
+
+.. code:: bash
+
+    conda install -c conda-forge silicone
 
 .. sec-end-installation
 
