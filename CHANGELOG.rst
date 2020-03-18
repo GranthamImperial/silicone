@@ -3,6 +3,8 @@ Changelog
 
 master
 ------
+
+- (`#60 <https://github.com/znicholls/silicone/pull/60>`_) Update installation docs to reference pip and conda
 - (`#62 <https://github.com/znicholls/silicone/pull/62>`_) Minor changes to remove warning messages and remove some todos.
 - (`#52 <https://github.com/znicholls/silicone/pull/52>`_) Made the Lead Gas infiller use the average latest data rather than being restricted to a single value. Updated infill_composite_values to work with the latest data.
 - (`#51 <https://github.com/znicholls/silicone/pull/51>`_) Split the notebooks into chapters with minor changes to the text. Moved a script function into utilities to download data.
