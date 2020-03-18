@@ -3,66 +3,97 @@ import silicone.database_crunchers as dc
 import pandas as pd
 import numpy as np
 from silicone.plotting import _plot_reconstruct_value_with_cruncher
-from multiprocessing import Pool
-import os
+from multiprocessing import Pool, freeze_support
 
 """
 This script measures how accurate the different crunchers are at recreating known data.
 We remove the data of interest, infill to find it and compare the true and infilled 
 values. 
 """
-# __________________________________Input options_______________________________________
-# Where is the file stored for data used to fill in the sheet?
-input_data = "./sr_15_complete.csv"
-# A list of all crunchers to investigate, here a reference to the actual cruncher
-crunchers_list = [
-    #  dc.DatabaseCruncherLeadGas,
-    # dc.DatabaseCruncherTimeDepRatio,
-    dc.DatabaseCruncherQuantileRollingWindows,
-    dc.DatabaseCruncherRMSClosest,
-    dc.DatabaseCruncherLinearInterpolation,
-]
-options_list = [
-    #  {},
-    # {"same_sign": True},
-    {"use_ratio": False},
-    {},
-    {}
-]
-# This list must agree with the above list, but is the name of the crunchers
-crunchers_name_list = [
-    x.__name__.replace("DatabaseCruncher", "") for x in crunchers_list
-]
-# Leader is a single data class presented as a list.
-leaders = ["Emissions|CH4"]
-# Place to save the infilled data as a csv
-save_file = "../Output/CruncherResults/CruncherComparisonLead_{}.csv".format(
-    leaders[0].split("|")[-1]
-)
-# Do we want to save plots? If not, leave as None, else the location to save them.
-# Note that these are not filter-dependent and so only the results of the last filter
-# will persist
-save_plots = None #  "../Output/CruncherResults/plots/"
-# Do we want to run this for all possible filters? If so, choose none,
-# otherwise specify the filter here as a list of tuples
-to_compare_filter = None
-"""[
-    ("MESSAGE-GLOBIOM 1.0", "SSP3-45"),
-    ("WITCH-GLOBIOM 4.2", "ADVANCE_2020_Med2C"),
-    ("AIM/CGE 2.0", "SSP1-19"),
-    ("AIM/CGE 2.1", "TERL_15D_NoTransportPolicy"),
-]
-"""
-years = range(2020, 2101, 10)
-# __________________________________end options_________________________________________
+def main():
+    freeze_support()
+    # __________________________________Input options_______________________________________
+    # Where is the file stored for data used to fill in the sheet?
+    input_data = "./sr_15_complete.csv"
+    # A list of all crunchers to investigate, here a reference to the actual cruncher
+    crunchers_list = [
+        #  dc.DatabaseCruncherLeadGas,
+        # dc.DatabaseCruncherTimeDepRatio,
+        dc.DatabaseCruncherQuantileRollingWindows,
+        dc.DatabaseCruncherRMSClosest,
+        dc.DatabaseCruncherLinearInterpolation,
+    ]
+    options_list = [
+        #  {},
+        # {"same_sign": True},
+        {"use_ratio": False},
+        {},
+        {}
+    ]
+    # This list must agree with the above list, but is the name of the crunchers
+    crunchers_name_list = [
+        x.__name__.replace("DatabaseCruncher", "") for x in crunchers_list
+    ]
+    # Leader is a single data class presented as a list.
+    leaders = ["Emissions|CH4"]
+    # Place to save the infilled data as a csv
+    save_file = "../Output/CruncherResults/CruncherComparisonLead_{}.csv".format(
+        leaders[0].split("|")[-1]
+    )
+    # Do we want to save plots? If not, leave as None, else the location to save them.
+    # Note that these are not filter-dependent and so only the results of the last filter
+    # will persist
+    save_plots = None #  "../Output/CruncherResults/plots/"
+    # Do we want to run this for all possible filters? If so, choose none,
+    # otherwise specify the filter here as a list of tuples
+    to_compare_filter = [
+        ("AIM/CGE 2.0", "SSP1-19"),
+        ("AIM/CGE 2.1", "TERL_15D_NoTransportPolicy"),
+    ]
+    years = range(2020, 2100, 10)
+    # __________________________________end options_________________________________________
 
-assert len(crunchers_list) == len(crunchers_name_list)
-assert len(options_list) == len(crunchers_name_list)
+    assert len(crunchers_list) == len(crunchers_name_list)
+    assert len(options_list) == len(crunchers_name_list)
+
+    db_all = pyam.IamDataFrame(input_data).filter(region="World", year=years)
+    db_all.filter(variable="Emissions|Kyoto Gases*", keep=False, inplace=True)
+    # This is the model/scenario combination to compare.
+    if to_compare_filter:
+        all_possible_filters = to_compare_filter
+    else:
+        all_possible_filters = (
+            db_all.data[["model", "scenario"]]
+            .groupby(["model", "scenario"])
+            .size()
+            .index.values
+        )
+    vars_to_crunch = [
+        req for req in db_all.filter(level=1).variables() if req not in leaders
+    ]
+
+    all_args = [
+        (
+            filter_instance, db_all, vars_to_crunch, crunchers_name_list,
+            crunchers_list, save_plots, leaders, options_list
+         ) for filter_instance in all_possible_filters
+    ]
+
+    # Perform the loop
+    with Pool() as pool:
+        results_db = list(pool.map(_recalc_and_compare_results, all_args))
+
+    results_count = sum([result.notnull() for result in list(results_db)])
+    overall_results = sum([result.fillna(0) for result in list(results_db)])
+    overall_results = overall_results / results_count
+    overall_results.to_csv(save_file)
+
 
 def _recalc_and_compare_results(
-        one_filter, db_all, vars_to_crunch, crunchers_name_list, crunchers_list,
-        save_plots
+    args
 ):
+    one_filter, db_all, vars_to_crunch, crunchers_name_list, crunchers_list, \
+    save_plots, leaders, options_list = args
     combo_filter = {"model": one_filter[0], "scenario": one_filter[1]}
     input_to_fill = db_all.filter(**combo_filter)
     results_db = pd.DataFrame(index=vars_to_crunch, columns=crunchers_name_list)
@@ -124,36 +155,8 @@ def _recalc_and_compare_results(
         print("Completed cruncher {}".format(
             crunchers_name_list[cruncher_ind])
         )
-        return results_db
+    return results_db
 
 
-db_all = pyam.IamDataFrame(input_data).filter(region="World", year=years)
-db_all.filter(variable="Emissions|Kyoto Gases*", keep=False, inplace=True)
-# This is the model/scenario combination to compare.
-if to_compare_filter:
-    all_possible_filters = to_compare_filter
-else:
-    all_possible_filters = (
-        db_all.data[["model", "scenario"]]
-        .groupby(["model", "scenario"])
-        .size()
-        .index.values
-    )
-vars_to_crunch = [
-    req for req in db_all.filter(level=1).variables() if req not in leaders
-]
-overall_results = pd.DataFrame(index=vars_to_crunch, columns=crunchers_name_list)
-results_count = pd.DataFrame(index=vars_to_crunch, columns=crunchers_name_list, data=0)
-
-# pool = Pool(os.cpu_count() - 1)
-for one_filter in all_possible_filters:
-    results_db = _recalc_and_compare_results(
-        one_filter, db_all, vars_to_crunch, crunchers_name_list, crunchers_list,
-        save_plots
-    )
-    results_count = results_count + results_db.notnull()
-    overall_results = (
-        overall_results.fillna(0) + results_db.fillna(0)
-    )
-overall_results = overall_results / results_count
-overall_results.to_csv(save_file)
+if __name__ == '__main__':
+    main()
