@@ -4,6 +4,7 @@ from abc import ABCMeta, abstractmethod
 
 import pytest
 from pyam import IamDataFrame
+
 from silicone.utils import _adjust_time_style_to_match
 
 

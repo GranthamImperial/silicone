@@ -3,13 +3,14 @@ Module for the database cruncher which uses the 'rolling windows' technique.
 """
 
 import logging
+
 import numpy as np
 import pandas as pd
 import scipy.interpolate
 from pyam import IamDataFrame
 
-from .base import _DatabaseCruncher
 from ..utils import _get_unit_of_variable
+from .base import _DatabaseCruncher
 
 logger = logging.getLogger(__name__)
 

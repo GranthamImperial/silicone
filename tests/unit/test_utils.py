@@ -1,18 +1,19 @@
-import re
 import os
+import re
 
 import numpy as np
 import pandas as pd
 import pyam
 import pytest
+
 from silicone.utils import (
+    _construct_consistent_values,
     _get_unit_of_variable,
-    find_matching_scenarios,
     _make_interpolator,
-    return_cases_which_consistently_split,
     convert_units_to_MtCO2_equiv,
     download_or_load_sr15,
-    _construct_consistent_values,
+    find_matching_scenarios,
+    return_cases_which_consistently_split,
 )
 
 _mc = "model_c"

@@ -1,11 +1,11 @@
+import datetime as dt
 import logging
+import os.path
 
 import numpy as np
 import pandas as pd
-import scipy.interpolate
-import os.path
 import pyam
-import datetime as dt
+import scipy.interpolate
 
 logger = logging.getLogger(__name__)
 

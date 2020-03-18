@@ -1,4 +1,5 @@
 import logging
+
 from silicone.utils import _construct_consistent_values
 
 logger = logging.getLogger(__name__)

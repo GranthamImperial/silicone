@@ -3,6 +3,7 @@ import warnings
 
 import pandas as pd
 import pytest
+
 from silicone.multiple_infillers.infill_all_required_emissions_for_openscm import (
     infill_all_required_variables,
 )
