@@ -39,13 +39,13 @@ ENTRY_POINTS = {
 }
 
 REQUIREMENTS_INSTALL = [
-    "numpy",
     "scipy",
     "pint",
     "python-dateutil",
     "pyam-iamc>=0.3.0",
     "click",
     "tqdm",
+    "multiprocessing",
 ]
 REQUIREMENTS_NOTEBOOKS = ["notebook", "seaborn", "statsmodels"]
 REQUIREMENTS_TESTS = [
