@@ -3,16 +3,20 @@ import silicone.database_crunchers as dc
 import pandas as pd
 import numpy as np
 from silicone.plotting import _plot_reconstruct_value_with_cruncher
-from multiprocessing import Pool, freeze_support
+from multiprocessing import Pool, freeze_support, cpu_count
 
 """
 This script measures how accurate the different crunchers are at recreating known data.
 We remove the data of interest, infill to find it and compare the true and infilled 
-values. 
+values. It normalises this difference by the total range of the data. It runs on 
+multiple cores and saves the resulting statistics to disk. It may run for either a list
+of specified cases, or for all possible cases. Optionally it can also 
+plot graphs comparing the infilled and original data - this is best done with only a 
+small number of cases, otherwise a huge number of files will be created.  
 """
 def main():
     freeze_support()
-    # __________________________________Input options_______________________________________
+    # __________________________________Input options___________________________________
     # Where is the file stored for data used to fill in the sheet?
     input_data = "./sr_15_complete.csv"
     # A list of all crunchers to investigate, here a reference to the actual cruncher
@@ -35,23 +39,24 @@ def main():
         x.__name__.replace("DatabaseCruncher", "") for x in crunchers_list
     ]
     # Leader is a single data class presented as a list.
-    leaders = ["Emissions|CH4"]
+    leaders = ["Emissions|CO2"]
     # Place to save the infilled data as a csv
     save_file = "../Output/CruncherResults/CruncherComparisonLead_{}.csv".format(
         leaders[0].split("|")[-1]
     )
     # Do we want to save plots? If not, leave as None, else the location to save them.
-    # Note that these are not filter-dependent and so only the results of the last filter
-    # will persist
+    # Note that these are not filter-dependent and so only the results of the last
+    # filter will persist
     save_plots = None #  "../Output/CruncherResults/plots/"
     # Do we want to run this for all possible filters? If so, choose none,
     # otherwise specify the filter here as a list of tuples
-    to_compare_filter = [
+    to_compare_filter = None
+    """[
         ("AIM/CGE 2.0", "SSP1-19"),
         ("AIM/CGE 2.1", "TERL_15D_NoTransportPolicy"),
-    ]
-    years = range(2020, 2100, 10)
-    # __________________________________end options_________________________________________
+    ]"""
+    years = range(2020, 2101, 10)
+    # __________________________________end options_____________________________________
 
     assert len(crunchers_list) == len(crunchers_name_list)
     assert len(options_list) == len(crunchers_name_list)
@@ -71,6 +76,7 @@ def main():
     vars_to_crunch = [
         req for req in db_all.filter(level=1).variables() if req not in leaders
     ]
+    db_all.filter(variable=vars_to_crunch + leaders, inplace=True)
 
     all_args = [
         (
@@ -80,7 +86,7 @@ def main():
     ]
 
     # Perform the loop
-    with Pool() as pool:
+    with Pool(cpu_count()-1) as pool:
         results_db = list(pool.map(_recalc_and_compare_results, all_args))
 
     results_count = sum([result.notnull() for result in list(results_db)])
