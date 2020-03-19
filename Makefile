@@ -70,7 +70,7 @@ test: $(VENV_DIR) ## run the full testsuite
 
 .PHONY: test-notebooks
 test-notebooks: $(VENV_DIR)  ## test the notebooks
-	$(VENV_DIR)/bin/pytest -r a --nbval $(NOTEBOOKS_DIR) --sanitize $(NOTEBOOKS_SANITIZE_FILE)
+	$(VENV_DIR)/bin/pytest -r a --nbval-lax $(NOTEBOOKS_DIR) --sanitize $(NOTEBOOKS_SANITIZE_FILE)
 
 .PHONY: docs
 docs:  ## make docs
