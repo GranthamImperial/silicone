@@ -4,8 +4,8 @@ Module for the database cruncher which makes a linear interpolator between known
 
 from pyam import IamDataFrame
 
+from ..utils import _get_unit_of_variable, _make_interpolator, _make_wide_db
 from .base import _DatabaseCruncher
-from ..utils import _get_unit_of_variable, _make_wide_db, _make_interpolator
 
 
 class DatabaseCruncherLinearInterpolation(_DatabaseCruncher):
