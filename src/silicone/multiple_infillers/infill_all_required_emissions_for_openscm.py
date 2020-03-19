@@ -4,10 +4,12 @@ import warnings
 
 import pyam
 import tqdm
+
 from silicone.database_crunchers import (
-    DatabaseCruncherQuantileRollingWindows,
     DatabaseCruncherConstantRatio,
+    DatabaseCruncherQuantileRollingWindows,
 )
+
 
 """
 Infills all required data for MAGICC and FAIR emulators with minimal configuration 
