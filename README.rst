@@ -56,7 +56,7 @@ Silicone can be installed with pip
 
     pip install silicone
 
-If you also want to run the example notebooks install additional
+If you also want to run the example notebooks, install additional
 dependencies using
 
 .. code:: bash
