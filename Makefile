@@ -4,6 +4,7 @@ VENV_DIR ?= ./venv
 DATA_DIR ?= ./data
 DOCS_DIR=$(PWD)/docs
 SCRIPTS_DIR ?= ./scripts
+TESTS_DIR=$(PWD)/tests
 
 FILES_TO_FORMAT_PYTHON=setup.py scripts src tests docs/source/conf.py
 
@@ -12,7 +13,7 @@ SR15_EMISSIONS_DIR = $(DATA_DIR)/sr15_emissions
 SR15_EMISSIONS_FILE = $(SR15_EMISSIONS_DIR)/sr15_emissions.csv
 
 NOTEBOOKS_DIR=./notebooks
-NOTEBOOKS_SANITIZE_FILE=$(NOTEBOOKS_DIR)/tests_sanitize.cfg
+NOTEBOOKS_SANITIZE_FILE=$(TESTS_DIR)/notebook-tests.cfg
 
 define PRINT_HELP_PYSCRIPT
 import re, sys
