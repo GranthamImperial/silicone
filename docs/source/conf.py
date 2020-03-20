@@ -65,6 +65,7 @@ autodoc_default_flags = [
 #     "inherited-members": False,
 #     "show-inheritance": False,
 # }
+coverage_write_headline = False  # do not write headlines.
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
