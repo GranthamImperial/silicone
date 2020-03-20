@@ -134,7 +134,7 @@ def calc_all_emissions_correlations(emms_df, years, output_dir):
     for var in df_gases.index:
         var_db = emms_df.filter(variable=var)
         var_count[var] = len(var_db.timeseries())
-    var_save_loc = output_dir + "/" + var_count_file
+    var_save_loc = os.path.join(output_dir, var_count_file)
     var_count.to_csv(var_save_loc)
     print("Counted the number of each variable and saved to ".format(var_save_loc))
 

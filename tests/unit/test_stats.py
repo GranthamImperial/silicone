@@ -82,16 +82,18 @@ def test_rolling_window_find_quantiles_one():
     assert np.allclose(quantiles.values.squeeze(), 2)
 
 
-def test_calc_all_emissions_correlations_works():
+def test_calc_all_emissions_correlations_works(tmpdir):
     # We test that this saves a file in the correct place, with the correct results
-    test_folder = "./test_created_files/"
+    test_folder = os.path.join(tmpdir, "output")
+    if not os.path.isdir(test_folder):
+        os.makedirs(test_folder)
     stats.calc_all_emissions_correlations(
         simple_df, list(set(simple_df["year"])), test_folder
     )
     expected = {2010: 1, 2030: -1, 2050: 1}
     for year in list(set(simple_df["year"])):
         for file_string in ["gases_correlation", "gases_rank_correlation"]:
-            test_file = test_folder + file_string + "_{}.csv".format(year)
+            test_file = os.path.join(test_folder, file_string + "_{}.csv".format(year))
             assert os.path.isfile(test_file)
             test_results = pd.read_csv(test_file)
             assert np.isnan(test_results.iloc[0].iloc[1])
@@ -102,9 +104,9 @@ def test_calc_all_emissions_correlations_works():
     for file_string in [
         "time_av_absolute_correlation", "time_av_absolute_rank_correlation"
     ]:
-        test_file = test_folder + file_string + "_{}_to_{}.csv".format(
+        test_file = os.path.join(test_folder, file_string + "_{}_to_{}.csv".format(
             min(set(simple_df["year"])), max(set(simple_df["year"]))
-        )
+        ))
         assert os.path.isfile(test_file)
         test_results = pd.read_csv(test_file)
         assert np.isnan(test_results.iloc[0].iloc[1])
@@ -113,7 +115,7 @@ def test_calc_all_emissions_correlations_works():
         os.remove(test_file)
         assert not os.path.isfile(test_file)
     # Check that the variable counts are correct too.
-    test_file = test_folder + "/variable_counts.csv"
+    test_file = os.path.join(test_folder, "variable_counts.csv")
     assert os.path.isfile(test_file)
     test_results = pd.read_csv(test_file)
     assert np.allclose(test_results["0"].iloc[0], 3)
@@ -121,9 +123,11 @@ def test_calc_all_emissions_correlations_works():
     os.remove(test_file)
     assert not os.path.isfile(test_file)
 
-def test_calc_all_emissions_numerical():
+def test_calc_all_emissions_numerical(tmpdir):
     # We construct a specific situation and check that the numerical answers are correct
-    test_folder = "./test_created_files/"
+    test_folder = os.path.join(tmpdir, "output")
+    if not os.path.isdir(test_folder):
+        os.makedirs(test_folder)
     # We establish a more complicated set of values
     numerical_df = simple_df
     numerical_df.data["model"] = numerical_df.data["model"] + \
@@ -146,28 +150,32 @@ def test_calc_all_emissions_numerical():
         ) ** 0.5
 
     correl = calc_correl(xs, ys)
-    test_file = test_folder + "gases_correlation" + "_{}.csv".format(2010)
+    test_file = os.path.join(test_folder, "gases_correlation" + "_{}.csv".format(2010))
     test_results = pd.read_csv(test_file)
     assert np.isclose(test_results.iloc[1].iloc[1], correl)
     os.remove(test_file)
     x_ord = np.argsort(xs)
     y_ord = np.argsort(ys)
     rank_correl = calc_correl(x_ord, y_ord)
-    test_file = test_folder + "gases_rank_correlation" + "_{}.csv".format(2010)
+    test_file = os.path.join(
+        test_folder, "gases_rank_correlation" + "_{}.csv".format(2010)
+    )
     test_results = pd.read_csv(test_file)
     assert np.isclose(test_results.iloc[1].iloc[1], rank_correl, rtol=1e-4)
     os.remove(test_file)
     for file_string in [
         "time_av_absolute_correlation", "time_av_absolute_rank_correlation"
     ]:
-        test_file = test_folder + file_string + "_{}_to_{}.csv".format(
-            min(set(simple_df["year"])), max(set(simple_df["year"]))
+        test_file = os.path.join(
+            test_folder, file_string + "_{}_to_{}.csv".format(
+                min(set(simple_df["year"])), max(set(simple_df["year"]))
+            )
         )
         test_results = pd.read_csv(test_file)
         some_cor = rank_correl if file_string.__contains__("rank") else correl
         assert np.isclose(test_results.iloc[1].iloc[1], some_cor, rtol=1e-4)
         os.remove(test_file)
-    test_file = test_folder + "/variable_counts.csv"
+    test_file = os.path.join(test_folder, "variable_counts.csv")
     assert os.path.isfile(test_file)
     test_results = pd.read_csv(test_file)
     assert np.allclose(test_results["0"].iloc[0], 7)
