@@ -68,7 +68,7 @@ def test_plot_emission_correlations(check_aggregate_df, tmpdir, caplog):
         # only one point to regress so should all be identical
         assert (res_csv == 217).all().all()
 
-    assert len(csv_files) == 6
+    assert len(csv_files) == 4
     assert len(png_files) == 4
 
 
@@ -110,7 +110,7 @@ def test_plot_emission_correlations_no_quantiles_or_model_colours(
     assert not result.exit_code  # exit_code should be zero
 
     png_files, csv_files = _get_png_and_csv_files(output_dir)
-    assert len(csv_files) == 2
+    assert len(csv_files) == 0
     assert len(png_files) == 4
 
 
