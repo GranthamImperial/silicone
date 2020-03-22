@@ -72,6 +72,10 @@ test: $(VENV_DIR) ## run the full testsuite
 test-notebooks: $(VENV_DIR)  ## test the notebooks
 	$(VENV_DIR)/bin/pytest -r a --nbval-lax $(NOTEBOOKS_DIR) --sanitize $(NOTEBOOKS_SANITIZE_FILE)
 
+.PHONY: format-notebooks
+format-notebooks: $(VENV_DIR)  ## format the notebooks
+	$(VENV_DIR)/bin/black-nb $(NOTEBOOKS_DIR)
+
 .PHONY: docs
 docs: $(VENV_DIR)  ## make docs
 	$(VENV_DIR)/bin/sphinx-build -M html docs/source docs/build
