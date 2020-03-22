@@ -20,12 +20,16 @@ jobs:
       run: |
         pip install --upgrade pip
         pip install -e .[dev]
-    # To be activated in future
-    # - name: Formatting and linters
-    #   # add `pydocstyle src`, `bandit -c .bandit.yml -r src`, `flake8 src tests setup.py` and `pylint src` when addressing https://github.com/znicholls/silicone/issues/58
-    #   run: |
-    #     black --check src tests setup.py --exclude silicone/_version.py
-    #     isort --check-only --quiet --recursive src tests setup.py
+    - name: Formatting and linters
+      # add (when addressing https://github.com/znicholls/silicone/issues/58)
+      # - `pydocstyle src`
+      # - `bandit -c .bandit.yml -r src`
+      # - `flake8 src tests setup.py` and `pylint src`
+      # - black --check src tests setup.py --exclude silicone/_version.py
+      # - isort --check-only --quiet --recursive src tests setup.py
+      run: |
+        black-nb --check notebooks
+    # # for future
     # - name: Build docs
     #   # treat warnings as errors (-W)...
     #   # ...but not when being nitpicky (-n)
