@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 import pyam
 import pytest
+from pint.errors import UndefinedUnitError
+
 from silicone.utils import (
     _get_unit_of_variable,
     find_matching_scenarios,
@@ -363,8 +365,8 @@ def test_convert_units_to_mtco2_equiv_fails_with_month_units(check_aggregate_df)
     )
     limited_check_agg.data["unit"].iloc[0] = "Mt CH4/mo"
     limited_check_agg = pyam.IamDataFrame(limited_check_agg.data)
-    err_msg = "The units are unexpectedly not per year"
-    with pytest.raises(AssertionError, match=err_msg):
+    err_msg = "'mo' is not defined in the unit registry"
+    with pytest.raises(UndefinedUnitError, match=err_msg):
         convert_units_to_MtCO2_equiv(limited_check_agg)
 
 
@@ -372,21 +374,24 @@ def test_convert_units_to_mtco2_equiv_fails_with_oom_units(check_aggregate_df):
     limited_check_agg = check_aggregate_df.filter(
         variable="Primary Energy*", keep=False
     )
-    limited_check_agg.data["unit"].iloc[0] = "Tt CO2/yr"
+    limited_check_agg.data["unit"].iloc[0] = "Tt CO2"
     limited_check_agg = pyam.IamDataFrame(limited_check_agg.data)
-    err_msg = "Unclear how to parse the units for {}.".format("Tt CO2")
+    err_msg = "Cannot convert from Tt CO2 to Mt CO2/yr"
     with pytest.raises(ValueError, match=err_msg):
         convert_units_to_MtCO2_equiv(limited_check_agg)
 
 
 def test_convert_units_to_mtco2_equiv_fails_with_bad_units(check_aggregate_df):
-    with pytest.raises(AssertionError):
+    err_msg = "'y' is not defined in the unit registry"
+    with pytest.raises(UndefinedUnitError, match=err_msg):
         convert_units_to_MtCO2_equiv(check_aggregate_df)
+
     limited_check_agg = check_aggregate_df.filter(
         variable="Primary Energy*", keep=False
     )
     limited_check_agg.data["unit"].iloc[0] = "bad unit"
-    with pytest.raises(AssertionError):
+    err_msg = "'bad' is not defined in the unit registry"
+    with pytest.raises(UndefinedUnitError, match=err_msg):
         convert_units_to_MtCO2_equiv(limited_check_agg)
 
 

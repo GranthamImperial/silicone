@@ -6,8 +6,15 @@ import scipy.interpolate
 import os.path
 import pyam
 import datetime as dt
+from openscm_units.unit_registry import ScmUnitRegistry
+from pint.errors import DimensionalityError
+
 
 logger = logging.getLogger(__name__)
+
+# initialise our own registry to avoid conflicts
+_ur = ScmUnitRegistry()
+_ur.add_standards()
 
 """
 Utils contains a number of helpful functions that don't belong elsewhere.
@@ -260,7 +267,7 @@ def _get_unit_of_variable(df, variable, multiple_units="raise"):
 
 
 def return_cases_which_consistently_split(
-    df, aggregate, components, how_close=None, use_AR4_data=False
+    df, aggregate, components, how_close=None, use_ar4_data=False
 ):
     """
     Returns model-scenario tuples which correctly split up the to_split into the various
@@ -284,7 +291,7 @@ def return_cases_which_consistently_split(
         tolerance of 1% ('rtol': 1e-2). The syntax for this can be found in the numpy
         documentation.
 
-    use_AR4_data : bool
+    use_ar4_data : bool
         Determines whether the unit conversion takes place using GWP100 values from
         the UNFCCC AR5 (if false, default) or AR4 (if true).
 
@@ -297,7 +304,7 @@ def return_cases_which_consistently_split(
         how_close = {"equal_nan": True, "rtol": 1e-02}
     valid_model_scenario = []
     df = convert_units_to_MtCO2_equiv(
-        df.filter(variable=[aggregate] + components), use_AR4_data
+        df.filter(variable=[aggregate] + components), use_ar4_data
     )
     combinations = df.data[["model", "scenario", "region"]].drop_duplicates()
     for ind in range(len(combinations)):
@@ -325,17 +332,18 @@ def return_cases_which_consistently_split(
     return valid_model_scenario
 
 
-def convert_units_to_MtCO2_equiv(df, use_AR4_data=False):
+def convert_units_to_MtCO2_equiv(df, use_ar4_data=False):
     """
-    Converts the units of gases reported in kt into Mt CO2 equivalent, using GWP100
-    values from either (by default) AR5 or AR4 UNFCCC reports.
+    Converts the units of gases reported in kt into Mt CO2 equivalent per year
+
+    Uses GWP100 values from either (by default) AR5 or AR4 IPCC reports.
 
     Parameters
     ----------
     df : :obj:`pyam.IamDataFrame`
-        The input dataframe whose units need conversion.
+        The input dataframe whose units need to be converted.
 
-    use_AR4_data : bool
+    use_ar4_data : bool
         If true, use the AR4 GWP100 conversion figures, else use the AR5.
 
     Return
@@ -344,54 +352,39 @@ def convert_units_to_MtCO2_equiv(df, use_AR4_data=False):
         The input data with units converted.
     """
     # Check things need converting
-    if all(y[0:6] == "Mt CO2" for y in df.variables(True)["unit"]):
+    convert_to_str = "Mt CO2/yr"
+    if (df["unit"] == convert_to_str).all():
         return df
-    if use_AR4_data:
-        file = "../../Input/GWP100_unit_conversion_AR4.csv"
-    else:
-        file = "../../Input/GWP100_unit_conversion_AR5.csv"
-    conversion_factors = pd.read_csv(
-        os.path.join(os.path.dirname(__file__), file), sep=";", header=3
-    )
-    # This string is found at the start of all correct units:
-    convert_to_str = "Mt CO2"
+
+    context = "AR4GWP100" if use_ar4_data else "AR5GWP100"
+
     to_convert_df = df.copy()
     to_convert_var = to_convert_df.filter(
         unit=convert_to_str + "*", keep=False
     ).variables(True)
-    to_convert_units = to_convert_var["unit"]
-    not_found = [
-        y
-        for y in to_convert_units.map(
-            lambda x: x.split(" ")[-1][:-3].replace("-equiv", "")
-        ).values
-        if y not in conversion_factors["Gas"].values
-    ]
+    to_convert_units = to_convert_var["unit"].apply(lambda x: x.replace("equiv", "").replace("-equiv", ""))
+
+    conversion_factors = {}
+    not_found = []
+    with _ur.context(context):
+        for unit in to_convert_units:
+            if unit in conversion_factors:
+                continue
+
+            try:
+                conversion_factors[unit] = _ur(unit).to(convert_to_str).magnitude
+            except DimensionalityError:
+                raise ValueError("Cannot convert from {} to {}".format(unit, convert_to_str))
+
     assert (
         not not_found
-    ), "Not all units are found in the conversion table. We lack {}".format(not_found)
-    assert all(
-        y == "/yr" for y in to_convert_units.map(lambda x: x.split(" ")[-1][-3:]).values
-    ), "The units are unexpectedly not per year"
-    for ind in range(len(to_convert_units)):
-        unit = to_convert_units[ind]
-        gas_name = to_convert_units[ind].split(" ")[-1][:-3].replace("-equiv", "")
-        # We divide by 1000 if we convert Mt to kt
-        if unit[0] == "M":
-            order_of_magnitude = 1
-        elif unit[0] == "k":
-            order_of_magnitude = 1 / 1000
-        else:
-            raise ValueError("Unclear how to parse the units for {}.".format(unit))
-        conv_factor = (
-            order_of_magnitude
-            * conversion_factors[conversion_factors["Gas"] == gas_name]["GWP100"].iloc[
-                0
-            ]
-        )
+    ), "Not all units can be converted. We lack {}".format(not_found)
+
+    for unit in to_convert_units:
         to_convert_df.convert_unit(
-            {unit: [convert_to_str + "-equiv/yr", conv_factor]}, inplace=True
+            {unit: [convert_to_str.replace("CO2", "CO2-equiv"), conversion_factors[unit]]}, inplace=True
         )
+
     return to_convert_df
 
 

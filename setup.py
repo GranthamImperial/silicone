@@ -39,11 +39,13 @@ ENTRY_POINTS = {
 }
 
 REQUIREMENTS_INSTALL = [
-    "scipy",
-    "pint",
-    "python-dateutil",
-    "pyam-iamc>=0.3.0",
     "click",
+    "openscm-units>=0.1.1",
+    "pint",
+    "pyam-iamc>=0.3.0",
+    "python-dateutil",
+    "numpy",
+    "scipy",
     "tqdm",
 ]
 REQUIREMENTS_NOTEBOOKS = ["notebook", "seaborn", "statsmodels"]
