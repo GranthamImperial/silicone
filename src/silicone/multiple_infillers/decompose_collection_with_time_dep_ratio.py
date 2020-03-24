@@ -150,7 +150,7 @@ class DecomposeCollectionTimeDepRatio:
                 )
         if len(self._set_of_units_without_equiv(self._db)) > 1:
             db_to_generate = convert_units_to_MtCO2_equiv(
-                self._db, use_AR4_data=use_ar4_data
+                self._db, use_ar4_data=use_ar4_data
             )
         else:
             db_to_generate = self._db
