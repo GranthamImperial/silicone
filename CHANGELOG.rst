@@ -4,6 +4,7 @@ Changelog
 master
 ------
 
+- (`#66 <https://github.com/znicholls/silicone/pull/66>`_) Remove ``Input`` folder in favour of using ``openscm-units``
 - (`#67 <https://github.com/znicholls/silicone/pull/67>`_) Introduce investigatory tools for plotting relations between emissions.
 - (`#65 <https://github.com/znicholls/silicone/pull/65>`_) Add ``format-notebooks`` target to the ``Makefile``
 - (`#61 <https://github.com/znicholls/silicone/pull/61>`_) Switch to using GitHub actions for CI
