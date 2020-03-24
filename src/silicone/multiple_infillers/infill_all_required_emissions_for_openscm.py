@@ -143,6 +143,9 @@ def infill_all_required_variables(
             database.interpolate(time)
         if time not in to_fill[timecol].tolist() or to_fill_times_missing[time]:
             to_fill.interpolate(time)
+    # Nans in additional columns break steps, so we overwrite them
+    database.data[database.extra_cols] = database.data[database.extra_cols].fillna(0)
+    to_fill.data[to_fill.extra_cols] = to_fill.data[to_fill.extra_cols].fillna(0)
     # Filter for desired times
     if timecol == "year":
         database = database.filter(year=output_timesteps)
