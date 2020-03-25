@@ -4,7 +4,6 @@ import os.path
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 
 from .stats import rolling_window_find_quantiles
 
@@ -13,38 +12,70 @@ def _plot_emission_correlations_quantile_rolling_windows(
     emms_df,
     output_dir,
     years,
-    quantiles,
-    quantile_boxes,
-    quantile_decay_factor,
-    model_colours,
-    legend_fraction,
+    x_gas="Emissions|CO2",
+    quantiles=None,
+    quantile_boxes=20,
+    quantile_decay_factor=1,
+    model_colours=True,
+    legend_fraction=0.65,
+    region="World",
 ):
     """
+    Calculates the relationship between different sorts of emissions at pre-specified
+    times. Plots graphs of the relationships between each of the variables and
+    optionally plots given quantiles on top of this.
+    Saves csv files of the correlation coefficients and the rank correlation
+    coefficients between emissions at specified locations.
 
+    Parameters
+    ----------
+    emms_df : :obj:`pyam.IamDataFrame`
+        The database to search for correlations between named values
+
+    output_dir : str
+        The folder location to save the files.
+
+    years : list[int]
+        The years upon which to calculate correlations.
+
+    x_gas : str
+        The name of the gas to plot on the x-axis.
+
+    quantiles : list[float], None
+        If not none, the function will also calculate the quantiles specified by this
+        list, using rolling windows as documented in rolling_window_find_quantiles. If
+        none, the following four values are irrelevant.
+
+    quantile_boxes : int, None
+        The number of points at which quantiles should be evaluated. For details see
+        rolling_window_find_quantiles documentation.
+
+    quantile_decay_factor : float
+        This determines how strong the local weighting is for the quantiles. 1 is the
+        standard value. For details see rolling_window_find_quantiles documentation.
+
+    model_colours : bool
+        If true, the plot of quantiles will include a legend and differently coloured
+        trends.
+
+    legend_fraction : float
+        The size of the legend, if plotted.
     """
-    # TODO: split this function into smaller bits
     for year_of_interest in years:
         # Obtain the list of gases to examine
         df_gases = (
-            emms_df.filter(region="World", year=year_of_interest, level=1)
+            emms_df.filter(region=region, year=year_of_interest, level=1)
             .filter(variable="Emissions|*")
             .variables(True)
             .set_index("variable")
         )
 
-        # We currently assume all correlations are with CO2
-        x_gas = "Emissions|CO2"
-
-        if x_gas not in df_gases.index:
+        if x_gas not in emms_df.variables().values:
             raise ValueError("No {} data".format(x_gas))
 
         # Check that the list has only one entry for each gas
         assert not any(df_gases.index.duplicated()), "Index contains duplicated entries"
-        x_units = df_gases.loc[x_gas, "unit"]
-
-        # Initialise the tables to hold all parameters between runs
-        correlations_df = pd.DataFrame(index=df_gases.index, columns=[x_gas])
-        rank_corr_df = pd.DataFrame(index=df_gases.index, columns=[x_gas])
+        x_units = emms_df.filter(variable=x_gas)['unit'].iloc[0]
 
         for y_gas_ind in range(df_gases.count()[0]):
             plt.close()
@@ -53,7 +84,7 @@ def _plot_emission_correlations_quantile_rolling_windows(
 
             # Create the dataframe to plot
             seaborn_df = emms_df.filter(
-                variable=[y_gas, x_gas], region="World", year=year_of_interest
+                variable=[y_gas, x_gas], region=region, year=year_of_interest
             ).pivot_table(
                 ["year", "model", "scenario", "region"], ["variable"], aggfunc="mean"
             )
@@ -95,8 +126,8 @@ def _plot_emission_correlations_quantile_rolling_windows(
                         os.path.join(
                             output_dir,
                             "{}_{}_{}.csv".format(
-                                x_gas.replace("Emissions|", ""),
-                                y_gas.replace("Emissions|", ""),
+                                x_gas.split('|')[-1],
+                                y_gas.split('|')[-1],
                                 year_of_interest,
                             ),
                         )
@@ -107,29 +138,12 @@ def _plot_emission_correlations_quantile_rolling_windows(
                 plt.savefig(
                     os.path.join(
                         output_dir,
-                        "{}_{}_{}.png".format(x_gas[10:], y_gas[10:], year_of_interest),
+                        "{}_{}_{}.png".format(
+                            x_gas.split('|')[-1], y_gas.split('|')[-1], year_of_interest
+                        ),
                     )
                 )
-
-            correlations_df.at[y_gas, x_gas] = seaborn_df.corr("pearson").loc[
-                x_gas, y_gas
-            ]
-            rank_corr_df.at[y_gas, x_gas] = seaborn_df.corr("spearman").loc[
-                x_gas, y_gas
-            ]
             print("Finished {} vs {} in {}".format(x_gas, y_gas, year_of_interest))
-
-        if output_dir is not None:
-            correlations_df.to_csv(
-                os.path.join(
-                    output_dir, "gases_correlation_{}.csv".format(year_of_interest)
-                )
-            )
-            rank_corr_df.to_csv(
-                os.path.join(
-                    output_dir, "gases_rank_correlation_{}.csv".format(year_of_interest)
-                )
-            )
 
 
 def _plot_emissions(legend_fraction, seaborn_df, x_gas, y_gas, x_units, y_units):
@@ -138,8 +152,8 @@ def _plot_emissions(legend_fraction, seaborn_df, x_gas, y_gas, x_units, y_units)
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * legend_fraction, box.height])
     plt.scatter(x=x_gas, y=y_gas, color=colours_for_plot, data=seaborn_df, alpha=0.5)
-    plt.xlabel("Emissions of {} ({})".format(x_gas[10:], x_units))
-    plt.ylabel("Emissions of {} ({})".format(y_gas[10:], y_units))
+    plt.xlabel("Emissions of {} ({})".format(x_gas.split('|')[-1], x_units))
+    plt.ylabel("Emissions of {} ({})".format(y_gas.split('|')[-1], y_units))
 
 
 def _plot_multiple_models(legend_fraction, seaborn_df, x_gas, y_gas, x_units, y_units):
@@ -159,5 +173,53 @@ def _plot_multiple_models(legend_fraction, seaborn_df, x_gas, y_gas, x_units, y_
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * legend_fraction, box.height])
     ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-    plt.xlabel("Emissions of {} ({})".format(x_gas[10:], x_units))
-    plt.ylabel("Emissions of {} ({})".format(y_gas[10:], y_units))
+    plt.xlabel("Emissions of {} ({})".format(x_gas.split('|')[-1], x_units))
+    plt.ylabel("Emissions of {} ({})".format(y_gas.split('|')[-1], y_units))
+
+
+
+def _plot_reconstruct_value_with_cruncher(
+    var_inst, var_units, interp_values, originals, crunchers_name, save_plots, db_all
+):
+    """
+    Plots the relationships between two variables in the database at a particular time,
+    the
+    :param var_inst:
+    :param var_units:
+    :param interp_values:
+    :param originals:
+    :param crunchers_name:
+    :param save_plots:
+    :param db_all:
+    :return:
+    """
+    plt.close()
+    plt.subplot(111)
+    plt.scatter(
+        x=originals.index, y=originals, label="True values", alpha=0.8
+    )
+    plt.scatter(
+        x=interp_values.index,
+        y=interp_values,
+        label="Model values",
+        marker="s",
+        alpha=0.5,
+    )
+    plt.xlabel("Year")
+    plt.ylabel("Emissions of {} ({})".format(var_inst, var_units[0]))
+    to_plot = db_all.filter(variable=var_inst)
+    plt.scatter(
+        to_plot["year"],
+        to_plot["value"],
+        label="Other values",
+        alpha=0.5,
+        marker="v",
+        s=8,
+    )
+    plt.legend()
+    plt.savefig(
+        save_plots
+        + "{}_{}.png".format(
+            crunchers_name, var_inst.split("|")[-1]
+        )
+    )

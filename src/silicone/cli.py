@@ -24,6 +24,13 @@ from .plotting import _plot_emission_correlations_quantile_rolling_windows
     help="Years in which to explore correlations (comma-separated)",
 )
 @click.option(
+    "--x_gas",
+    default="Emissions|CO2",
+    type=click.STRING,
+    show_default=True,
+    help="The gas we find correlations with, placed on the x-axis of graphs",
+)
+@click.option(
     "--quantiles",
     default=None,
     type=click.STRING,
@@ -61,13 +68,14 @@ def plot_emission_correlations_quantile_rolling_windows_cli(
     emissions_data,
     output_dir,
     years,
+    x_gas,
     quantiles,
     quantile_boxes,
     quantile_decay_factor,
     model_colours,
     legend_fraction,
 ):
-    r"""
+    """
     Plot correlations between emisssions timeseries in ``emissions_data``.
 
     ``emissions_data`` is the file from which to load the emissions timeseries.
@@ -82,6 +90,7 @@ def plot_emission_correlations_quantile_rolling_windows_cli(
         emissions_data,
         output_dir,
         years,
+        x_gas,
         quantiles,
         quantile_boxes,
         quantile_decay_factor,

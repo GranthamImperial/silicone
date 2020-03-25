@@ -68,7 +68,7 @@ def test_plot_emission_correlations(check_aggregate_df, tmpdir, caplog):
         # only one point to regress so should all be identical
         assert (res_csv == 217).all().all()
 
-    assert len(csv_files) == 6
+    assert len(csv_files) == 4
     assert len(png_files) == 4
 
 
@@ -110,7 +110,7 @@ def test_plot_emission_correlations_no_quantiles_or_model_colours(
     assert not result.exit_code  # exit_code should be zero
 
     png_files, csv_files = _get_png_and_csv_files(output_dir)
-    assert len(csv_files) == 2
+    assert len(csv_files) == 0
     assert len(png_files) == 4
 
 
@@ -167,6 +167,7 @@ def test_plot_emission_correlations_no_co2_emms(check_aggregate_df, tmpdir, capl
     quantile_boxes = 3
     quantile_decay_factor = 1
     legend_fraction = 0.65
+    x_gas = "Emissions|CO2"
 
     # caplog can capture any logging calls (if we add any in future)
     with caplog.at_level("DEBUG"):
@@ -178,6 +179,8 @@ def test_plot_emission_correlations_no_co2_emms(check_aggregate_df, tmpdir, capl
                 output_dir,
                 "--years",
                 years_of_interest,
+                "--x_gas",
+                x_gas,
                 "--quantile-boxes",
                 quantile_boxes,
                 "--quantile-decay-factor",
