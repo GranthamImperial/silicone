@@ -2,6 +2,7 @@ import re
 import warnings
 
 import pandas as pd
+import pyam
 import pytest
 from silicone.multiple_infillers.infill_all_required_emissions_for_openscm import (
     infill_all_required_variables,
@@ -247,10 +248,16 @@ class TestGasDecomposeTimeDepRatio:
                     output_timesteps=[2010, 2015],
                 )
 
-    def test_infillallrequiredvariables_check_results_interp_times(self, test_db):
+    @pytest.mark.parametrize("additional_cols", [None, "Another_col"])
+    def test_infillallrequiredvariables_check_results_interp_times(
+            self, test_db, additional_cols
+    ):
         if test_db.time_col == "year":
             required_variables_list = ["Emissions|HFC|C5F12"]
             leader = ["Emissions|HFC|C2F6"]
+            if additional_cols:
+                test_db.data[additional_cols] = 0
+                test_db = pyam.IamDataFrame(test_db.data)
             to_fill = test_db.filter(variable=leader)
             output_df = infill_all_required_variables(
                 to_fill,
