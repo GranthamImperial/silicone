@@ -456,7 +456,7 @@ def test_convert_units_to_MtCO2_equiv_doesnt_change(check_aggregate_df):
     assert converted_data.data.equals(limited_check_agg.data)
 
 
-def test_convert_units_to_MtCO2_becomes_MtCO2_equiv(check_aggregate_df):
+def test_convert_units_to_MtCO2_doesnt_chnage(check_aggregate_df):
     # Check that it does nothing when nothing needs doing
     limited_check_agg = check_aggregate_df.filter(
         variable="Primary Energy*", keep=False
@@ -464,7 +464,7 @@ def test_convert_units_to_MtCO2_becomes_MtCO2_equiv(check_aggregate_df):
     limited_check_agg.data["unit"] = "Mt CO2/yr"
     converted_data = convert_units_to_MtCO2_equiv(limited_check_agg)
 
-    assert (converted_data.data["unit"] == "Mt CO2-equiv/yr").all()
+    assert (converted_data.data["unit"] == "Mt CO2/yr").all()
     assert converted_data.data["value"].equals(limited_check_agg.data["value"])
 
 
