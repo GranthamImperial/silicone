@@ -62,12 +62,14 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
         """
         self._check_iamdf_lead(variable_leaders)
         iamdf_follower = self._get_iamdf_section(variable_follower)
+        data_follower_time_col = iamdf_follower.time_col
         iamdf_lead = self._db.filter(variable=variable_leaders)
+        iamdf_lead, iamdf_follower = filter_for_overlap(
+            iamdf_lead, iamdf_follower, ["scenario", "model", data_follower_time_col]
+        )
 
         leader_unit = _get_unit_of_variable(iamdf_lead, variable_leaders)
         leader_unit = leader_unit[0]
-
-        data_follower_time_col = iamdf_follower.time_col
 
         def filler(in_iamdf):
             """
@@ -222,3 +224,30 @@ def _select_closest(to_search_df, target_series):
     labels, rmss = list(zip(*closeness))
     to_return = rmss.index(min(rmss))
     return dict(zip(to_search_df.index.names, labels[to_return]))
+
+
+def filter_for_overlap(df1, df2, cols):
+    """
+    Returns rows in the two input dataframes which have the same columns
+    Parameters
+    ----------
+    df1 : :obj:`pd.DataFrame`
+        The first dataframe (order is irrelevant)
+    df2 : :obj:`pd.DataFrame`
+        The second dataframe (order is irrelevant)
+    cols: list[str]
+        List of columns that should be identical between the two dataframes.
+    Returns
+    -------
+    (:obj:`pd.DataFrame`, :obj:`pd.DataFrame`)
+        The two dataframes in the order they were put in, now filtered for some columns
+        being identical.
+    """
+    lead_data = df1.data.set_index(cols)
+    follow_data = df2.data.set_index(cols)
+    shared_indices = [ind for ind in lead_data.index if ind in follow_data.index]
+    if shared_indices:
+        lead_data = lead_data.loc[shared_indices]
+        follow_data = follow_data.loc[shared_indices]
+        return pyam.IamDataFrame(lead_data), pyam.IamDataFrame(follow_data)
+    raise ValueError("No model/scenario overlap between leader and follower data")
