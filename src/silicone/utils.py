@@ -352,17 +352,23 @@ def convert_units_to_MtCO2_equiv(df, use_ar4_data=False):
         The input data with units converted.
     """
     # Check things need converting
-    convert_to_str = "Mt CO2/yr"
+    convert_to_str = "Mt CO2-equiv/yr"
     if (df["unit"] == convert_to_str).all():
         return df
+
+    convert_to_str_clean = "Mt CO2/yr"
 
     context = "AR4GWP100" if use_ar4_data else "AR5GWP100"
 
     to_convert_df = df.copy()
     to_convert_var = to_convert_df.filter(
-        unit=convert_to_str + "*", keep=False
+        unit=convert_to_str, keep=False
     ).variables(True)
-    to_convert_units = to_convert_var["unit"].apply(lambda x: x.replace("equiv", "").replace("-equiv", ""))
+    to_convert_units = to_convert_var["unit"]
+    to_convert_units_clean = {
+        unit: unit.replace("-equiv", "").replace("equiv", "")
+        for unit in to_convert_units
+    }
 
     conversion_factors = {}
     not_found = []
@@ -371,10 +377,11 @@ def convert_units_to_MtCO2_equiv(df, use_ar4_data=False):
             if unit in conversion_factors:
                 continue
 
+            clean_unit = to_convert_units_clean[unit]
             try:
-                conversion_factors[unit] = _ur(unit).to(convert_to_str).magnitude
+                conversion_factors[unit] = _ur(clean_unit).to(convert_to_str_clean).magnitude
             except DimensionalityError:
-                raise ValueError("Cannot convert from {} to {}".format(unit, convert_to_str))
+                raise ValueError("Cannot convert from {} (cleaned is: {}) to {} (cleaned is: {})".format(unit, clean_unit, convert_to_str, convert_to_str_clean))
 
     assert (
         not not_found
@@ -382,7 +389,7 @@ def convert_units_to_MtCO2_equiv(df, use_ar4_data=False):
 
     for unit in to_convert_units:
         to_convert_df.convert_unit(
-            {unit: [convert_to_str.replace("CO2", "CO2-equiv"), conversion_factors[unit]]}, inplace=True
+            {unit: [convert_to_str, conversion_factors[unit]]}, inplace=True
         )
 
     return to_convert_df
