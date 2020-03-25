@@ -2,9 +2,10 @@ import re
 
 import numpy as np
 import pandas as pd
+import pyam
 import pytest
 from base import _DataBaseCruncherTester
-from pyam import concat
+from pyam import concat, IamDataFrame
 
 from silicone.database_crunchers import DatabaseCruncherRMSClosest
 from silicone.database_crunchers.rms_closest import _select_closest
@@ -244,8 +245,13 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         with pytest.raises(ValueError, match=error_msg):
             filler(test_downscale_df)
 
-    def test_relationship_bad_data(self, bad_df, test_downscale_df):
-        tcruncher = self.tclass(bad_df)
+    def test_relationship_no_infiller_infillee_time_overlap(
+            self, bad_df, test_downscale_df
+    ):
+        odd_times = bad_df.copy()
+        odd_times["scenario"].iloc[0] = "scen_d"
+        odd_times["model"].iloc[0] = "model_b"
+        tcruncher = self.tclass(odd_times)
 
         filler = tcruncher.derive_relationship(
             "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
@@ -253,6 +259,16 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         error_msg = "No time series overlap between the original and unfilled data"
         with pytest.raises(ValueError, match=error_msg):
             filler(test_downscale_df)
+
+    def test_relationship_no_infiller_time_overlap(self, bad_df, test_downscale_df):
+        tcruncher = self.tclass(bad_df)
+        error_msg = re.escape(
+            "No model/scenario overlap between leader and follower data"
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            filler = tcruncher.derive_relationship(
+                "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
+            )
 
     def test_relationship_complex_usage(self, larger_df, test_downscale_df):
         tcruncher = self.tclass(larger_df)
@@ -297,6 +313,20 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
 
         error_msg = re.escape(
             "No data for `variable_leaders` ({}) in database".format(variable_leaders)
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            tcruncher.derive_relationship("Emissions|HFC|C5F12", variable_leaders)
+
+    def test_derive_relationship_error_no_overlap(self, test_db):
+        # test that crunching fails if there's no data about the lead gas in the
+        # database
+        variable_leaders = ["Emissions|HFC|C2F6"]
+        db_no_overlap_m = test_db.copy()
+        db_no_overlap_m["model"].loc[2] = "different model"
+        db_no_overlap_m = IamDataFrame(db_no_overlap_m.data)
+        tcruncher = self.tclass(db_no_overlap_m)
+        error_msg = re.escape(
+            "No model/scenario overlap between leader and follower data"
         )
         with pytest.raises(ValueError, match=error_msg):
             tcruncher.derive_relationship("Emissions|HFC|C5F12", variable_leaders)
