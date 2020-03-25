@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pyam
 import pytest
+from openscm_units.unit_registry import ScmUnitRegistry
 from pint.errors import UndefinedUnitError
 
 from silicone.utils import (
@@ -16,6 +17,10 @@ from silicone.utils import (
     download_or_load_sr15,
     _construct_consistent_values,
 )
+
+
+_ur = ScmUnitRegistry()
+_ur.add_standards()
 
 _mc = "model_c"
 _sa = "scen_a"
@@ -376,7 +381,7 @@ def test_convert_units_to_mtco2_equiv_fails_with_oom_units(check_aggregate_df):
     )
     limited_check_agg.data["unit"].iloc[0] = "Tt CO2"
     limited_check_agg = pyam.IamDataFrame(limited_check_agg.data)
-    err_msg = "Cannot convert from Tt CO2 to Mt CO2/yr"
+    err_msg = re.escape("Cannot convert from Tt CO2 (cleaned is: Tt CO2) to Mt CO2-equiv/yr (cleaned is: Mt CO2/yr)")
     with pytest.raises(ValueError, match=err_msg):
         convert_units_to_MtCO2_equiv(limited_check_agg)
 
@@ -421,14 +426,41 @@ def test_convert_units_to_MtCO2_equiv_works(check_aggregate_df, ARoption, expect
     )
 
 
+def test_convert_units_to_MtCO2_equiv_equiv_start(check_aggregate_df):
+    # Check that it does nothing when nothing needs doing
+    limited_check_agg = check_aggregate_df.filter(
+        variable="Primary Energy*", keep=False
+    )
+    limited_check_agg.data["unit"] = "kt CF4-equiv/yr"
+    converted_data = convert_units_to_MtCO2_equiv(limited_check_agg)
+
+    assert (converted_data.data["unit"] == "Mt CO2-equiv/yr").all()
+
+    with _ur.context("AR5GWP100"):
+        exp_conv_factor = _ur("kt CF4/yr").to("Mt CO2/yr").magnitude
+    assert converted_data.data["value"].equals(limited_check_agg.data["value"] * exp_conv_factor)
+
+
 def test_convert_units_to_MtCO2_equiv_doesnt_change(check_aggregate_df):
     # Check that it does nothing when nothing needs doing
     limited_check_agg = check_aggregate_df.filter(
         variable="Primary Energy*", keep=False
     )
-    limited_check_agg.data["unit"] = "Mt CO2 equiv/yr"
+    limited_check_agg.data["unit"] = "Mt CO2-equiv/yr"
     converted_data = convert_units_to_MtCO2_equiv(limited_check_agg)
     assert converted_data.data.equals(limited_check_agg.data)
+
+
+def test_convert_units_to_MtCO2_becomes_MtCO2_equiv(check_aggregate_df):
+    # Check that it does nothing when nothing needs doing
+    limited_check_agg = check_aggregate_df.filter(
+        variable="Primary Energy*", keep=False
+    )
+    limited_check_agg.data["unit"] = "Mt CO2/yr"
+    converted_data = convert_units_to_MtCO2_equiv(limited_check_agg)
+
+    assert (converted_data.data["unit"] == "Mt CO2-equiv/yr").all()
+    assert converted_data.data["value"].equals(limited_check_agg.data["value"])
 
 
 def test_get_files_and_use_them():
