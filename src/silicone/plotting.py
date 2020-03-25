@@ -183,15 +183,26 @@ def _plot_reconstruct_value_with_cruncher(
 ):
     """
     Plots the relationships between two variables in the database at a particular time,
-    the
-    :param var_inst:
-    :param var_units:
-    :param interp_values:
-    :param originals:
-    :param crunchers_name:
-    :param save_plots:
-    :param db_all:
-    :return:
+    and how a cruncher reconstructs a particular line.
+    Parameters
+    ----------
+    var_inst : str
+        Name of the variable being plotted
+
+    var_units : str
+        Name of the units of the variable
+
+    interp_values : Series
+        The data for the crunched values, x values as the index
+
+    originals : Series
+        The full dataset of all input values, x values as the index
+
+    crunchers_name : str
+        Name of the cruncher.
+
+    save_plots : str
+        The dirctory in which the plots are to be saved.
     """
     plt.close()
     plt.subplot(111)
