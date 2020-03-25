@@ -353,16 +353,15 @@ def convert_units_to_MtCO2_equiv(df, use_ar4_data=False):
     """
     # Check things need converting
     convert_to_str = "Mt CO2-equiv/yr"
-    if (df["unit"] == convert_to_str).all():
-        return df
-
     convert_to_str_clean = "Mt CO2/yr"
+    if df["unit"].isin([convert_to_str, convert_to_str_clean]).all():
+        return df
 
     context = "AR4GWP100" if use_ar4_data else "AR5GWP100"
 
     to_convert_df = df.copy()
     to_convert_var = to_convert_df.filter(
-        unit=convert_to_str, keep=False
+        unit=[convert_to_str, convert_to_str_clean], keep=False
     ).variables(True)
     to_convert_units = to_convert_var["unit"]
     to_convert_units_clean = {
