@@ -4,6 +4,7 @@ Changelog
 master
 ------
 - (`#69 <https://github.com/znicholls/silicone/pull/69>`_) Fixed bug so that ``DatabaseCruncherRMSClosest`` no longer selects scenarios which don't have follower data
+- (`#68 <https://github.com/znicholls/silicone/pull/68>`_) More investigatory tools and scripts for calculating and outputting emissions correlations.
 - (`#67 <https://github.com/znicholls/silicone/pull/67>`_) Introduce investigatory tools for plotting relations between emissions.
 - (`#66 <https://github.com/znicholls/silicone/pull/66>`_) Remove ``Input`` folder in favour of using ``openscm-units``
 - (`#65 <https://github.com/znicholls/silicone/pull/65>`_) Add ``format-notebooks`` target to the ``Makefile``
