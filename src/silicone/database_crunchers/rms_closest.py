@@ -64,7 +64,7 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
         iamdf_follower = self._get_iamdf_section(variable_follower)
         data_follower_time_col = iamdf_follower.time_col
         iamdf_lead = self._db.filter(variable=variable_leaders)
-        iamdf_lead, iamdf_follower = filter_for_overlap(
+        iamdf_lead, iamdf_follower = _filter_for_overlap(
             iamdf_lead, iamdf_follower, ["scenario", "model", data_follower_time_col]
         )
 
