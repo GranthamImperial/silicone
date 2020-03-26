@@ -432,7 +432,6 @@ def test_convert_units_to_MtCO2_equiv_works(check_aggregate_df, ARoption, expect
     "unit_start", ("kt CF4-equiv/yr", "kt CF4 equiv/yr", "kt CF4equiv/yr",)
 )
 def test_convert_units_to_MtCO2_equiv_equiv_start(check_aggregate_df, unit_start):
-    # Check that it does nothing when nothing needs doing
     limited_check_agg = check_aggregate_df.filter(
         variable="Primary Energy*", keep=False
     )
@@ -455,6 +454,7 @@ def test_convert_units_to_MtCO2_equiv_doesnt_change(check_aggregate_df):
     )
     limited_check_agg.data["unit"] = "Mt CO2-equiv/yr"
     converted_data = convert_units_to_MtCO2_equiv(limited_check_agg)
+    assert (converted_data.data["unit"] == "Mt CO2-equiv/yr").all()
     assert converted_data.data.equals(limited_check_agg.data)
 
 
@@ -467,7 +467,7 @@ def test_convert_units_to_MtCO2_doesnt_change(check_aggregate_df):
     converted_data = convert_units_to_MtCO2_equiv(limited_check_agg)
 
     assert (converted_data.data["unit"] == "Mt CO2/yr").all()
-    assert converted_data.data["value"].equals(limited_check_agg.data["value"])
+    assert converted_data.data.equals(limited_check_agg.data)
 
 
 def test_get_files_and_use_them():
