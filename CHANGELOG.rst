@@ -3,7 +3,7 @@ Changelog
 
 master
 ------
-- (`#69 <https://github.com/znicholls/silicone/pull/69>`_) Fixed bug that allowed RMS closest to select unfilled data
+- (`#69 <https://github.com/znicholls/silicone/pull/69>`_) Fixed bug so that ``DatabaseCruncherRMSClosest`` no longer selects scenarios which don't have follower data
 - (`#67 <https://github.com/znicholls/silicone/pull/67>`_) Introduce investigatory tools for plotting relations between emissions.
 - (`#65 <https://github.com/znicholls/silicone/pull/65>`_) Add ``format-notebooks`` target to the ``Makefile``
 - (`#61 <https://github.com/znicholls/silicone/pull/61>`_) Switch to using GitHub actions for CI
