@@ -226,7 +226,7 @@ def _select_closest(to_search_df, target_series):
     return dict(zip(to_search_df.index.names, labels[to_return]))
 
 
-def filter_for_overlap(df1, df2, cols):
+def _filter_for_overlap(df1, df2, cols):
     """
     Returns rows in the two input dataframes which have the same columns
     Parameters
