@@ -380,7 +380,15 @@ def convert_units_to_MtCO2_equiv(df, use_ar4_data=False):
             try:
                 conversion_factors[unit] = _ur(clean_unit).to(convert_to_str_clean).magnitude
             except DimensionalityError:
-                raise ValueError("Cannot convert from {} (cleaned is: {}) to {} (cleaned is: {})".format(unit, clean_unit, convert_to_str, convert_to_str_clean))
+                raise ValueError(
+                    "Cannot convert from {} (cleaned is: {}) "
+                    "to {} (cleaned is: {})".format(
+                        unit,
+                        clean_unit,
+                        convert_to_str,
+                        convert_to_str_clean
+                    )
+                )
 
     assert (
         not not_found
