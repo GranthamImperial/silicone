@@ -65,7 +65,18 @@ REQUIREMENTS_DOCS = [
 ]
 REQUIREMENTS_DEPLOY = ["setuptools>=38.6.0", "twine>=1.11.0", "wheel>=0.31.0"]
 REQUIREMENTS_DEV = (
-    ["black", "black-nb", "bandit", "coverage", "flake8", "isort", "mypy", "nbdime", "pydocstyle", "pylint"]
+    [
+        "black",
+        "black-nb",
+        "bandit",
+        "coverage",
+        "flake8",
+        "isort",
+        "mypy",
+        "nbdime",
+        "pydocstyle",
+        "pylint",
+    ]
     + REQUIREMENTS_NOTEBOOKS
     + REQUIREMENTS_TESTS
     + REQUIREMENTS_DOCS
