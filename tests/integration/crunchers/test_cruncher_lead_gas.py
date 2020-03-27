@@ -78,19 +78,12 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
             tcruncher.derive_relationship(variable_follower, ["Emissions|HFC|C2F6"])
 
     @pytest.mark.parametrize(
-        "extra_info",
-        (
+        "extra_info", (
             pd.DataFrame(
                 [["ma", "sb", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", "", 5, 2]],
                 columns=[
-                    "model",
-                    "scenario",
-                    "region",
-                    "variable",
-                    "unit",
-                    "meta",
-                    2010,
-                    2015,
+                    "model", "scenario", "region",
+                    "variable", "unit", "meta", 2010, 2015
                 ],
             ),
             pd.DataFrame(
@@ -99,14 +92,8 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
                     ["ma", "sb", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", "", 3],
                 ],
                 columns=[
-                    "model",
-                    "scenario",
-                    "region",
-                    "variable",
-                    "unit",
-                    "meta",
-                    2015,
-                ],
+                    "model", "scenario", "region", "variable", "unit", "meta", 2015]
+                ,
             ),
         ),
     )
@@ -119,18 +106,18 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
         )
         variable_follower = "Emissions|HFC|C5F12"
         variable_leader = ["Emissions|HFC|C2F6"]
-        cruncher = tcruncher.derive_relationship(variable_follower, variable_leader)
+        cruncher = tcruncher.derive_relationship(
+            variable_follower, variable_leader
+        )
         lead_db = test_db.filter(variable=variable_leader)
         infilled = cruncher(lead_db)
         # In both cases, the average follower value at the latest time is 2. We divide
         # by the value in 2015, which we have data for in both cases.
         assert np.allclose(
             infilled.data["value"],
-            2
-            * lead_db.data["value"]
-            / lead_db.data["value"]
-            .loc[lead_db.data[lead_db.time_col] == max(lead_db.data[lead_db.time_col])]
-            .values,
+            2 * lead_db.data["value"] / lead_db.data["value"].loc[
+                lead_db.data[lead_db.time_col] == max(lead_db.data[lead_db.time_col])
+            ].values
         )
         # Test that the result can be appended without problems.
         lead_db.append(infilled)

@@ -4,12 +4,10 @@ import warnings
 
 import pyam
 import tqdm
-
 from silicone.database_crunchers import (
-    DatabaseCruncherConstantRatio,
     DatabaseCruncherQuantileRollingWindows,
+    DatabaseCruncherConstantRatio,
 )
-
 
 """
 Infills all required data for MAGICC and FAIR emulators with minimal configuration 
@@ -176,7 +174,7 @@ def infill_all_required_variables(
             output_timesteps,
             to_fill_orig,
             check_data_returned=False,
-            **kwarg_dict,
+            **kwarg_dict
         )
     available_variables = [
         variab
@@ -208,7 +206,7 @@ def _perform_crunch_and_check(
     output_timesteps,
     to_fill_orig,
     check_data_returned=False,
-    **kwargs,
+    **kwargs
 ):
     """
         Takes a list of scenarios to infill and infills them according to the options

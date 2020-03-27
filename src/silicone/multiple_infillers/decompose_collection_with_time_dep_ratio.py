@@ -4,7 +4,6 @@ aggregate variable and breaking this mix into its constituents.
 """
 
 import pyam
-
 from silicone.database_crunchers import DatabaseCruncherTimeDepRatio
 from silicone.utils import convert_units_to_MtCO2_equiv
 

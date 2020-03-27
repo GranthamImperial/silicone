@@ -1,5 +1,4 @@
 import logging
-
 from silicone.utils import _construct_consistent_values
 
 logger = logging.getLogger(__name__)
@@ -41,7 +40,11 @@ def infill_composite_values(df, composite_dic=None):
                 "Emissions*|C8F18",
             ],
             "Emissions|HFC": ["Emissions|HFC*"],
-            "Emissions|F-Gases": ["Emissions|PFC", "Emissions|HFC", "Emissions|SF6",],
+            "Emissions|F-Gases": [
+                "Emissions|PFC",
+                "Emissions|HFC",
+                "Emissions|SF6",
+            ],
             "Emissions|Kyoto Gases (AR5-GWP100)": [
                 "Emissions|CO2",
                 "Emissions|CH4",

@@ -10,8 +10,8 @@ from pyam import IamDataFrame
 
 import silicone.stats
 from silicone.database_crunchers import (
-    DatabaseCruncherLinearInterpolation,
     DatabaseCruncherScenarioAndModelSpecificInterpolate,
+    DatabaseCruncherLinearInterpolation,
 )
 
 _ma = "model_a"

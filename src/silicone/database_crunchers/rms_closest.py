@@ -5,8 +5,8 @@ import warnings
 
 import pyam
 
-from ..utils import _get_unit_of_variable
 from .base import _DatabaseCruncher
+from ..utils import _get_unit_of_variable
 
 
 class DatabaseCruncherRMSClosest(_DatabaseCruncher):
