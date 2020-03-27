@@ -5,6 +5,9 @@ import pytest
 from silicone.multiple_infillers.infill_composite_values import infill_composite_values
 from silicone.utils import convert_units_to_MtCO2_equiv
 
+from silicone.multiple_infillers.infill_composite_values import infill_composite_values
+from silicone.utils import convert_units_to_MtCO2_equiv
+
 
 class TestInfillCompositeValues:
     larger_df = pd.DataFrame(

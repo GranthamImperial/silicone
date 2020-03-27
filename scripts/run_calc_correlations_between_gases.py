@@ -1,5 +1,6 @@
-import silicone.stats
 import pyam
+
+import silicone.stats
 
 # This script shows how to use the investigatory script, _plot_emission_correlations_
 # quantile_rolling_windows. It saves CSV files indicating statistics of correlation

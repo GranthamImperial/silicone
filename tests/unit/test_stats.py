@@ -1,9 +1,10 @@
+import os
+
 import numpy as np
-import pyam
 import pandas as pd
+import pyam
 
 import silicone.stats as stats
-import os
 
 _mc = "model_c"
 _sa = "scen_a"

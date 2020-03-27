@@ -1,4 +1,5 @@
 import datetime as dt
+import logging
 import re
 
 import numpy as np
@@ -7,7 +8,6 @@ import pytest
 import scipy.interpolate
 from base import _DataBaseCruncherTester
 from pyam import IamDataFrame
-import logging
 
 import silicone.stats
 from silicone.database_crunchers import DatabaseCruncherQuantileRollingWindows

@@ -1,9 +1,10 @@
 """
 Silicone's custom statistical operations.
 """
+import os
+
 import numpy as np
 import pandas as pd
-import os
 
 
 def rolling_window_find_quantiles(
