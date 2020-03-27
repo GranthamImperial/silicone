@@ -114,12 +114,11 @@ def calc_all_emissions_correlations(emms_df, years, output_dir):
     # Obtain the list of gases to examine
     df_gases = (
         emms_df.filter(level=1)
-            .filter(variable="Emissions|*")
-            .filter(variable="Emissions|Kyoto*", keep=False)
-            .append(
-            emms_df.filter(level=2)
-                .filter(variable="Emissions|CO2*")
-        ).variables(True).set_index("variable")
+        .filter(variable="Emissions|*")
+        .filter(variable="Emissions|Kyoto*", keep=False)
+        .append(emms_df.filter(level=2).filter(variable="Emissions|CO2*"))
+        .variables(True)
+        .set_index("variable")
     )
     all_correlations_df = pd.DataFrame(
         index=df_gases.index, columns=df_gases.index, data=0
@@ -147,14 +146,12 @@ def calc_all_emissions_correlations(emms_df, years, output_dir):
         formatted_df = emms_df.filter(
             variable=df_gases.index, year=year_of_interest
         ).pivot_table(
-            ["year", "model", "scenario", "region"],
-            ["variable"],
-            aggfunc="mean"
+            ["year", "model", "scenario", "region"], ["variable"], aggfunc="mean"
         )
         formatted_df.replace(r"^\s*$", np.nan, regex=True, inplace=True)
         for x_gas_ind in range(df_gases.count()[0]):
             x_gas = df_gases.index[x_gas_ind]
-            for y_gas_ind in range(x_gas_ind+1, df_gases.count()[0]):
+            for y_gas_ind in range(x_gas_ind + 1, df_gases.count()[0]):
                 y_gas = df_gases.index[y_gas_ind]
                 # Calculate the correlations. This requires removing NAs
                 correlations_df.at[y_gas, x_gas] = formatted_df.corr("pearson").loc[
@@ -164,11 +161,11 @@ def calc_all_emissions_correlations(emms_df, years, output_dir):
                     x_gas, y_gas
                 ]
                 all_correlations_df.loc[y_gas, x_gas] = all_correlations_df.at[
-                                                           y_gas, x_gas
-                    ] + abs(correlations_df.loc[y_gas, x_gas]) / len(years)
+                    y_gas, x_gas
+                ] + abs(correlations_df.loc[y_gas, x_gas]) / len(years)
                 all_rank_corr_df.loc[y_gas, x_gas] = all_rank_corr_df.at[
-                                                        y_gas, x_gas
-                    ] + abs(rank_corr_df.at[y_gas, x_gas]) / len(years)
+                    y_gas, x_gas
+                ] + abs(rank_corr_df.at[y_gas, x_gas]) / len(years)
                 # the other parts follow by symmetry
                 correlations_df.at[x_gas, y_gas] = correlations_df.at[y_gas, x_gas]
                 rank_corr_df.at[x_gas, y_gas] = rank_corr_df.at[y_gas, x_gas]
@@ -180,16 +177,12 @@ def calc_all_emissions_correlations(emms_df, years, output_dir):
         if output_dir is not None:
             correlations_df.to_csv(
                 os.path.join(
-                    output_dir, "gases_correlation_{}.csv".format(
-                        year_of_interest
-                    )
+                    output_dir, "gases_correlation_{}.csv".format(year_of_interest)
                 )
             )
             rank_corr_df.to_csv(
                 os.path.join(
-                    output_dir, "gases_rank_correlation_{}.csv".format(
-                        year_of_interest
-                    )
+                    output_dir, "gases_rank_correlation_{}.csv".format(year_of_interest)
                 )
             )
     for gas in df_gases.index:
@@ -198,15 +191,17 @@ def calc_all_emissions_correlations(emms_df, years, output_dir):
     if output_dir is not None:
         all_correlations_df.to_csv(
             os.path.join(
-                output_dir, "time_av_absolute_correlation_{}_to_{}.csv".format(
+                output_dir,
+                "time_av_absolute_correlation_{}_to_{}.csv".format(
                     min(years), max(years)
-                )
+                ),
             )
         )
         all_rank_corr_df.to_csv(
             os.path.join(
-                output_dir, "time_av_absolute_rank_correlation_{}_to_{}.csv".format(
+                output_dir,
+                "time_av_absolute_rank_correlation_{}_to_{}.csv".format(
                     min(years), max(years)
-                )
+                ),
             )
         )

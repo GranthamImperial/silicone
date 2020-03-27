@@ -79,9 +79,7 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
 
         data_follower_time_col = iamdf_follower.time_col
         data_follower_key_timepoint = max(data_follower[data_follower_time_col])
-        key_timepoint_filter = {
-            data_follower_time_col: [data_follower_key_timepoint]
-        }
+        key_timepoint_filter = {data_follower_time_col: [data_follower_key_timepoint]}
         data_follower_key_year_val = np.nanmean(
             iamdf_follower.filter(**key_timepoint_filter)["value"].values
         )

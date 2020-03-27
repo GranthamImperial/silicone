@@ -250,7 +250,7 @@ class TestGasDecomposeTimeDepRatio:
 
     @pytest.mark.parametrize("additional_cols", [None, "Another_col"])
     def test_infillallrequiredvariables_check_results_interp_times(
-            self, test_db, additional_cols
+        self, test_db, additional_cols
     ):
         if test_db.time_col == "year":
             required_variables_list = ["Emissions|HFC|C5F12"]
