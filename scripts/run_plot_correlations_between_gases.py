@@ -8,12 +8,12 @@ import silicone.plotting
 # ________________________________________________________
 # We must indicate the main gas of interest
 x_gases = [
-            "Emissions|PFC",
-            "Emissions|CH4",
-            "Emissions|CO2|AFOLU",
-            "Emissions|CO2|Energy and Industrial Processes",
-            "Emissions|CO2",
-        ]
+    "Emissions|PFC",
+    "Emissions|CH4",
+    "Emissions|CO2|AFOLU",
+    "Emissions|CO2|Energy and Industrial Processes",
+    "Emissions|CO2",
+]
 years_of_interest = [2030, 2050, 2100]
 save_results = "../Output/LotsOfPlotsOfRelations"
 # if non-null, also plot these quantiles.

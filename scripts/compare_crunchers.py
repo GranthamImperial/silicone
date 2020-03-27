@@ -14,6 +14,8 @@ of specified cases, or for all possible cases. Optionally it can also
 plot graphs comparing the infilled and original data - this is best done with only a 
 small number of cases, otherwise a huge number of files will be created.  
 """
+
+
 def main():
     freeze_support()
     # __________________________________Input options___________________________________
@@ -32,7 +34,7 @@ def main():
         # {"same_sign": True},
         {"use_ratio": False},
         {},
-        {}
+        {},
     ]
     # This list must agree with the above list, but is the name of the crunchers
     crunchers_name_list = [
@@ -47,7 +49,7 @@ def main():
     # Do we want to save plots? If not, leave as None, else the location to save them.
     # Note that these are not filter-dependent and so only the results of the last
     # filter will persist
-    save_plots = None #  "../Output/CruncherResults/plots/"
+    save_plots = None  #  "../Output/CruncherResults/plots/"
     # Do we want to run this for all possible filters? If so, choose none,
     # otherwise specify the filter here as a list of tuples
     to_compare_filter = None
@@ -80,13 +82,20 @@ def main():
 
     all_args = [
         (
-            filter_instance, db_all, vars_to_crunch, crunchers_name_list,
-            crunchers_list, save_plots, leaders, options_list
-         ) for filter_instance in all_possible_filters
+            filter_instance,
+            db_all,
+            vars_to_crunch,
+            crunchers_name_list,
+            crunchers_list,
+            save_plots,
+            leaders,
+            options_list,
+        )
+        for filter_instance in all_possible_filters
     ]
 
     # Perform the loop
-    with Pool(cpu_count()-1) as pool:
+    with Pool(cpu_count() - 1) as pool:
         results_db = list(pool.map(_recalc_and_compare_results, all_args))
 
     results_count = sum([result.notnull() for result in list(results_db)])
@@ -95,18 +104,26 @@ def main():
     overall_results.to_csv(save_file)
 
 
-def _recalc_and_compare_results(
-    args
-):
-    one_filter, db_all, vars_to_crunch, crunchers_name_list, crunchers_list, \
-    save_plots, leaders, options_list = args
+def _recalc_and_compare_results(args):
+    (
+        one_filter,
+        db_all,
+        vars_to_crunch,
+        crunchers_name_list,
+        crunchers_list,
+        save_plots,
+        leaders,
+        options_list,
+    ) = args
     combo_filter = {"model": one_filter[0], "scenario": one_filter[1]}
     input_to_fill = db_all.filter(**combo_filter)
     results_db = pd.DataFrame(index=vars_to_crunch, columns=crunchers_name_list)
     if leaders not in input_to_fill.variables(False).values:
-        print("No data for {} in model {}, scen {}".format(
-            leaders, one_filter[0], one_filter[1]
-        ))
+        print(
+            "No data for {} in model {}, scen {}".format(
+                leaders, one_filter[0], one_filter[1]
+            )
+        )
         return results_db
     # Remove all items that overlap directly with this
     db_filter = db_all.filter(**combo_filter, keep=False)
@@ -124,7 +141,7 @@ def _recalc_and_compare_results(
             cruncher_instance = crunchers_list[cruncher_ind](db)
             var_units = db.filter(variable=var_inst).variables(True)["unit"]
             assert (
-                    var_units.size == 1
+                var_units.size == 1
             ), "Multiple units involved, this spoils the calculation"
             filler = cruncher_instance.derive_relationship(
                 var_inst, leaders, **options_list[cruncher_ind]
@@ -132,37 +149,46 @@ def _recalc_and_compare_results(
             interpolated = filler(input_to_fill)
             interp_values = interpolated.data.set_index("year")["value"]
             if originals.size != interp_values.size:
-                print("Wrong number of values from cruncher {}: {}, not {}".format(
-                    crunchers_name_list[cruncher_ind],
-                    interp_values.size, originals.size
-                ))
+                print(
+                    "Wrong number of values from cruncher {}: {}, not {}".format(
+                        crunchers_name_list[cruncher_ind],
+                        interp_values.size,
+                        originals.size,
+                    )
+                )
                 continue
             assert (
-                    interpolated["year"].size == interpolated["year"].unique().size
+                interpolated["year"].size == interpolated["year"].unique().size
             ), "The wrong number of years have returned values"
             # Set up normalisation
             norm_factor = pd.Series(index=interp_values.index, dtype=float)
             for year in norm_factor.index:
                 norm_factor[year] = max(
                     db_all.filter(year=year, variable=var_inst).data["value"]
-                ) - min(
-                    db_all.filter(year=year, variable=var_inst).data["value"]
-                )
+                ) - min(db_all.filter(year=year, variable=var_inst).data["value"])
             # Calculate the RMS difference, Normalised by the spread of values
             results_db[crunchers_name_list[cruncher_ind]][var_inst] = (
-                np.nanmean(((interp_values - originals)[norm_factor > 0] /
-                    norm_factor[norm_factor > 0]) ** 2)
+                np.nanmean(
+                    (
+                        (interp_values - originals)[norm_factor > 0]
+                        / norm_factor[norm_factor > 0]
+                    )
+                    ** 2
+                )
             ) ** 0.5
             if save_plots:
                 _plot_reconstruct_value_with_cruncher(
-                    var_inst, var_units, interp_values, originals,
-                    crunchers_name_list[cruncher_ind], save_plots, db_all
+                    var_inst,
+                    var_units,
+                    interp_values,
+                    originals,
+                    crunchers_name_list[cruncher_ind],
+                    save_plots,
+                    db_all,
                 )
-        print("Completed cruncher {}".format(
-            crunchers_name_list[cruncher_ind])
-        )
+        print("Completed cruncher {}".format(crunchers_name_list[cruncher_ind]))
     return results_db
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

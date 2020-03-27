@@ -75,7 +75,7 @@ def _plot_emission_correlations_quantile_rolling_windows(
 
         # Check that the list has only one entry for each gas
         assert not any(df_gases.index.duplicated()), "Index contains duplicated entries"
-        x_units = emms_df.filter(variable=x_gas)['unit'].iloc[0]
+        x_units = emms_df.filter(variable=x_gas)["unit"].iloc[0]
 
         for y_gas_ind in range(df_gases.count()[0]):
             plt.close()
@@ -126,8 +126,8 @@ def _plot_emission_correlations_quantile_rolling_windows(
                         os.path.join(
                             output_dir,
                             "{}_{}_{}.csv".format(
-                                x_gas.split('|')[-1],
-                                y_gas.split('|')[-1],
+                                x_gas.split("|")[-1],
+                                y_gas.split("|")[-1],
                                 year_of_interest,
                             ),
                         )
@@ -139,7 +139,7 @@ def _plot_emission_correlations_quantile_rolling_windows(
                     os.path.join(
                         output_dir,
                         "{}_{}_{}.png".format(
-                            x_gas.split('|')[-1], y_gas.split('|')[-1], year_of_interest
+                            x_gas.split("|")[-1], y_gas.split("|")[-1], year_of_interest
                         ),
                     )
                 )
@@ -152,8 +152,8 @@ def _plot_emissions(legend_fraction, seaborn_df, x_gas, y_gas, x_units, y_units)
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * legend_fraction, box.height])
     plt.scatter(x=x_gas, y=y_gas, color=colours_for_plot, data=seaborn_df, alpha=0.5)
-    plt.xlabel("Emissions of {} ({})".format(x_gas.split('|')[-1], x_units))
-    plt.ylabel("Emissions of {} ({})".format(y_gas.split('|')[-1], y_units))
+    plt.xlabel("Emissions of {} ({})".format(x_gas.split("|")[-1], x_units))
+    plt.ylabel("Emissions of {} ({})".format(y_gas.split("|")[-1], y_units))
 
 
 def _plot_multiple_models(legend_fraction, seaborn_df, x_gas, y_gas, x_units, y_units):
@@ -173,9 +173,8 @@ def _plot_multiple_models(legend_fraction, seaborn_df, x_gas, y_gas, x_units, y_
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * legend_fraction, box.height])
     ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-    plt.xlabel("Emissions of {} ({})".format(x_gas.split('|')[-1], x_units))
-    plt.ylabel("Emissions of {} ({})".format(y_gas.split('|')[-1], y_units))
-
+    plt.xlabel("Emissions of {} ({})".format(x_gas.split("|")[-1], x_units))
+    plt.ylabel("Emissions of {} ({})".format(y_gas.split("|")[-1], y_units))
 
 
 def _plot_reconstruct_value_with_cruncher(
@@ -206,9 +205,7 @@ def _plot_reconstruct_value_with_cruncher(
     """
     plt.close()
     plt.subplot(111)
-    plt.scatter(
-        x=originals.index, y=originals, label="True values", alpha=0.8
-    )
+    plt.scatter(x=originals.index, y=originals, label="True values", alpha=0.8)
     plt.scatter(
         x=interp_values.index,
         y=interp_values,
@@ -229,8 +226,5 @@ def _plot_reconstruct_value_with_cruncher(
     )
     plt.legend()
     plt.savefig(
-        save_plots
-        + "{}_{}.png".format(
-            crunchers_name, var_inst.split("|")[-1]
-        )
+        save_plots + "{}_{}.png".format(crunchers_name, var_inst.split("|")[-1])
     )

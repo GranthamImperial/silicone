@@ -27,6 +27,7 @@ simple_df = pd.DataFrame(
 )
 simple_df = pyam.IamDataFrame(simple_df)
 
+
 def test_rolling_window_find_quantiles():
     xs = np.array([0, 0, 1, 1])
     ys = np.array([0, 1, 0, 1])
@@ -102,11 +103,16 @@ def test_calc_all_emissions_correlations_works(tmpdir):
             os.remove(test_file)
             assert not os.path.isfile(test_file)
     for file_string in [
-        "time_av_absolute_correlation", "time_av_absolute_rank_correlation"
+        "time_av_absolute_correlation",
+        "time_av_absolute_rank_correlation",
     ]:
-        test_file = os.path.join(test_folder, file_string + "_{}_to_{}.csv".format(
-            min(set(simple_df["year"])), max(set(simple_df["year"]))
-        ))
+        test_file = os.path.join(
+            test_folder,
+            file_string
+            + "_{}_to_{}.csv".format(
+                min(set(simple_df["year"])), max(set(simple_df["year"]))
+            ),
+        )
         assert os.path.isfile(test_file)
         test_results = pd.read_csv(test_file)
         assert np.isnan(test_results.iloc[0].iloc[1])
@@ -123,6 +129,7 @@ def test_calc_all_emissions_correlations_works(tmpdir):
     os.remove(test_file)
     assert not os.path.isfile(test_file)
 
+
 def test_calc_all_emissions_numerical(tmpdir):
     # We construct a specific situation and check that the numerical answers are correct
     test_folder = os.path.join(tmpdir, "output")
@@ -130,14 +137,13 @@ def test_calc_all_emissions_numerical(tmpdir):
         os.makedirs(test_folder)
     # We establish a more complicated set of values
     numerical_df = simple_df
-    numerical_df.data["model"] = numerical_df.data["model"] + \
-                                 numerical_df.data["year"].map(lambda x: str(x))
+    numerical_df.data["model"] = numerical_df.data["model"] + numerical_df.data[
+        "year"
+    ].map(lambda x: str(x))
     numerical_df.data["year"] = 2010
     numerical_df = pyam.IamDataFrame(numerical_df.data)
     # Perform the calculations
-    stats.calc_all_emissions_correlations(
-        numerical_df, [2010], test_folder
-    )
+    stats.calc_all_emissions_correlations(numerical_df, [2010], test_folder)
     # The order of the elements is identical for the different cases, no sorting needed
     xs = numerical_df.filter(variable=_eco2).data["value"].values
     ys = numerical_df.filter(variable=_ech4).data["value"].values
@@ -145,9 +151,10 @@ def test_calc_all_emissions_numerical(tmpdir):
     def calc_correl(x, y):
         xmean = sum(x) / len(x)
         ymean = sum(y) / len(y)
-        return sum((x - xmean) * (y - ymean)) / (
-            sum((x - xmean) ** 2) * sum((y - ymean) ** 2)
-        ) ** 0.5
+        return (
+            sum((x - xmean) * (y - ymean))
+            / (sum((x - xmean) ** 2) * sum((y - ymean) ** 2)) ** 0.5
+        )
 
     correl = calc_correl(xs, ys)
     test_file = os.path.join(test_folder, "gases_correlation" + "_{}.csv".format(2010))
@@ -164,12 +171,15 @@ def test_calc_all_emissions_numerical(tmpdir):
     assert np.isclose(test_results.iloc[1].iloc[1], rank_correl, rtol=1e-4)
     os.remove(test_file)
     for file_string in [
-        "time_av_absolute_correlation", "time_av_absolute_rank_correlation"
+        "time_av_absolute_correlation",
+        "time_av_absolute_rank_correlation",
     ]:
         test_file = os.path.join(
-            test_folder, file_string + "_{}_to_{}.csv".format(
+            test_folder,
+            file_string
+            + "_{}_to_{}.csv".format(
                 min(set(simple_df["year"])), max(set(simple_df["year"]))
-            )
+            ),
         )
         test_results = pd.read_csv(test_file)
         some_cor = rank_correl if file_string.__contains__("rank") else correl

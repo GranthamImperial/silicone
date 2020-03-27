@@ -246,7 +246,7 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
             filler(test_downscale_df)
 
     def test_relationship_no_infiller_infillee_time_overlap(
-            self, bad_df, test_downscale_df
+        self, bad_df, test_downscale_df
     ):
         odd_times = bad_df.copy()
         odd_times["scenario"].iloc[0] = "scen_d"
