@@ -400,6 +400,21 @@ def convert_units_to_MtCO2_equiv(df, use_ar4_data=False):
 
 
 def download_or_load_sr15(filename, valid_model_ids="*"):
+    """
+    Load SR1.5 data, if it isn't there, download it
+
+    Parameters
+    ----------
+    filename : str
+        Filename in which to look for/save the data
+    valid_model_ids : str
+        Models to return from date
+
+    Returns
+    -------
+    :obj: `pyam.IamDataFrame`
+        The loaded data
+    """
     if not os.path.isfile(filename):
         get_sr15_scenarios(filename, valid_model_ids)
     return pyam.IamDataFrame(filename).filter(model=valid_model_ids)
@@ -407,17 +422,15 @@ def download_or_load_sr15(filename, valid_model_ids="*"):
 
 def get_sr15_scenarios(output_file, valid_model_ids):
     """
-       Collects world-level data from the IIASA database for the named models and saves
-       them to a given location.
+    Collects world-level data from the IIASA database for the named models and saves them to a given location.
 
-        Parameters
-        ----------
-        output_file : str
-            File name and location for data to be saved
+    Parameters
+    ----------
+    output_file : str
+        File name and location for data to be saved
 
-        valid_model_ids : list[str]
-            Names of models that are to be fetched.
-
+    valid_model_ids : list[str]
+        Names of models that are to be fetched.
     """
     conn = pyam.iiasa.Connection("IXSE_SR15")
     variables_to_fetch = ["Emissions*"]
