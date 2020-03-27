@@ -4,10 +4,11 @@ import numpy as np
 import pandas as pd
 import pyam
 import pytest
+
 from silicone.multiple_infillers.decompose_collection_with_time_dep_ratio import (
     DecomposeCollectionTimeDepRatio,
 )
-from silicone.utils import convert_units_to_MtCO2_equiv, _adjust_time_style_to_match
+from silicone.utils import _adjust_time_style_to_match, convert_units_to_MtCO2_equiv
 
 _msa = ["model_a", "scen_a"]
 _msb = ["model_a", "scen_b"]

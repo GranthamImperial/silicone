@@ -1,9 +1,12 @@
-import pyam
-import silicone.database_crunchers as dc
-import pandas as pd
+from multiprocessing import Pool, cpu_count, freeze_support
+
 import numpy as np
+import pandas as pd
+import pyam
+
+import silicone.database_crunchers as dc
 from silicone.plotting import _plot_reconstruct_value_with_cruncher
-from multiprocessing import Pool, freeze_support, cpu_count
+
 
 """
 This script measures how accurate the different crunchers are at recreating known data.

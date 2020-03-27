@@ -4,6 +4,7 @@ models for a given scenario.
 """
 
 from download_sr15_emissions import download_or_load_sr15
+
 import silicone.PlotCorrelationsBetweenGases as pltcor
 
 # Get the data

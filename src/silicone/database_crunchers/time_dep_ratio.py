@@ -2,9 +2,10 @@
 Module for the database cruncher which uses the 'time-dependent ratio' technique.
 """
 
+import warnings
+
 import numpy as np
 import pandas as pd
-import warnings
 from pyam import IamDataFrame
 
 from .base import _DatabaseCruncher

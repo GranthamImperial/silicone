@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 from base import _DataBaseCruncherTester
 from pyam import IamDataFrame
+
 from silicone.database_crunchers import DatabaseCruncherTimeDepRatio
 
 _msa = ["model_a", "scen_a"]
