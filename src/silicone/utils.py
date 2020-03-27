@@ -323,7 +323,7 @@ def return_cases_which_consistently_split(
                 np.isclose(
                     sum_all["value"].loc[time],
                     sum_to_split["value"].loc[time] * 2,
-                    **how_close,
+                    **how_close
                 )
                 for time in sum_to_split.index
             ]
@@ -400,22 +400,6 @@ def convert_units_to_MtCO2_equiv(df, use_ar4_data=False):
 
 
 def download_or_load_sr15(filename, valid_model_ids="*"):
-    """
-    Load SR1.5 data, if it isn't there, download it
-
-    Parameters
-    ----------
-    filename : str
-        Filename in which to look for/save the data
-
-    valid_model_ids : str
-        Models to return from date
-
-    Returns
-    -------
-    :obj: `pyam.IamDataFrame`
-        The loaded data
-    """
     if not os.path.isfile(filename):
         get_sr15_scenarios(filename, valid_model_ids)
     return pyam.IamDataFrame(filename).filter(model=valid_model_ids)

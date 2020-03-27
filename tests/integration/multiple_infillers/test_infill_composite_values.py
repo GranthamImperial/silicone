@@ -10,49 +10,40 @@ class TestInfillCompositeValues:
     larger_df = pd.DataFrame(
         [
             [
-                "model_C",
-                "scen_C",
-                "World",
-                "Emissions|CO2|AFOLU",
-                "Mt CO2/yr",
-                1.5,
-                1.5,
-                1.5,
+                "model_C", "scen_C", "World", "Emissions|CO2|AFOLU",
+                "Mt CO2/yr",  1.5, 1.5, 1.5
             ],
             [
-                "model_C",
-                "scen_C",
-                "World",
-                "Emissions|CO2|Industry",
-                "Mt CO2/yr",
-                1,
-                1,
-                1,
+                "model_C", "scen_C", "World", "Emissions|CO2|Industry",
+                "Mt CO2/yr", 1, 1, 1
             ],
             [
-                "model_D",
-                "scen_C",
-                "World",
-                "Emissions|CO2|Industry",
-                "Mt CO2/yr",
-                2,
-                2,
-                2,
+                "model_D", "scen_C", "World", "Emissions|CO2|Industry",
+                "Mt CO2/yr", 2, 2, 2
             ],
-            ["model_D", "scen_C", "World", "Emissions|CH4", "Mt CH4/yr", 2, 2, 2],
             [
-                "model_D",
-                "scen_F",
-                "World",
-                "Emissions|CO2|Industry",
-                "Mt CO2/yr",
-                4,
-                4,
-                4,
+                "model_D", "scen_C", "World", "Emissions|CH4",
+                "Mt CH4/yr", 2, 2, 2
             ],
-            ["model_D", "scen_F", "World", "Emissions|CH4", "Mt CH4/yr", 2, 2, 2],
+            [
+                "model_D", "scen_F", "World", "Emissions|CO2|Industry",
+                "Mt CO2/yr", 4, 4, 4
+            ],
+            [
+                "model_D", "scen_F", "World", "Emissions|CH4",
+                "Mt CH4/yr", 2, 2, 2
+             ],
         ],
-        columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2050,],
+        columns=[
+            "model",
+            "scenario",
+            "region",
+            "variable",
+            "unit",
+            2010,
+            2015,
+            2050,
+        ],
     )
 
     def test_infill_composite_values_warns(self, larger_df, caplog):
@@ -82,9 +73,10 @@ class TestInfillCompositeValues:
         larger_df_copy = larger_df.copy()
         larger_df_copy.append(
             infill_composite_values(
-                larger_df_copy, composite_dic={"Emissions|CO2": ["Emissions|CO2|*"]}
+                larger_df_copy,
+                composite_dic={"Emissions|CO2": ["Emissions|CO2|*"]}
             ),
-            inplace=True,
+            inplace=True
         )
         larger_df_copy = convert_units_to_MtCO2_equiv(larger_df_copy)
         infilled = infill_composite_values(larger_df_copy)
