@@ -3,12 +3,15 @@ Changelog
 
 master
 ------
-- (`#72 <https://github.com/znicholls/silicone/pull/72>`_) Altered infill_composite_value to allow multiplication by a factor before summing. Removed unnecessary notebooks. 
+
+
+- (`#72 <https://github.com/znicholls/silicone/pull/72>`_) Altered infill_composite_value to allow multiplication by a factor before summing. Removed unnecessary notebooks.
 - (`#69 <https://github.com/znicholls/silicone/pull/69>`_) Fixed bug so that ``DatabaseCruncherRMSClosest`` no longer selects scenarios which don't have follower data
 - (`#68 <https://github.com/znicholls/silicone/pull/68>`_) More investigatory tools and scripts for calculating and outputting emissions correlations.
 - (`#67 <https://github.com/znicholls/silicone/pull/67>`_) Introduce investigatory tools for plotting relations between emissions.
 - (`#66 <https://github.com/znicholls/silicone/pull/66>`_) Remove ``Input`` folder in favour of using ``openscm-units``
 - (`#65 <https://github.com/znicholls/silicone/pull/65>`_) Add ``format-notebooks`` target to the ``Makefile``
+- (`#64 <https://github.com/znicholls/silicone/pull/64>`_) Add basic linters to CI
 - (`#61 <https://github.com/znicholls/silicone/pull/61>`_) Switch to using GitHub actions for CI
 - (`#60 <https://github.com/znicholls/silicone/pull/60>`_) Update installation docs to reference pip and conda
 - (`#62 <https://github.com/znicholls/silicone/pull/62>`_) Minor changes to remove warning messages and remove some todos.
