@@ -4,7 +4,7 @@ from silicone.utils import _construct_consistent_values
 logger = logging.getLogger(__name__)
 
 
-def infill_composite_values(df, composite_dic=None, factors_dic=None):
+def infill_composite_values(df, composite_dic=None):
     """
     Constructs a series of aggregate variables, calculated as the sums of variables
     that have been reported. If given factors terms too, the terms will be multiplied
