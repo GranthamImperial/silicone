@@ -33,11 +33,7 @@ def infill_composite_values(df, composite_dic=None):
                 "Emissions*|C6F14",
             ],
             "Emissions|HFC": ["Emissions|HFC*"],
-            "Emissions|F-Gases": [
-                "Emissions|PFC",
-                "Emissions|HFC",
-                "Emissions|SF6",
-            ],
+            "Emissions|F-Gases": ["Emissions|PFC", "Emissions|HFC", "Emissions|SF6",],
             "Emissions|Kyoto Gases (AR5-GWP100)": [
                 "Emissions|CO2",
                 "Emissions|CH4",
@@ -64,10 +60,11 @@ def infill_composite_values(df, composite_dic=None):
                 variable=[composite] + list(composite_dic.get(composite).keys())
             )
             for factor in composite_dic.get(composite).keys():
-                temp_df.data["value"].loc[temp_df.data["variable"] == factor] = \
                 temp_df.data["value"].loc[
                     temp_df.data["variable"] == factor
-                    ] * composite_dic.get(composite).get(factor)
+                ] = temp_df.data["value"].loc[
+                    temp_df.data["variable"] == factor
+                ] * composite_dic.get(composite).get(factor)
             composite_df = _construct_consistent_values(
                 composite, composite_dic.get(composite), temp_df
             )
