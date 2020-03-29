@@ -454,25 +454,25 @@ def _adjust_time_style_to_match(in_df, target_df):
 
 def _construct_consistent_values(aggregate_name, components, db_to_generate):
     """
-        Calculates the sum of the components and creates an IamDataFrame with this
-        value under variable type `aggregate_name`.
+    Calculates the sum of the components and creates an IamDataFrame with this
+    value under variable type `aggregate_name`.
 
-        Parameters
-        ----------
-        aggregate_name : str
-            The name of the aggregate variable.
+    Parameters
+    ----------
+    aggregate_name : str
+        The name of the aggregate variable.
 
-        components : [str]
-            List of the names of the variables to be summed.
+    components : [str]
+        List of the names of the variables to be summed.
 
-        db_to_generate : :obj:`pyam.IamDataFrame`
-            Input data from which to construct consistent values.
+    db_to_generate : :obj:`pyam.IamDataFrame`
+        Input data from which to construct consistent values.
 
-        Return
-        ------
-        :obj:`pyam.IamDataFrame`
-            Consistently calculated aggregate data.
-        """
+    Returns
+    -------
+    :obj:`pyam.IamDataFrame`
+        Consistently calculated aggregate data.
+    """
     assert (
         aggregate_name not in db_to_generate.variables().values
     ), "We already have a variable of this name"
