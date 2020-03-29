@@ -62,6 +62,8 @@ class TestInfillCompositeValues:
                 "Emissions*|C4F10",
                 "Emissions*|C5F12",
                 "Emissions*|C6F14",
+                "Emissions*|C7F16",
+                "Emissions*|C8F18",
             ]
         )
 
