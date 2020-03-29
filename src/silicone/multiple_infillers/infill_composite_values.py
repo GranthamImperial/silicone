@@ -72,8 +72,8 @@ def infill_composite_values(df, composite_dic=None):
                 variable=[composite] + list(composite_variables.keys())
             )
             for contributor, factor in composite_variables.items():
-                temp_df.data["value"].loc[
-                    temp_df.data["variable"] == contributor
+                temp_df.data.loc[
+                    temp_df.data["variable"] == contributor, "value"
                 ] *= factor
 
             composite_df = _construct_consistent_values(
