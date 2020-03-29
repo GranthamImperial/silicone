@@ -27,7 +27,7 @@ def infill_composite_values(df, composite_dic=None):
     :obj:`pyam.IamDataFrame`
         :obj:`pyam.IamDataFrame` containing the composite values.
     """
-    if not composite_dic:
+    if composite_dic is None:
         composite_dic = {
             "Emissions|PFC": [
                 "Emissions*|CF4",
@@ -36,6 +36,8 @@ def infill_composite_values(df, composite_dic=None):
                 "Emissions*|C4F10",
                 "Emissions*|C5F12",
                 "Emissions*|C6F14",
+                "Emissions*|C7F16",
+                "Emissions*|C8F18",
             ],
             "Emissions|HFC": ["Emissions|HFC*"],
             "Emissions|F-Gases": ["Emissions|PFC", "Emissions|HFC", "Emissions|SF6",],
