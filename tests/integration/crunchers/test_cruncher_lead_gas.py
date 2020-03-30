@@ -124,14 +124,12 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
         infilled = cruncher(lead_db)
         # In both cases, the average follower value at the latest time is 2. We divide
         # by the value in 2015, which we have data for in both cases.
-        assert np.allclose(
-            infilled.data["value"],
-            2
-            * lead_db.data["value"]
-            / lead_db.data["value"]
-            .loc[lead_db.data[lead_db.time_col] == max(lead_db.data[lead_db.time_col])]
-            .values,
+        lead_db_time = lead_db.data[lead_db.time_col]
+        latest_time = lead_db_time == max(lead_db_time)
+        expected = (
+            2 * lead_db.data["value"] / lead_db.data["value"].loc[latest_time].values
         )
+        assert np.allclose(infilled.data["value"], expected)
         # Test that the result can be appended without problems.
         lead_db.append(infilled)
 
