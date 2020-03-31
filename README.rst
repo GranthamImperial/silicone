@@ -9,9 +9,9 @@ Silicone
 | Repository health | |Build Status| | |Codecov| |
 +-------------------+----------------+-----------+
 
-+-----------------+------------------+
-| Latest releases | |Latest Version| |
-+-----------------+------------------+
++-----------------+------------------+----------------+
+| Latest releases | |Latest Version| | |PyPI Install| |
++-----------------+------------------+----------------+
 
 +-----------------+----------------+---------------+------------------------------+
 | Latest activity | |Contributors| | |Last Commit| | |Commits Since Last Release| |
@@ -21,16 +21,15 @@ Silicone
 .. sec-begin-index
 
 
-Silicone is a Python package which can be used to infer
-emissions from other emissions data. It is intended to 'infill' integrated
-assessment model (IAM) data so that their scenarios quantify more climate-relevant
-emissions than is natively reported by the IAMs themselves.
-It does this by comparing the incomplete emissions set to complete data. It uses the
-relationships within the complete data to make informed infilling estimates of
+Silicone is a Python package which can be used to infer emissions from other emissions data.
+It is intended to 'infill' integrated assessment model (IAM) data so that their scenarios
+quantify more climate-relevant emissions than is natively reported by the IAMs themselves.
+It does this by comparing the incomplete emissions set to complete data from other sources.
+It uses the relationships within the complete data to make informed infilling estimates of
 otherwise missing emissions timeseries.
 For example, it can add emissions of aerosol precurors based on carbon dioxide emissions
-and infill nitrous oxide emissions based on methane, or split HFC emissions
-pathways into emissions of different specific HFC gases.
+and infill nitrous oxide emissions based on methane, or split HFC emissions pathways into
+emissions of different specific HFC gases.
 
 .. sec-end-index
 
@@ -88,12 +87,14 @@ Please see the `Development section of the docs <https://silicone.readthedocs.io
     :target: https://silicone.readthedocs.io/en/latest/
 .. |License| image:: https://img.shields.io/github/license/znicholls/silicone.svg
     :target: https://github.com/znicholls/silicone/blob/master/LICENSE
-.. |Build Status| image:: https://travis-ci.com/znicholls/silicone.svg?branch=master
-    :target: https://travis-ci.com/znicholls/silicone
+.. |Build Status| image:: https://github.com/znicholls/silicone/workflows/Silicone%20CI-CD/badge.svg
+    :target: https://github.com/znicholls/silicone/actions?query=workflow%3A%22Silicone+CI-CD%22
 .. |Codecov| image:: https://img.shields.io/codecov/c/github/znicholls/silicone.svg
     :target: https://codecov.io/gh/znicholls/silicone/branch/master/graph/badge.svg
 .. |Latest Version| image:: https://img.shields.io/github/tag/znicholls/silicone.svg
     :target: https://github.com/znicholls/silicone/releases
+.. |PyPI Install| image:: https://github.com/znicholls/silicone/workflows/Test%20PyPI%20install/badge.svg
+    :target: https://github.com/znicholls/silicone/actions?query=workflow%3A%22Test+PyPI+install%22
 .. |Last Commit| image:: https://img.shields.io/github/last-commit/znicholls/silicone.svg
     :target: https://github.com/znicholls/silicone/commits/master
 .. |Commits Since Last Release| image:: https://img.shields.io/github/commits-since/znicholls/silicone/latest.svg
