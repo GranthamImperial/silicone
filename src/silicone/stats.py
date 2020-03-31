@@ -125,6 +125,9 @@ def calc_all_emissions_correlations(emms_df, years, output_dir):
     all_rank_corr_df = pd.DataFrame(
         index=df_gases.index, columns=df_gases.index, data=0
     )
+    all_rank_corr_var_df = pd.DataFrame(
+        index=df_gases.index, columns=df_gases.index, data=0
+    )
 
     # Calculate the total amount of data
     var_count_file = "variable_counts.csv"
@@ -165,10 +168,16 @@ def calc_all_emissions_correlations(emms_df, years, output_dir):
                 all_rank_corr_df.loc[y_gas, x_gas] = all_rank_corr_df.at[
                     y_gas, x_gas
                 ] + abs(rank_corr_df.at[y_gas, x_gas]) / len(years)
+                all_rank_corr_var_df.loc[y_gas, x_gas] = all_rank_corr_var_df.at[
+                    y_gas, x_gas
+                ] + rank_corr_df.at[y_gas, x_gas] ** 2
                 # the other parts follow by symmetry
                 correlations_df.at[x_gas, y_gas] = correlations_df.at[y_gas, x_gas]
                 rank_corr_df.at[x_gas, y_gas] = rank_corr_df.at[y_gas, x_gas]
                 all_correlations_df.loc[x_gas, y_gas] = all_correlations_df.at[
+                    y_gas, x_gas
+                ]
+                all_rank_corr_var_df.loc[x_gas, y_gas] = all_rank_corr_var_df.loc[
                     y_gas, x_gas
                 ]
                 all_rank_corr_df.loc[x_gas, y_gas] = all_rank_corr_df.at[y_gas, x_gas]
@@ -184,6 +193,18 @@ def calc_all_emissions_correlations(emms_df, years, output_dir):
                     output_dir, "gases_rank_correlation_{}.csv".format(year_of_interest)
                 )
             )
+    # Complete variance calc by removing mean and dividing through
+    all_rank_corr_var_df = (all_rank_corr_var_df - len(
+        years) * all_rank_corr_df ** 2) / (len(years) - 1)
+    if output_dir is not None:
+        all_rank_corr_var_df.to_csv(
+            os.path.join(
+                output_dir,
+                "time_variance_rank_correlation_{}_to_{}.csv".format(
+                    min(years), max(years)
+                ),
+            )
+        )
     for gas in df_gases.index:
         all_correlations_df.loc[gas, gas] = np.nan
         all_rank_corr_df.loc[gas, gas] = np.nan
