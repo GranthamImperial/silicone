@@ -4,7 +4,7 @@ Changelog
 master
 ------
 
-- (`#73 <https://github.com/znicholls/silicone/pull/73>`_) Updated README
+- (`#75 <https://github.com/znicholls/silicone/pull/75>`_) Updated README
 - (`#72 <https://github.com/znicholls/silicone/pull/72>`_) Altered infill_composite_value to allow multiplication by a factor before summing. Removed unnecessary notebooks.
 - (`#69 <https://github.com/znicholls/silicone/pull/69>`_) Fixed bug so that ``DatabaseCruncherRMSClosest`` no longer selects scenarios which don't have follower data
 - (`#68 <https://github.com/znicholls/silicone/pull/68>`_) More investigatory tools and scripts for calculating and outputting emissions correlations.
