@@ -45,8 +45,8 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
     where :math:`x` is the position of the data point on the lead timeseries axis,
     :math:`x_{\\text{window}}` is the position of the centre of the window on the lead
     timeseries axis, :math:`b` is the distance between window centres and :math:`f` is
-    a decay factor which controls how much less points away from :math:`x_{\\
-    text{window}}` are weighted. If :math:`f=1` then a point which is halfway between
+    a decay factor which controls how much less points away from :math:`x_{\\text{window}}`
+    are weighted. If :math:`f=1` then a point which is halfway between
     window centres receives a weighting of :math:`1/2`. Lowering the value of
     :math:`f` cause points further from the window centre to receive less weight.
 
