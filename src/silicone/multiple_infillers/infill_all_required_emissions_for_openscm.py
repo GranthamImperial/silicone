@@ -28,7 +28,7 @@ def infill_all_required_variables(
     check_data_returned=False,
 ):
     """
-    This is function designed to infill all required data given a minimal amount of
+    This function is designed to infill all required data given a minimal amount of
     input.
 
     Parameters
