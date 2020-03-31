@@ -32,11 +32,11 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3.7",
 ]
 
-ENTRY_POINTS = {
-    "console_scripts": [
-        "silicone-explore-quantiles-rolling-windows = silicone.cli:plot_emission_correlations_quantile_rolling_windows_cli"
-    ]
-}
+# ENTRY_POINTS = {
+#     "console_scripts": [
+#         "silicone-explore-quantiles-rolling-windows = silicone.cli:plot_emission_correlations_quantile_rolling_windows_cli"
+#     ]
+# }
 
 REQUIREMENTS_INSTALL = [
     "click",
@@ -141,5 +141,5 @@ setup(
     install_requires=REQUIREMENTS_INSTALL,
     extras_require=REQUIREMENTS_EXTRAS,
     cmdclass=CMDCLASS,
-    entry_points=ENTRY_POINTS,
+    # entry_points=ENTRY_POINTS,
 )

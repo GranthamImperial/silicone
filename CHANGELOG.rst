@@ -4,6 +4,7 @@ Changelog
 master
 ------
 
+- (`#76 <https://github.com/znicholls/silicone/pull/76>`_) Removed command-line interface
 - (`#75 <https://github.com/znicholls/silicone/pull/75>`_) Updated README
 - (`#72 <https://github.com/znicholls/silicone/pull/72>`_) Altered infill_composite_value to allow multiplication by a factor before summing. Removed unnecessary notebooks.
 - (`#69 <https://github.com/znicholls/silicone/pull/69>`_) Fixed bug so that ``DatabaseCruncherRMSClosest`` no longer selects scenarios which don't have follower data
