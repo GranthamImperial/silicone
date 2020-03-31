@@ -106,6 +106,7 @@ def test_calc_all_emissions_correlations_works(tmpdir):
     for file_string in [
         "time_av_absolute_correlation",
         "time_av_absolute_rank_correlation",
+        "time_variance_rank_correlation"
     ]:
         test_file = os.path.join(
             test_folder,
@@ -116,9 +117,15 @@ def test_calc_all_emissions_correlations_works(tmpdir):
         )
         assert os.path.isfile(test_file)
         test_results = pd.read_csv(test_file)
-        assert np.isnan(test_results.iloc[0].iloc[1])
-        assert np.allclose(test_results.iloc[1].iloc[1], 1)
-        assert np.allclose(test_results.iloc[0].iloc[2], 1)
+        if file_string == "time_variance_rank_correlation":
+            # All values are zeros since the abs value is 1 in all cases (+/-1)
+            assert np.allclose(test_results.iloc[0].iloc[1], 0)
+            assert np.allclose(test_results.iloc[1].iloc[1], 0)
+            assert np.allclose(test_results.iloc[0].iloc[2], 0)
+        else:
+            assert np.isnan(test_results.iloc[0].iloc[1])
+            assert np.allclose(test_results.iloc[1].iloc[1], 1)
+            assert np.allclose(test_results.iloc[0].iloc[2], 1)
         os.remove(test_file)
         assert not os.path.isfile(test_file)
     # Check that the variable counts are correct too.
@@ -137,7 +144,7 @@ def test_calc_all_emissions_numerical(tmpdir):
     if not os.path.isdir(test_folder):
         os.makedirs(test_folder)
     # We establish a more complicated set of values
-    numerical_df = simple_df
+    numerical_df = simple_df.copy()
     numerical_df.data["model"] = numerical_df.data["model"] + numerical_df.data[
         "year"
     ].map(lambda x: str(x))
@@ -174,6 +181,47 @@ def test_calc_all_emissions_numerical(tmpdir):
     for file_string in [
         "time_av_absolute_correlation",
         "time_av_absolute_rank_correlation",
+        "time_variance_rank_correlation",
+    ]:
+        test_file = os.path.join(
+            test_folder,
+            file_string
+            + "_{}_to_{}.csv".format(
+                min(set(numerical_df["year"])), max(set(numerical_df["year"]))
+            ),
+        )
+        test_results = pd.read_csv(test_file)
+        some_cor = rank_correl if file_string.__contains__("rank") else correl
+        if file_string == "time_variance_rank_correlation":
+            assert np.isnan(test_results.iloc[1].iloc[1])
+        else:
+            assert np.isclose(test_results.iloc[1].iloc[1], some_cor, rtol=1e-4)
+        os.remove(test_file)
+    test_file = os.path.join(test_folder, "variable_counts.csv")
+    assert os.path.isfile(test_file)
+    test_results = pd.read_csv(test_file)
+    assert np.allclose(test_results["0"].iloc[0], 7)
+    assert np.allclose(test_results["0"].iloc[1], 7)
+    os.remove(test_file)
+    assert not os.path.isfile(test_file)
+    # Now do a test for just the variance. This requires multiple years
+    numerical_df["value"] = numerical_df["value"] + 10
+    numerical_df.append(simple_df, inplace=True)
+    numerical_df["year"] = numerical_df["year"].map(lambda x: int(x))
+    rank_cors = []
+    years = [2010, 2030, 2050]
+    for year in years:
+        xs = numerical_df.filter(variable=_eco2, year=year).data["value"].values
+        ys = numerical_df.filter(variable=_ech4, year=year).data["value"].values
+        x_ord = np.argsort(xs)
+        y_ord = np.argsort(ys)
+        rank_cors.append(abs(calc_correl(x_ord, y_ord)))
+    expect_var = np.var(rank_cors, ddof=1)
+    stats.calc_all_emissions_correlations(numerical_df, years, test_folder)
+    for file_string in [
+        "time_av_absolute_correlation",
+        "time_av_absolute_rank_correlation",
+        "time_variance_rank_correlation",
     ]:
         test_file = os.path.join(
             test_folder,
@@ -183,13 +231,6 @@ def test_calc_all_emissions_numerical(tmpdir):
             ),
         )
         test_results = pd.read_csv(test_file)
-        some_cor = rank_correl if file_string.__contains__("rank") else correl
-        assert np.isclose(test_results.iloc[1].iloc[1], some_cor, rtol=1e-4)
+        if file_string == "time_variance_rank_correlation":
+            assert np.isclose(expect_var, test_results.iloc[1].iloc[1])
         os.remove(test_file)
-    test_file = os.path.join(test_folder, "variable_counts.csv")
-    assert os.path.isfile(test_file)
-    test_results = pd.read_csv(test_file)
-    assert np.allclose(test_results["0"].iloc[0], 7)
-    assert np.allclose(test_results["0"].iloc[1], 7)
-    os.remove(test_file)
-    assert not os.path.isfile(test_file)
