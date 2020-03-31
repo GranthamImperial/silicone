@@ -9,9 +9,9 @@ Silicone
 | Repository health | |Build Status| | |Codecov| |
 +-------------------+----------------+-----------+
 
-+-----------------+------------------+----------------+
-| Latest releases | |Latest Version| | |PyPI Install| |
-+-----------------+------------------+----------------+
++-----------------+----------------+----------------+------------------+
+| Latest releases | |PyPI Install| | |PyPI Version| | |Latest Version| |
++-----------------+----------------+----------------+------------------+
 
 +-----------------+----------------+---------------+------------------------------+
 | Latest activity | |Contributors| | |Last Commit| | |Commits Since Last Release| |
@@ -95,6 +95,8 @@ Please see the `Development section of the docs <https://silicone.readthedocs.io
     :target: https://github.com/znicholls/silicone/releases
 .. |PyPI Install| image:: https://github.com/znicholls/silicone/workflows/Test%20PyPI%20install/badge.svg
     :target: https://github.com/znicholls/silicone/actions?query=workflow%3A%22Test+PyPI+install%22
+.. |PyPI Version| image:: https://img.shields.io/pypi/v/silicone.svg
+    :target: https://pypi.org/project/silicone/
 .. |Last Commit| image:: https://img.shields.io/github/last-commit/znicholls/silicone.svg
     :target: https://github.com/znicholls/silicone/commits/master
 .. |Commits Since Last Release| image:: https://img.shields.io/github/commits-since/znicholls/silicone/latest.svg
