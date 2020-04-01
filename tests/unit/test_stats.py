@@ -106,7 +106,7 @@ def test_calc_all_emissions_correlations_works(tmpdir):
     for file_string in [
         "time_av_absolute_correlation",
         "time_av_absolute_rank_correlation",
-        "time_variance_rank_correlation"
+        "time_variance_rank_correlation",
     ]:
         test_file = os.path.join(
             test_folder,
