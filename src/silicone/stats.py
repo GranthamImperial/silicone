@@ -5,6 +5,7 @@ import os
 
 import numpy as np
 import pandas as pd
+import scipy.interpolate
 
 
 def rolling_window_find_quantiles(
@@ -74,9 +75,11 @@ def rolling_window_find_quantiles(
         weights /= sum(weights)
         cumsum_weights = np.cumsum(weights)
         for i_quantile in range(quantiles.__len__()):
-            quantmatrix.iloc[ind, i_quantile] = min(
-                ys[cumsum_weights >= quantiles[i_quantile]]
-            )
+            quantmatrix.iloc[ind, i_quantile] = scipy.interpolate.interp1d(
+                cumsum_weights, ys, bounds_error=False, fill_value=(
+                    ys[0], ys[-1]
+                )
+            )(i_quantile)
     return quantmatrix
 
 
