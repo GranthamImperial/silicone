@@ -7,7 +7,7 @@ import tqdm
 
 from silicone.database_crunchers import (
     DatabaseCruncherConstantRatio,
-    DatabaseCruncherQuantileRollingWindows,
+    QuantileRollingWindows,
 )
 
 
@@ -21,7 +21,7 @@ def infill_all_required_variables(
     database,
     variable_leaders,
     required_variables_list=None,
-    cruncher=DatabaseCruncherQuantileRollingWindows,
+    cruncher=QuantileRollingWindows,
     output_timesteps=None,
     infilled_data_prefix=None,
     to_fill_old_prefix=None,
@@ -51,7 +51,7 @@ def infill_all_required_variables(
 
     cruncher : :class:
         The class of cruncher to use to compute the infilled values. Defaults to
-        DatabaseCruncherQuantileRollingWindows, which uses the median value of a rolling
+        QuantileRollingWindows, which uses the median value of a rolling
         window. See the cruncher documentation for more details.
 
     output_timesteps : list[int or datetime]

@@ -28,7 +28,7 @@ def main():
     crunchers_list = [
         #  dc.DatabaseCruncherLeadGas,
         # dc.DatabaseCruncherTimeDepRatio,
-        dc.DatabaseCruncherQuantileRollingWindows,
+        dc.QuantileRollingWindows,
         dc.DatabaseCruncherRMSClosest,
         dc.DatabaseCruncherLinearInterpolation,
     ]
