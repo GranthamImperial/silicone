@@ -168,9 +168,10 @@ def calc_all_emissions_correlations(emms_df, years, output_dir):
                 all_rank_corr_df.loc[y_gas, x_gas] = all_rank_corr_df.at[
                     y_gas, x_gas
                 ] + abs(rank_corr_df.at[y_gas, x_gas]) / len(years)
-                all_rank_corr_var_df.loc[y_gas, x_gas] = all_rank_corr_var_df.at[
-                    y_gas, x_gas
-                ] + rank_corr_df.at[y_gas, x_gas] ** 2
+                all_rank_corr_var_df.loc[y_gas, x_gas] = (
+                    all_rank_corr_var_df.at[y_gas, x_gas]
+                    + rank_corr_df.at[y_gas, x_gas] ** 2
+                )
                 # the other parts follow by symmetry
                 correlations_df.at[x_gas, y_gas] = correlations_df.at[y_gas, x_gas]
                 rank_corr_df.at[x_gas, y_gas] = rank_corr_df.at[y_gas, x_gas]
@@ -194,8 +195,9 @@ def calc_all_emissions_correlations(emms_df, years, output_dir):
                 )
             )
     # Complete variance calc by removing mean and dividing through
-    all_rank_corr_var_df = (all_rank_corr_var_df - len(
-        years) * all_rank_corr_df ** 2) / (len(years) - 1)
+    all_rank_corr_var_df = (
+        all_rank_corr_var_df - len(years) * all_rank_corr_df ** 2
+    ) / (len(years) - 1)
     if output_dir is not None:
         all_rank_corr_var_df.to_csv(
             os.path.join(
