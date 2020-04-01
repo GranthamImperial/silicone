@@ -82,23 +82,33 @@ def rolling_window_find_quantiles(
 
 def calc_all_emissions_correlations(emms_df, years, output_dir):
     """
-    Save csv files of the correlation coefficients and the rank correlation coefficients between emissions at specified locations.
+    Save csv files of the correlation coefficients and the rank correlation coefficients
+     between emissions at specified locations.
 
-    This function includes all undivided emissions (i.e. results recorded as `Emissions|X`) and CO2 emissions split once (i.e. `Emissions|CO2|X`). It does not include Kyoto gases. It will also save the average absolute value of the coefficients.
+    This function includes all undivided emissions (i.e. results recorded as
+    `Emissions|X`) and CO2 emissions split once (i.e. `Emissions|CO2|X`). It does not
+    include Kyoto gases. It will also save the average absolute value of the
+    coefficients.
 
     Files created:
 
-    - "variable_counts.csv" : the number of scenario/model pairs where the emissions data occurs.
+    - "variable_counts.csv" : the number of scenario/model pairs where the emissions
+    data occurs.
 
-    - "gases_correlation_{year}.csv" : The Pearson's correlation between gases emissions in a given year.
+    - "gases_correlation_{year}.csv" : The Pearson's correlation between gases emissions
+     in a given year.
 
-    - "gases_rank_correlation_{year}.csv" : The Spearman's rank correlation between gases in a given year
+    - "gases_rank_correlation_{year}.csv" : The Spearman's rank correlation between
+    gases in a given year
 
-    - "time_av_absolute_correlation_{}_to_{}.csv" : The magnitude of the Pearson's correlation between emissions, averaged over the years requested.
+    - "time_av_absolute_correlation_{}_to_{}.csv" : The magnitude of the Pearson's
+    correlation between emissions, averaged over the years requested.
 
-    - "time_av_absolute_rank_correlation_{}_to_{}.csv" : The magnitude of the Spearman's rank correlation between emissions, averaged over the years requested.
+    - "time_av_absolute_rank_correlation_{}_to_{}.csv" : The magnitude of the Spearman's
+     rank correlation between emissions, averaged over the years requested.
 
-    - "time_variance_rank_correlation_{}_to_{}.csv" : the variance over time in the rank correlation values above. 
+    - "time_variance_rank_correlation_{}_to_{}.csv" : The variance over time in the rank
+     correlation values above.
 
     Parameters
     ----------
