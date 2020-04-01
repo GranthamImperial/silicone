@@ -79,7 +79,7 @@ def rolling_window_find_quantiles(
                 cumsum_weights, ys, bounds_error=False, fill_value=(
                     ys[0], ys[-1]
                 )
-            )(i_quantile)
+            )(quantiles[i_quantile])
     return quantmatrix
 
 
