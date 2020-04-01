@@ -4,6 +4,7 @@ Changelog
 master
 ------
 
+- (`#77 <https://github.com/znicholls/silicone/pull/77>`_) Added calculation of variance of rank correlation to stats
 - (`#76 <https://github.com/znicholls/silicone/pull/76>`_) Removed command-line interface
 - (`#75 <https://github.com/znicholls/silicone/pull/75>`_) Updated README
 - (`#72 <https://github.com/znicholls/silicone/pull/72>`_) Altered infill_composite_value to allow multiplication by a factor before summing. Removed unnecessary notebooks.
