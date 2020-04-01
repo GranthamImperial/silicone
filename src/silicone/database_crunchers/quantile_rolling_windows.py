@@ -220,10 +220,13 @@ class QuantileRollingWindows(_DatabaseCruncher):
                     db_time_table.loc[
                         (db_time, quantile), window_center
                     ] = scipy.interpolate.interp1d(
-                        cumsum_weights, ys, bounds_error=False, fill_value=(
-                            ys[0], ys[-1]
-                        )
-                    )(quantile)
+                        cumsum_weights,
+                        ys,
+                        bounds_error=False,
+                        fill_value=(ys[0], ys[-1]),
+                    )(
+                        quantile
+                    )
 
                 derived_relationships[db_time] = scipy.interpolate.interp1d(
                     db_time_table.columns.values.squeeze(),
