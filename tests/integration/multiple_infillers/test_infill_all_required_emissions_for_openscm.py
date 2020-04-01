@@ -127,7 +127,7 @@ class TestGasDecomposeTimeDepRatio:
         to_fill = modified_test_db.filter(
             variable=required_variables_list, keep=False
         )
-        output_times = list(set(to_fill[to_fill.time_col]))
+        output_times = to_fill[to_fill.time_col].unique()
         output_df = infill_all_required_variables(
             to_fill,
             modified_test_db,
@@ -168,27 +168,25 @@ class TestGasDecomposeTimeDepRatio:
 
     def test_infillallrequiredvariables_check_results_fails_wrong_times(self, test_db):
         # We do not have data for all the default times, so this fails
-        if test_db.time_col == "year":
-
-            required_variables_list = ["HFC|C5F12"]
-            infilled_data_prefix = "Emissions"
-            modified_test_db = test_db.copy()
-            modified_test_db.data["variable"] = modified_test_db.data[
-                "variable"
-            ].str.replace(re.escape(infilled_data_prefix + "|"), "")
-            to_fill = modified_test_db.filter(
-                variable=required_variables_list, keep=False
+        required_variables_list = ["HFC|C5F12"]
+        infilled_data_prefix = "Emissions"
+        modified_test_db = test_db.copy()
+        modified_test_db.data["variable"] = modified_test_db.data[
+            "variable"
+        ].str.replace(re.escape(infilled_data_prefix + "|"), "")
+        to_fill = modified_test_db.filter(
+            variable=required_variables_list, keep=False
+        )
+        err_msg = re.escape("We do not have data for all required timesteps")
+        with pytest.raises(AssertionError, match=err_msg):
+            infill_all_required_variables(
+                to_fill,
+                modified_test_db,
+                ["HFC|C2F6"],
+                required_variables_list,
+                infilled_data_prefix=infilled_data_prefix,
+                check_data_returned=True,
             )
-            err_msg = re.escape("We do not have data for all required timesteps")
-            with pytest.raises(AssertionError, match=err_msg):
-                infill_all_required_variables(
-                    to_fill,
-                    modified_test_db,
-                    ["HFC|C2F6"],
-                    required_variables_list,
-                    infilled_data_prefix=infilled_data_prefix,
-                    check_data_returned=True,
-                )
 
     def test_infillallrequiredvariables_check_results_error_bad_names_to_infill(
         self, test_db
