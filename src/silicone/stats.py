@@ -83,7 +83,7 @@ def rolling_window_find_quantiles(
 def calc_all_emissions_correlations(emms_df, years, output_dir):
     """
     Save csv files of the correlation coefficients and the rank correlation coefficients
-     between emissions at specified locations.
+     between emissions at specified times.
 
     This function includes all undivided emissions (i.e. results recorded as
     `Emissions|X`) and CO2 emissions split once (i.e. `Emissions|CO2|X`). It does not
