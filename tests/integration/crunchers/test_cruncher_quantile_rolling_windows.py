@@ -141,7 +141,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         # We are (quant - 1/6) along a gradient of 1/(5/6)
         assert np.isclose(
             returned.filter(scenario="scen_b", year=2010)["value"].iloc[0],
-            (quant - 1/6) / (5/6)
+            (quant - 1 / 6) / (5 / 6),
         )
         assert all(returned.filter(year=2030)["value"] == 1000)
         assert all(returned.filter(year=2050)["value"] == 5000)
@@ -154,11 +154,11 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         result_2 = res(simple_df)
         assert np.isclose(
             result_2.filter(scenario="scen_a", year=2010)["value"].iloc[0],
-            (quant - 5 / 6) / (1 / 6)
+            (quant - 5 / 6) / (1 / 6),
         )
         assert np.isclose(
             result_2.filter(scenario="scen_b", year=2010)["value"].iloc[0],
-            (quant - 1 / 6) / (5 / 6)
+            (quant - 1 / 6) / (5 / 6),
         )
         assert all(result_2.filter(year=2030)["value"] == 1000)
         assert all(result_2.filter(year=2050)["value"] == 5000)
