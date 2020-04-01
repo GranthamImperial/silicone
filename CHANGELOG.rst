@@ -4,6 +4,7 @@ Changelog
 master
 ------
 
+- (`#78 <https://github.com/znicholls/silicone/pull/78>`_) Changed how quantile rolling windows works by adding an extra interpolate step for smoothness
 - (`#77 <https://github.com/znicholls/silicone/pull/77>`_) Added calculation of variance of rank correlation to stats
 - (`#76 <https://github.com/znicholls/silicone/pull/76>`_) Removed command-line interface
 - (`#75 <https://github.com/znicholls/silicone/pull/75>`_) Updated README
