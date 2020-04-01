@@ -15,7 +15,7 @@ from .base import _DatabaseCruncher
 logger = logging.getLogger(__name__)
 
 
-class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
+class QuantileRollingWindows(_DatabaseCruncher):
     """
     Database cruncher which uses the 'rolling windows' technique.
 
@@ -237,7 +237,7 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
 
         def filler(in_iamdf):
             """
-            Filler function derived from :obj:`DatabaseCruncherQuantileRollingWindows`.
+            Filler function derived from :obj:`QuantileRollingWindows`.
 
             Parameters
             ----------

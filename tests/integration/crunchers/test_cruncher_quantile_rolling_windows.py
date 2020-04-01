@@ -10,7 +10,7 @@ from base import _DataBaseCruncherTester
 from pyam import IamDataFrame
 
 import silicone.stats
-from silicone.database_crunchers import DatabaseCruncherQuantileRollingWindows
+from silicone.database_crunchers import QuantileRollingWindows
 
 _ma = "model_a"
 _mb = "model_b"
@@ -32,7 +32,7 @@ _msrvu = ["model", "scenario", "region", "variable", "unit"]
 
 
 class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
-    tclass = DatabaseCruncherQuantileRollingWindows
+    tclass = QuantileRollingWindows
     # The units in this dataframe are intentionally illogical for C5F12
     tdb = pd.DataFrame(
         [
