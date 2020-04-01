@@ -90,26 +90,6 @@ def calc_all_emissions_correlations(emms_df, years, output_dir):
     include Kyoto gases. It will also save the average absolute value of the
     coefficients.
 
-    Files created:
-
-    - "variable_counts.csv" : the number of scenario/model pairs where the emissions
-    data occurs.
-
-    - "gases_correlation_{year}.csv" : The Pearson's correlation between gases emissions
-     in a given year.
-
-    - "gases_rank_correlation_{year}.csv" : The Spearman's rank correlation between
-    gases in a given year
-
-    - "time_av_absolute_correlation_{}_to_{}.csv" : The magnitude of the Pearson's
-    correlation between emissions, averaged over the years requested.
-
-    - "time_av_absolute_rank_correlation_{}_to_{}.csv" : The magnitude of the Spearman's
-     rank correlation between emissions, averaged over the years requested.
-
-    - "time_variance_rank_correlation_{}_to_{}.csv" : The variance over time in the rank
-     correlation values above.
-
     Parameters
     ----------
     emms_df : :obj:`pyam.IamDataFrame`
@@ -120,6 +100,26 @@ def calc_all_emissions_correlations(emms_df, years, output_dir):
 
     years : list[int]
         The years upon which to calculate correlations.
+
+    Files created
+    -------------
+    "variable_counts.csv" : the number of scenario/model pairs where the emissions
+    data occurs.
+
+    "gases_correlation_{year}.csv" : The Pearson's correlation between gases emissions
+     in a given year.
+
+    "gases_rank_correlation_{year}.csv" : The Spearman's rank correlation between
+    gases in a given year
+
+    "time_av_absolute_correlation_{}_to_{}.csv" : The magnitude of the Pearson's
+    correlation between emissions, averaged over the years requested.
+
+    "time_av_absolute_rank_correlation_{}_to_{}.csv" : The magnitude of the Spearman's
+     rank correlation between emissions, averaged over the years requested.
+
+    "time_variance_rank_correlation_{}_to_{}.csv" : The variance over time in the rank
+     correlation values above.
     """
     assert len(emms_df.regions()) == 1, "Calculation is for only one region"
     # Obtain the list of gases to examine
