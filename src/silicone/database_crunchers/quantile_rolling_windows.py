@@ -45,17 +45,15 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
     where :math:`x` is the position of the data point on the lead timeseries axis,
     :math:`x_{\\text{window}}` is the position of the centre of the window on the lead
     timeseries axis, :math:`b` is the distance between window centres and :math:`f` is
-    a decay factor which controls how much less points away from :math:`x_{\\text{window}}`
-    are weighted. If :math:`f=1` then a point which is halfway between
+    a decay factor which controls how much less points away from
+    :math:`x_{\\text{window}}` are weighted.
+    If :math:`f=1` then a point which is halfway between
     window centres receives a weighting of :math:`1/2`. Lowering the value of
     :math:`f` cause points further from the window centre to receive less weight.
 
     With these weightings, the desired quantile of the data is then calculated. This
-    calculation is done by sorting the data, and then choosing the first data point
-    from the database which sits above or equal to the given quantile, with each data
-    point's contribution to the quantile calculation being weighted by its weight. As
-    a result, this cruncher limits itself to using data within the distribution and
-    will not make any assumptions about the shape of the distribution.
+    calculation is done by sorting the data and interpolating the value where the
+    cumulative sum of weights equals the quantile.
 
     If the option ``use_ratio`` is set to ``True``, instead of returning the absolute
     value of the follow at this quantile, we return the quantile of the ratio between
@@ -219,9 +217,13 @@ class DatabaseCruncherQuantileRollingWindows(_DatabaseCruncher):
                     # We want to calculate the weights at the midpoint of step
                     # corresponding to the y-value.
                     cumsum_weights = np.cumsum(weights)
-                    db_time_table.loc[(db_time, quantile), window_center] = min(
-                        ys[cumsum_weights >= quantile]
-                    )
+                    db_time_table.loc[
+                        (db_time, quantile), window_center
+                    ] = scipy.interpolate.interp1d(
+                        cumsum_weights, ys, bounds_error=False, fill_value=(
+                            ys[0], ys[-1]
+                        )
+                    )(quantile)
 
                 derived_relationships[db_time] = scipy.interpolate.interp1d(
                     db_time_table.columns.values.squeeze(),
