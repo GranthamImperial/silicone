@@ -98,6 +98,8 @@ def calc_all_emissions_correlations(emms_df, years, output_dir):
 
     - "time_av_absolute_rank_correlation_{}_to_{}.csv" : The magnitude of the Spearman's rank correlation between emissions, averaged over the years requested.
 
+    - "time_variance_rank_correlation_{}_to_{}.csv" : the variance over time in the rank correlation values above. 
+
     Parameters
     ----------
     emms_df : :obj:`pyam.IamDataFrame`
