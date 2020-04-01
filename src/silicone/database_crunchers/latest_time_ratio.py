@@ -140,7 +140,6 @@ class LatestTimeRatio(_DatabaseCruncher):
                     )
                     raise ValueError(error_msg)
                 else:
-                    # TODO: make interpolate method of IamDataFrame datetime friendly
                     lead_var_interp = lead_var.timeseries()
                     lead_var_interp[data_follower_key_timepoint] = np.nan
                     lead_var_interp = lead_var_interp.reindex(

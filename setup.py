@@ -36,7 +36,7 @@ REQUIREMENTS_INSTALL = [
     "click",
     "openscm-units>=0.1.1",
     "pint",
-    "pyam-iamc>=0.3.0",
+    "pyam-iamc>=0.5.0",
     "python-dateutil",
     "numpy",
     "scipy",
