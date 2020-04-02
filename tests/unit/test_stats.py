@@ -34,25 +34,26 @@ def test_rolling_window_find_quantiles():
     xs = np.array([0, 0, 1, 1])
     ys = np.array([0, 1, 0, 1])
     desired_quantiles = [0.4, 0.5, 0.6]
-    # We have points at 0 and 1 in both a and y. Weightings cancel out, so the quantile
-    # marks the distance between 0 and 1 we travel. We set the decay length to 20 so 0
-    # and 1 get weightings of 1/3 and 1/6 at the ends. This then means gradient 3 *
+    # We have points at 0 and 1 in both x and y. We set the decay length to 20 so 0
+    # and 1 get weightings of 1/3 at their own end and 1/6 at the other end.
+    # This then means gradient of either 3 or 6, depending on whether you encounter the
+    # 3 first (nearer 0, which occurs first above) or 6 first (nearer 1, occurs later)
     quantiles = stats.rolling_window_find_quantiles(xs, ys, desired_quantiles, 9, 20)
     assert np.allclose(
-        quantiles.iloc[0].tolist(), [
-            (0.4 - 1/3) * 3, 0.5, 1 - (0.4 - 1/3) * 3
-        ]
+        quantiles.iloc[0].tolist(),
+        [0, 0, 0.1 * 3]
     )
-    assert np.allclose(quantiles.iloc[-1].tolist(), [0, 0.5, 1])
+    assert np.allclose(quantiles.iloc[-1].tolist(), [0, 0, 0.1 * 6])
 
     xs = np.array([0, 0, 1, 1])
     ys = np.array([0, 0, 1, 1])
     quantiles = stats.rolling_window_find_quantiles(xs, ys, desired_quantiles, 9, 20)
-    # In this case we have a gradient of 6 starting from 0.5 at x = 0
-    assert all(quantiles.iloc[0, 0:1] == 0)
-    assert np.isclose(quantiles.iloc[0, -1], 0.1 * 6)
-    # And a gradient of 3 starting from 3/12 at x = 1
-    assert np.allclose(quantiles.iloc[-1, :].tolist(), [(0.4 - 3/12) * 3, (0.5 - 3/12) * 3, 1 ])
+    assert all(quantiles.iloc[0] == 0)
+    # And a gradient of 3 starting from 1/3 at x = 1
+    assert np.allclose(
+        quantiles.iloc[-1, :].tolist(),
+        [(0.4 - 1 / 3) * 3, (0.5 - 1 / 3) * 3, (0.6 - 1 / 3) * 3]
+    )
 
     desired_quantiles = [0, 0.5, 1]
     quantiles = stats.rolling_window_find_quantiles(
