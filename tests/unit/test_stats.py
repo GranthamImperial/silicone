@@ -3,6 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 import pyam
+import scipy.interpolate
 
 import silicone.stats as stats
 
@@ -33,26 +34,35 @@ def test_rolling_window_find_quantiles():
     xs = np.array([0, 0, 1, 1])
     ys = np.array([0, 1, 0, 1])
     desired_quantiles = [0.4, 0.5, 0.6]
-    quantiles = stats.rolling_window_find_quantiles(xs, ys, desired_quantiles, 9, 2 * 9)
-    assert all(quantiles.iloc[0] == [0, 0, 1])
-    assert all(quantiles.iloc[1] == [0, 0, 1])
+    # We have points at 0 and 1 in both a and y. Weightings cancel out, so the quantile
+    # marks the distance between 0 and 1 we travel. We set the decay length to 20 so 0
+    # and 1 get weightings of 1/3 and 1/6 at the ends. This then means gradient 3 *
+    quantiles = stats.rolling_window_find_quantiles(xs, ys, desired_quantiles, 9, 20)
+    assert np.allclose(
+        quantiles.iloc[0].tolist(), [
+            (0.4 - 1/3) * 3, 0.5, 1 - (0.4 - 1/3) * 3
+        ]
+    )
+    assert np.allclose(quantiles.iloc[-1].tolist(), [0, 0.5, 1])
 
     xs = np.array([0, 0, 1, 1])
     ys = np.array([0, 0, 1, 1])
-    quantiles = stats.rolling_window_find_quantiles(xs, ys, desired_quantiles, 9, 2 * 9)
-    assert all(quantiles.iloc[0, :] == 0)
-    assert all(quantiles.iloc[-1, :] == 1)
-    assert all(quantiles.iloc[5, :] == [0, 0, 1])
+    quantiles = stats.rolling_window_find_quantiles(xs, ys, desired_quantiles, 9, 20)
+    # In this case we have a gradient of 6 starting from 0.5 at x = 0
+    assert all(quantiles.iloc[0, 0:1] == 0)
+    assert np.isclose(quantiles.iloc[0, -1], 0.1 * 6)
+    # And a gradient of 3 starting from 3/12 at x = 1
+    assert np.allclose(quantiles.iloc[-1, :].tolist(), [(0.4 - 3/12) * 3, (0.5 - 3/12) * 3, 1 ])
 
     desired_quantiles = [0, 0.5, 1]
     quantiles = stats.rolling_window_find_quantiles(
-        np.array([1]), np.array([1]), desired_quantiles, 9, 2 * 9
+        np.array([1]), np.array([1]), desired_quantiles, 9, 20
     )
     assert all(quantiles.iloc[0, :] == [1, 1, 1])
 
     desired_quantiles = [0, 0.5, 1]
     quantiles = stats.rolling_window_find_quantiles(
-        np.array([1, 1]), np.array([1, 1]), desired_quantiles, 9, 2 * 9
+        np.array([1, 1]), np.array([1, 1]), desired_quantiles, 9, 20
     )
     assert all(quantiles.iloc[0, :] == [1, 1, 1])
 
@@ -63,14 +73,22 @@ def test_rolling_window_find_quantiles_same_points():
     xs = np.array([1] * 11)
     ys = np.array(range(11))
     desired_quantiles = [0, 0.4, 0.5, 0.6, 0.85, 1]
-    quantiles = stats.rolling_window_find_quantiles(xs, ys, desired_quantiles, 9, 2 * 9)
+    quantiles = stats.rolling_window_find_quantiles(xs, ys, desired_quantiles, 9, 20)
 
     cumsum_weights = (1 + np.arange(11)) / 11
     calculated_quantiles = []
     for quant in desired_quantiles:
-        calculated_quantiles.append(min(ys[cumsum_weights >= quant]))
+        calculated_quantiles.append(
+            scipy.interpolate.interp1d(
+                cumsum_weights,
+                ys,
+                bounds_error=False,
+                fill_value=(ys[0], ys[-1]),
+                assume_sorted=True,
+            )(quant)
+        )
 
-    assert all(quantiles.values.squeeze() == calculated_quantiles)
+    assert np.allclose(quantiles.squeeze().tolist(), calculated_quantiles)
 
 
 def test_rolling_window_find_quantiles_one():

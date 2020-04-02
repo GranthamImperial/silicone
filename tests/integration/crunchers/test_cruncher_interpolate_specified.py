@@ -176,7 +176,7 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         large_db = IamDataFrame(self.large_db.copy())
         tcruncher = self.tclass(large_db)
         res = tcruncher.derive_relationship(
-            "Emissions|CH4", ["Emissions|CO2"], required_scenario="scen_a"
+            "Emissions|CH4", ["Emissions|CO2"], required_scenario="*"
         )
         assert callable(res)
         to_find = IamDataFrame(self.small_db.copy())
@@ -185,9 +185,9 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         # Calculate the same values numerically
         xs = large_db.filter(variable="Emissions|CO2")["value"].values
         ys = large_db.filter(variable="Emissions|CH4")["value"].values
-        quantile_expected = silicone.stats.rolling_window_find_quantiles(xs, ys, [0.5])
+        ys = [np.mean(ys[xs == x]) for x in xs]
         interpolate_fn = scipy.interpolate.interp1d(
-            np.array(quantile_expected.index), quantile_expected.values.squeeze()
+            xs, ys
         )
         xs_to_interp = to_find.filter(variable="Emissions|CO2")["value"].values
 

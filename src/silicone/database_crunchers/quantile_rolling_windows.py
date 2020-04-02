@@ -224,6 +224,7 @@ class QuantileRollingWindows(_DatabaseCruncher):
                         ys,
                         bounds_error=False,
                         fill_value=(ys[0], ys[-1]),
+                        assume_sorted=True,
                     )(
                         quantile
                     )
