@@ -186,9 +186,7 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         xs = large_db.filter(variable="Emissions|CO2")["value"].values
         ys = large_db.filter(variable="Emissions|CH4")["value"].values
         ys = [np.mean(ys[xs == x]) for x in xs]
-        interpolate_fn = scipy.interpolate.interp1d(
-            xs, ys
-        )
+        interpolate_fn = scipy.interpolate.interp1d(xs, ys)
         xs_to_interp = to_find.filter(variable="Emissions|CO2")["value"].values
 
         expected = interpolate_fn(xs_to_interp)

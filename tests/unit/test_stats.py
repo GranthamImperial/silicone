@@ -39,10 +39,7 @@ def test_rolling_window_find_quantiles():
     # This then means gradient of either 3 or 6, depending on whether you encounter the
     # 3 first (nearer 0, which occurs first above) or 6 first (nearer 1, occurs later)
     quantiles = stats.rolling_window_find_quantiles(xs, ys, desired_quantiles, 9, 20)
-    assert np.allclose(
-        quantiles.iloc[0].tolist(),
-        [0, 0, 0.1 * 3]
-    )
+    assert np.allclose(quantiles.iloc[0].tolist(), [0, 0, 0.1 * 3])
     assert np.allclose(quantiles.iloc[-1].tolist(), [0, 0, 0.1 * 6])
 
     xs = np.array([0, 0, 1, 1])
@@ -52,7 +49,7 @@ def test_rolling_window_find_quantiles():
     # And a gradient of 3 starting from 1/3 at x = 1
     assert np.allclose(
         quantiles.iloc[-1, :].tolist(),
-        [(0.4 - 1 / 3) * 3, (0.5 - 1 / 3) * 3, (0.6 - 1 / 3) * 3]
+        [(0.4 - 1 / 3) * 3, (0.5 - 1 / 3) * 3, (0.6 - 1 / 3) * 3],
     )
 
     desired_quantiles = [0, 0.5, 1]
