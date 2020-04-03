@@ -1,9 +1,11 @@
 import logging
-import pyam
 import re
-from silicone.database_crunchers import ConstantRatio, QuantileRollingWindows
-import tqdm
 import warnings
+
+import pyam
+import tqdm
+
+from silicone.database_crunchers import ConstantRatio, QuantileRollingWindows
 
 
 """
