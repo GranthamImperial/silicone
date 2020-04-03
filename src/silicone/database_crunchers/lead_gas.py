@@ -1,5 +1,5 @@
 """
-Module for the database cruncher which uses the 'lead gas' technique.
+Module for the database cruncher which uses the 'latest time ratio' technique.
 """
 import warnings
 
@@ -9,9 +9,9 @@ from pyam import IamDataFrame
 from .base import _DatabaseCruncher
 
 
-class DatabaseCruncherLeadGas(_DatabaseCruncher):
+class LatestTimeRatio(_DatabaseCruncher):
     """
-    Database cruncher which uses the 'lead gas' technique.
+    Database cruncher which uses the 'latest time ratio' technique.
 
     This cruncher derives the relationship between two variables by simply assuming
     that the follower timeseries is equal to the lead timeseries multiplied by a
@@ -90,7 +90,7 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
 
         def filler(in_iamdf, interpolate=False):
             """
-            Filler function derived from :obj:`DatabaseCruncherLeadGas`.
+            Filler function derived from :obj:`LatestTimeRatio`.
 
             Parameters
             ----------
@@ -177,7 +177,7 @@ class DatabaseCruncherLeadGas(_DatabaseCruncher):
     def _get_iamdf_follower(self, variable_follower, variable_leaders):
         if len(variable_leaders) > 1:
             raise ValueError(
-                "For `DatabaseCruncherLeadGas`, ``variable_leaders`` should only "
+                "For `LatestTimeRatio`, ``variable_leaders`` should only "
                 "contain one variable"
             )
 

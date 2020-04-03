@@ -8,7 +8,7 @@ from ..utils import _get_unit_of_variable, _make_interpolator, _make_wide_db
 from .base import _DatabaseCruncher
 
 
-class DatabaseCruncherLinearInterpolation(_DatabaseCruncher):
+class LinearInterpolation(_DatabaseCruncher):
     """
     Database cruncher which uses linear interpolation.
 

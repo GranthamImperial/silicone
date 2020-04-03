@@ -1,12 +1,12 @@
 from .base import _DatabaseCruncher
-from .linear_interpolation import DatabaseCruncherLinearInterpolation
+from .linear_interpolation import LinearInterpolation
 
 
-class DatabaseCruncherScenarioAndModelSpecificInterpolate(_DatabaseCruncher):
+class ScenarioAndModelSpecificInterpolate(_DatabaseCruncher):
     """
     Database cruncher which pre-filters to only use data from specific scenarios, then
     runs the linear interpolator to return values from that set of scenarios. See the
-    documentation of DatabaseCruncherLinearInterpolation for more details.
+    documentation of LinearInterpolation for more details.
     """
 
     def derive_relationship(
@@ -58,5 +58,5 @@ class DatabaseCruncherScenarioAndModelSpecificInterpolate(_DatabaseCruncher):
                 "There is no data of the appropriate type in the database."
                 " There may be a typo in the SSP option."
             )
-        cruncher = DatabaseCruncherLinearInterpolation(use_db)
+        cruncher = LinearInterpolation(use_db)
         return cruncher.derive_relationship(variable_follower, variable_leaders)

@@ -5,7 +5,7 @@ aggregate variable and breaking this mix into its constituents.
 
 import pyam
 
-from silicone.database_crunchers import DatabaseCruncherTimeDepRatio
+from silicone.database_crunchers import TimeDepRatio
 from silicone.utils import convert_units_to_MtCO2_equiv
 
 
@@ -159,7 +159,7 @@ class DecomposeCollectionTimeDepRatio:
             aggregate, components, db_to_generate
         )
         self._db.append(consistent_composite, inplace=True)
-        cruncher = DatabaseCruncherTimeDepRatio(self._db)
+        cruncher = TimeDepRatio(self._db)
         if self._set_of_units_without_equiv(
             to_infill_df
         ) != self._set_of_units_without_equiv(consistent_composite):
