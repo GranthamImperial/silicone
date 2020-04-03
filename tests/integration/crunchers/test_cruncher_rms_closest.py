@@ -299,8 +299,7 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
     def test_derive_relationship_error_multiple_lead_vars(self, test_db):
         tcruncher = self.tclass(test_db)
         error_msg = re.escape(
-            "For `RMSClosest`, ``variable_leaders`` should only "
-            "contain one variable"
+            "For `RMSClosest`, ``variable_leaders`` should only " "contain one variable"
         )
         with pytest.raises(ValueError, match=error_msg):
             tcruncher.derive_relationship("Emissions|HFC|C5F12", ["a", "b"])
