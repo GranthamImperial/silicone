@@ -12,10 +12,10 @@ Closest RMS cruncher API
 .. automodule:: silicone.database_crunchers.rms_closest
     :members:
 
-Lead gas cruncher API
+Latest Time Ratio API
 =====================
 
-.. automodule:: silicone.database_crunchers.lead_gas
+.. automodule:: silicone.database_crunchers.latest_time_ratio
     :members:
 
 
