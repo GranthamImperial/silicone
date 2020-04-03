@@ -11,7 +11,7 @@ from .constant_ratio import ConstantRatio  # noqa: F401
 from .interpolate_specified_scenarios_and_models import (  # noqa: F401
     ScenarioAndModelSpecificInterpolate,
 )
-from .lead_gas import LatestTimeRatio  # noqa: F401
+from .latest_time_ratio import LatestTimeRatio  # noqa: F401
 from .linear_interpolation import LinearInterpolation  # noqa: F401
 from .quantile_rolling_windows import QuantileRollingWindows  # noqa: F401
 from .rms_closest import RMSClosest  # noqa: F401
