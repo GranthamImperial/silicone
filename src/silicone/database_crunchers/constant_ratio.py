@@ -11,7 +11,7 @@ from .base import _DatabaseCruncher
 logger = logging.getLogger(__name__)
 
 
-class DatabaseCruncherConstantRatio(_DatabaseCruncher):
+class ConstantRatio(_DatabaseCruncher):
     """
     Database cruncher which uses the 'constant given ratio' technique.
 
@@ -73,13 +73,13 @@ class DatabaseCruncherConstantRatio(_DatabaseCruncher):
         """
         if len(variable_leaders) > 1:
             raise ValueError(
-                "For `DatabaseCruncherConstantRatio`, ``variable_leaders`` should only "
+                "For `ConstantRatio`, ``variable_leaders`` should only "
                 "contain one variable"
             )
 
         def filler(in_iamdf):
             """
-            Filler function derived from :obj:`DatabaseCruncherTimeDepRatio`.
+            Filler function derived from :obj:`TimeDepRatio`.
 
             Parameters
             ----------

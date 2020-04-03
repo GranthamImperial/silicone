@@ -6,14 +6,14 @@ import pandas as pd
 import pytest
 from pyam import IamDataFrame
 
-from silicone.database_crunchers import DatabaseCruncherConstantRatio
+from silicone.database_crunchers import ConstantRatio
 
 _msa = ["model_a", "scen_a"]
 _msb = ["model_a", "scen_b"]
 
 
 class TestDatabaseCruncherTimeDepRatio:
-    tclass = DatabaseCruncherConstantRatio
+    tclass = ConstantRatio
     tdb = pd.DataFrame(
         [
             _msa + ["World", "Emissions|HFC|C5F12", "kt C5F12/yr", 2, 3],
@@ -84,7 +84,7 @@ class TestDatabaseCruncherTimeDepRatio:
     def test_derive_relationship_error_multiple_lead_vars(self):
         tcruncher = self.tclass()
         error_msg = re.escape(
-            "For `DatabaseCruncherConstantRatio`, ``variable_leaders`` should only "
+            "For `ConstantRatio`, ``variable_leaders`` should only "
             "contain one variable"
         )
         with pytest.raises(ValueError, match=error_msg):

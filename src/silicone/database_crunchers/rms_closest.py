@@ -9,7 +9,7 @@ from ..utils import _get_unit_of_variable
 from .base import _DatabaseCruncher
 
 
-class DatabaseCruncherRMSClosest(_DatabaseCruncher):
+class RMSClosest(_DatabaseCruncher):
     """
     Database cruncher which uses the 'closest RMS' technkque.
 
@@ -73,7 +73,7 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
 
         def filler(in_iamdf):
             """
-            Filler function derived from :obj:`DatabaseCruncherRMSClosest`.
+            Filler function derived from :obj:`RMSClosest`.
 
             Parameters
             ----------
@@ -161,7 +161,7 @@ class DatabaseCruncherRMSClosest(_DatabaseCruncher):
     def _check_iamdf_lead(self, variable_leaders):
         if len(variable_leaders) > 1:
             raise ValueError(
-                "For `DatabaseCruncherRMSClosest`, ``variable_leaders`` should only "
+                "For `RMSClosest`, ``variable_leaders`` should only "
                 "contain one variable"
             )
 

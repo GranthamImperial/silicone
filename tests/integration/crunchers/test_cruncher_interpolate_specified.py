@@ -10,8 +10,8 @@ from pyam import IamDataFrame
 
 import silicone.stats
 from silicone.database_crunchers import (
-    DatabaseCruncherLinearInterpolation,
-    DatabaseCruncherScenarioAndModelSpecificInterpolate,
+    LinearInterpolation,
+    ScenarioAndModelSpecificInterpolate,
 )
 
 _ma = "model_a"
@@ -35,7 +35,7 @@ _msrvu = ["model", "scenario", "region", "variable", "unit"]
 
 
 class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherTester):
-    tclass = DatabaseCruncherScenarioAndModelSpecificInterpolate
+    tclass = ScenarioAndModelSpecificInterpolate
     # The units in this dataframe are intentionally illogical for C5F12
     tdb = pd.DataFrame(
         [
@@ -96,7 +96,7 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
     def test_database_crunchers_with_filters(self, test_db, simple_df):
         test_db = self._adjust_time_style_to_match(test_db, simple_df)
         tcruncher_filtered = self.tclass(test_db)
-        tcruncher_linear = DatabaseCruncherLinearInterpolation(test_db)
+        tcruncher_linear = LinearInterpolation(test_db)
         filtered_cruncher = tcruncher_filtered.derive_relationship(
             "Emissions|CO2", ["Emissions|CH4"]
         )

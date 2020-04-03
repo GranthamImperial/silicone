@@ -6,7 +6,7 @@ import pyam
 import tqdm
 
 from silicone.database_crunchers import (
-    DatabaseCruncherConstantRatio,
+    ConstantRatio,
     QuantileRollingWindows,
 )
 
@@ -172,7 +172,7 @@ def infill_all_required_variables(
             variable_leaders,
             to_fill,
             database,
-            DatabaseCruncherConstantRatio,
+            ConstantRatio,
             output_timesteps,
             to_fill_orig,
             check_data_returned=False,
@@ -250,7 +250,7 @@ def _perform_crunch_and_check(
         """
     if (
         not all(x in df.variables().values for x in required_variables)
-        and type_of_cruncher != DatabaseCruncherConstantRatio
+        and type_of_cruncher != ConstantRatio
     ):
         not_present = [x for x in required_variables if x not in df.variables().values]
         raise Warning("Missing some requested variables: {}".format(not_present))

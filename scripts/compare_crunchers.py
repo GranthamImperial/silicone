@@ -26,11 +26,11 @@ def main():
     input_data = "./sr_15_complete.csv"
     # A list of all crunchers to investigate, here a reference to the actual cruncher
     crunchers_list = [
-        #  dc.DatabaseCruncherLeadGas,
-        # dc.DatabaseCruncherTimeDepRatio,
+        #  dc.LatestTimeRatio,
+        # dc.TimeDepRatio,
         dc.QuantileRollingWindows,
-        dc.DatabaseCruncherRMSClosest,
-        dc.DatabaseCruncherLinearInterpolation,
+        dc.RMSClosest,
+        dc.LinearInterpolation,
     ]
     options_list = [
         #  {},

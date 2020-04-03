@@ -11,7 +11,7 @@ from pyam import IamDataFrame
 from .base import _DatabaseCruncher
 
 
-class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
+class TimeDepRatio(_DatabaseCruncher):
     """
     Database cruncher which uses the 'time-dependent ratio' technique.
 
@@ -124,7 +124,7 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
 
         def filler(in_iamdf):
             """
-            Filler function derived from :obj:`DatabaseCruncherTimeDepRatio`.
+            Filler function derived from :obj:`TimeDepRatio`.
 
             Parameters
             ----------
@@ -197,7 +197,7 @@ class DatabaseCruncherTimeDepRatio(_DatabaseCruncher):
     def _get_iamdf_followers(self, variable_follower, variable_leaders):
         if len(variable_leaders) > 1:
             raise ValueError(
-                "For `DatabaseCruncherTimeDepRatio`, ``variable_leaders`` should only "
+                "For `TimeDepRatio`, ``variable_leaders`` should only "
                 "contain one variable"
             )
 

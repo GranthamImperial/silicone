@@ -7,14 +7,14 @@ import pytest
 from base import _DataBaseCruncherTester
 from pyam import IamDataFrame, concat
 
-from silicone.database_crunchers import DatabaseCruncherRMSClosest
+from silicone.database_crunchers import RMSClosest
 from silicone.database_crunchers.rms_closest import _select_closest
 
 _msa = ["model_a", "scen_a"]
 
 
 class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
-    tclass = DatabaseCruncherRMSClosest
+    tclass = RMSClosest
     tdb = pd.DataFrame(
         [
             _msa + ["World", "Emissions|HFC|C5F12", "kt C5F12/yr", np.nan, 3.14],
@@ -299,7 +299,7 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
     def test_derive_relationship_error_multiple_lead_vars(self, test_db):
         tcruncher = self.tclass(test_db)
         error_msg = re.escape(
-            "For `DatabaseCruncherRMSClosest`, ``variable_leaders`` should only "
+            "For `RMSClosest`, ``variable_leaders`` should only "
             "contain one variable"
         )
         with pytest.raises(ValueError, match=error_msg):

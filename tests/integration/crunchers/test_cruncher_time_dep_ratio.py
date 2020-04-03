@@ -6,14 +6,14 @@ import pytest
 from base import _DataBaseCruncherTester
 from pyam import IamDataFrame
 
-from silicone.database_crunchers import DatabaseCruncherTimeDepRatio
+from silicone.database_crunchers import TimeDepRatio
 
 _msa = ["model_a", "scen_a"]
 _msb = ["model_a", "scen_b"]
 
 
 class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
-    tclass = DatabaseCruncherTimeDepRatio
+    tclass = TimeDepRatio
     tdb = pd.DataFrame(
         [
             _msa + ["World", "Emissions|HFC|C5F12", "kt C5F12/yr", 2, 3],
@@ -68,7 +68,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
     def test_derive_relationship_error_multiple_lead_vars(self, test_db):
         tcruncher = self.tclass(test_db)
         error_msg = re.escape(
-            "For `DatabaseCruncherTimeDepRatio`, ``variable_leaders`` should only "
+            "For `TimeDepRatio`, ``variable_leaders`` should only "
             "contain one variable"
         )
         with pytest.raises(ValueError, match=error_msg):
