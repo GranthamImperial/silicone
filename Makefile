@@ -59,6 +59,16 @@ black: $(VENV_DIR)  ## use black to autoformat code
 		echo Not trying any formatting, working directory is dirty... >&2; \
 	fi;
 
+.PHONY: checks
+checks: $(VENV_DIR)  ## run checks similar to CI
+	@echo "=== black ==="; $(VENV_DIR)/bin/black --check src tests setup.py docs/source/conf.py --exclude silicone/_version.py || echo "--- black failed ---" >&2; \
+		echo "\n\n=== isort ==="; $(VENV_DIR)/bin/isort --check-only --quiet --recursive src tests setup.py || echo "--- isort failed ---" >&2; \
+		echo "\n\n=== docs ==="; $(VENV_DIR)/bin/sphinx-build -M html docs/source docs/build -qW || echo "--- docs failed ---" >&2; \
+		echo "\n\n=== notebook tests ==="; $(VENV_DIR)/bin/pytest notebooks -r a --nbval --sanitize-with tests/notebook-tests.cfg || echo "--- notebook tests failed ---" >&2; \
+		echo "\n\n=== tests ==="; $(VENV_DIR)/bin/pytest tests -r a --cov=silicone --cov-report='' \
+			&& $(VENV_DIR)/bin/coverage report --fail-under=95 || echo "--- tests failed ---" >&2; \
+		echo
+
 .PHONY: test-all
 test-all:  ## run the testsuite and test the notebooks
 	make test
