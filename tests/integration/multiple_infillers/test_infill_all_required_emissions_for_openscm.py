@@ -1,6 +1,7 @@
 import re
 
 import pandas as pd
+import numpy as np
 import pyam
 import pytest
 
@@ -150,7 +151,7 @@ class TestGasDecomposeTimeDepRatio:
             "variable"
         ].str.replace(re.escape(infilled_data_prefix + "|"), "")
         to_fill = test_db.filter(variable=required_variables_list, keep=False)
-        output_times = list(set(to_fill[to_fill.time_col]))
+        output_times = to_fill[to_fill.time_col].unique()
         output_df = infill_all_required_variables(
             to_fill,
             modified_test_db,
@@ -177,6 +178,14 @@ class TestGasDecomposeTimeDepRatio:
         to_fill = modified_test_db.filter(
             variable=required_variables_list, keep=False
         )
+        if test_db.time_col == "year":
+            timesteps = None
+        else:
+            # No default timeslist is available.
+            timesteps = [
+                pd.datetime(year=2010, day=15, month=6),
+                pd.datetime(year=2030, day=15, month=6),
+            ]
         err_msg = re.escape("We do not have data for all required timesteps")
         with pytest.raises(AssertionError, match=err_msg):
             infill_all_required_variables(
@@ -186,86 +195,96 @@ class TestGasDecomposeTimeDepRatio:
                 required_variables_list,
                 infilled_data_prefix=infilled_data_prefix,
                 check_data_returned=True,
+                output_timesteps=timesteps
             )
 
     def test_infillallrequiredvariables_check_results_error_bad_names_to_infill(
         self, test_db
     ):
-        #
-        if test_db.time_col == "year":
-
-            required_variables_list = ["HFC|C5F12"]
-            infilled_data_prefix = "Emissions"
-            modified_test_db = test_db.copy()
-            modified_test_db.data["variable"] = modified_test_db.data[
-                "variable"
-            ].str.replace(re.escape(infilled_data_prefix + "|"), "")
-            to_fill = modified_test_db.filter(
-                variable=required_variables_list, keep=False
-            ).append(test_db)
-            err_msg = re.escape("Not all of the data begins with the expected prefix")
-            with pytest.raises(ValueError, match=err_msg):
-                output_df = infill_all_required_variables(
-                    to_fill,
-                    modified_test_db,
-                    ["HFC|C2F6"],
-                    required_variables_list,
-                    infilled_data_prefix=infilled_data_prefix,
-                    to_fill_old_prefix=infilled_data_prefix,
-                    check_data_returned=True,
-                    output_timesteps=[2010, 2015],
-                )
+        required_variables_list = ["HFC|C5F12"]
+        infilled_data_prefix = "Emissions"
+        modified_test_db = test_db.copy()
+        modified_test_db.data["variable"] = modified_test_db.data[
+            "variable"
+        ].str.replace(re.escape(infilled_data_prefix + "|"), "")
+        to_fill = modified_test_db.filter(
+            variable=required_variables_list, keep=False
+        ).append(test_db)
+        err_msg = re.escape("Not all of the data begins with the expected prefix")
+        with pytest.raises(ValueError, match=err_msg):
+            output_df = infill_all_required_variables(
+                to_fill,
+                modified_test_db,
+                ["HFC|C2F6"],
+                required_variables_list,
+                infilled_data_prefix=infilled_data_prefix,
+                to_fill_old_prefix=infilled_data_prefix,
+                check_data_returned=True,
+                output_timesteps=[2010, 2015],
+            )
 
     def test_infillallrequiredvariables_check_results_error_bad_names_in_database(
         self, test_db
     ):
-        #
+        required_variables_list = ["HFC|C5F12"]
+        infilled_data_prefix = "Emissions"
+        modified_test_db = test_db.copy()
+        modified_test_db.data["variable"] = modified_test_db.data[
+            "variable"
+        ].str.replace(re.escape(infilled_data_prefix + "|"), "")
+        modified_test_db.append(test_db, inplace=True)
+        to_fill = modified_test_db.filter(
+            variable=required_variables_list, keep=False
+        )
         if test_db.time_col == "year":
-
-            required_variables_list = ["HFC|C5F12"]
-            infilled_data_prefix = "Emissions"
-            modified_test_db = test_db.copy()
-            modified_test_db.data["variable"] = modified_test_db.data[
-                "variable"
-            ].str.replace(re.escape(infilled_data_prefix + "|"), "")
-            modified_test_db.append(test_db, inplace=True)
-            to_fill = modified_test_db.filter(
-                variable=required_variables_list, keep=False
+            output_times = [2010, 2015]
+        else:
+            output_times = [
+                pd.datetime(year=2010, day=15, month=6),
+                pd.datetime(year=2015, day=15, month=6),
+            ]
+        err_msg = re.escape(
+            "This data already contains values with the expected final "
+            "prefix. This suggests that some of it has already been infilled."
+        )
+        with pytest.raises(ValueError, match=err_msg):
+            infill_all_required_variables(
+                to_fill,
+                modified_test_db,
+                ["HFC|C2F6"],
+                required_variables_list,
+                infilled_data_prefix=infilled_data_prefix,
+                check_data_returned=True,
+                output_timesteps=output_times,
             )
-            err_msg = re.escape(
-                "This data already contains values with the expected final "
-                "prefix. This suggests that some of it has already been infilled."
-            )
-            with pytest.raises(ValueError, match=err_msg):
-                infill_all_required_variables(
-                    to_fill,
-                    modified_test_db,
-                    ["HFC|C2F6"],
-                    required_variables_list,
-                    infilled_data_prefix=infilled_data_prefix,
-                    check_data_returned=True,
-                    output_timesteps=[2010, 2015],
-                )
 
     @pytest.mark.parametrize("additional_cols", [None, "Another_col"])
     def test_infillallrequiredvariables_check_results_interp_times(
         self, test_db, additional_cols
     ):
+        required_variables_list = ["Emissions|HFC|C5F12"]
+        leader = ["Emissions|HFC|C2F6"]
+        if additional_cols:
+            test_db.data[additional_cols] = 0
+            test_db = pyam.IamDataFrame(test_db.data)
         if test_db.time_col == "year":
-            required_variables_list = ["Emissions|HFC|C5F12"]
-            leader = ["Emissions|HFC|C2F6"]
-            if additional_cols:
-                test_db.data[additional_cols] = 0
-                test_db = pyam.IamDataFrame(test_db.data)
-            to_fill = test_db.filter(variable=leader)
-            output_df = infill_all_required_variables(
-                to_fill,
-                test_db,
-                leader,
-                required_variables_list,
-                check_data_returned=True,
-                output_timesteps=[2012],
-            )
-            # The values should be interpolations between the known values at the start
-            assert output_df.data["value"][0] == (3 * 0.5 + 2 * 1.5) / 5
-            assert output_df.data["value"][1] == (3 * 2 + 2 * 3) / 5
+            output_times = [2012]
+        else:
+            # There is a leap year during 2015, so we subtract 3/5 of a day
+            output_times = [pd.Timestamp(year=2012, day=14, month=6, hour=10)]
+        to_fill = test_db.filter(variable=leader)
+        output_df = infill_all_required_variables(
+            to_fill,
+            test_db,
+            leader,
+            required_variables_list,
+            check_data_returned=True,
+            output_timesteps=output_times,
+        )
+        # The values should be interpolations between the known values at the start
+        assert np.isclose(
+            output_df.data["value"][0], (3 * 0.5 + 2 * 1.5) / 5, atol=1e-5
+        )
+        assert np.isclose(
+            output_df.data["value"][1], (3 * 2 + 2 * 3) / 5, atol=1e-5
+        )
