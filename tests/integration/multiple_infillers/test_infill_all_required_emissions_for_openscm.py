@@ -72,9 +72,7 @@ class TestGasDecomposeTimeDepRatio:
             database.data["variable"] == required_variables_list[0]
         ] = "Emissions|odd"
         err_msg = re.escape(
-            "Missing some requested variables: {}".format(
-                required_variables_list[0]
-            )
+            "Missing some requested variables: {}".format(required_variables_list[0])
         )
         with pytest.warns(UserWarning):
             infill_all_required_variables(
@@ -91,7 +89,7 @@ class TestGasDecomposeTimeDepRatio:
                 to_fill,
                 database,
                 variable_leaders=["Emissions|HFC|C2F6"],
-                output_timesteps=output_times
+                output_timesteps=output_times,
             )
 
     def test_infillallrequiredvariables_changes_names(self, test_db):
@@ -102,9 +100,7 @@ class TestGasDecomposeTimeDepRatio:
         modified_test_db.data["variable"] = modified_test_db.data[
             "variable"
         ].str.replace(re.escape(infilled_data_prefix + "|"), "")
-        to_fill = modified_test_db.filter(
-            variable=required_variables_list, keep=False
-        )
+        to_fill = modified_test_db.filter(variable=required_variables_list, keep=False)
         output_df = infill_all_required_variables(
             to_fill,
             modified_test_db,
@@ -112,7 +108,6 @@ class TestGasDecomposeTimeDepRatio:
             required_variables_list,
             infilled_data_prefix=infilled_data_prefix,
             output_timesteps=output_times,
-
         )
         assert not output_df.filter(
             variable=required_variables_list, keep=False
@@ -126,9 +121,7 @@ class TestGasDecomposeTimeDepRatio:
         modified_test_db.data["variable"] = modified_test_db.data[
             "variable"
         ].str.replace(re.escape(infilled_data_prefix + "|"), "")
-        to_fill = modified_test_db.filter(
-            variable=required_variables_list, keep=False
-        )
+        to_fill = modified_test_db.filter(variable=required_variables_list, keep=False)
         output_times = to_fill[to_fill.time_col].unique()
         output_df = infill_all_required_variables(
             to_fill,
@@ -176,9 +169,7 @@ class TestGasDecomposeTimeDepRatio:
         modified_test_db.data["variable"] = modified_test_db.data[
             "variable"
         ].str.replace(re.escape(infilled_data_prefix + "|"), "")
-        to_fill = modified_test_db.filter(
-            variable=required_variables_list, keep=False
-        )
+        to_fill = modified_test_db.filter(variable=required_variables_list, keep=False)
         if test_db.time_col == "year":
             timesteps = None
         else:
@@ -196,7 +187,7 @@ class TestGasDecomposeTimeDepRatio:
                 required_variables_list,
                 infilled_data_prefix=infilled_data_prefix,
                 check_data_returned=True,
-                output_timesteps=timesteps
+                output_timesteps=timesteps,
             )
 
     def test_infillallrequiredvariables_check_results_error_bad_names_to_infill(
@@ -234,9 +225,7 @@ class TestGasDecomposeTimeDepRatio:
             "variable"
         ].str.replace(re.escape(infilled_data_prefix + "|"), "")
         modified_test_db.append(test_db, inplace=True)
-        to_fill = modified_test_db.filter(
-            variable=required_variables_list, keep=False
-        )
+        to_fill = modified_test_db.filter(variable=required_variables_list, keep=False)
         if test_db.time_col == "year":
             output_times = [2010, 2015]
         else:
@@ -286,6 +275,4 @@ class TestGasDecomposeTimeDepRatio:
         assert np.isclose(
             output_df.data["value"][0], (3 * 0.5 + 2 * 1.5) / 5, atol=1e-5
         )
-        assert np.isclose(
-            output_df.data["value"][1], (3 * 2 + 2 * 3) / 5, atol=1e-5
-        )
+        assert np.isclose(output_df.data["value"][1], (3 * 2 + 2 * 3) / 5, atol=1e-5)
