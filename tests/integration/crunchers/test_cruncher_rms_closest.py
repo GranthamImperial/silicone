@@ -342,14 +342,18 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         with pytest.raises(ValueError, match=error_msg):
             tcruncher.derive_relationship(variable_follower, ["Emissions|HFC|C2F6"])
 
-    def test_relationship_usage(self, test_db, test_downscale_df):
+    @pytest.mark.parametrize("add_col", [None, "extra_col"])
+    def test_relationship_usage(self, test_db, test_downscale_df, add_col):
         tcruncher = self.tclass(test_db)
-
+        lead = ["Emissions|HFC|C2F6"]
         filler = tcruncher.derive_relationship(
-            "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
+            "Emissions|HFC|C5F12", lead
         )
 
         test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db)
+        if add_col:
+            test_downscale_df[add_col] = "blah"
+            test_downscale_df = IamDataFrame(test_downscale_df.data)
         res = filler(test_downscale_df)
 
         scen_b_df = test_db.filter(variable="Emissions|HFC|C5F12")
@@ -358,6 +362,11 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         scen_b_df["scenario"] = "scen_b"
         scen_c_df["model"] = "model_b"
         scen_c_df["scenario"] = "scen_c"
+        if add_col:
+            scen_c_df[add_col] = ""
+            scen_c_df = IamDataFrame(scen_c_df.data)
+            scen_b_df[add_col] = ""
+            scen_b_df = IamDataFrame(scen_b_df.data)
         exp = concat([scen_b_df, scen_c_df])
 
         pd.testing.assert_frame_equal(
@@ -369,6 +378,9 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
             res.timeseries().columns.values.squeeze(),
             exp.timeseries().columns.values.squeeze(),
         )
+
+        # Test we can append the answer to the original
+        test_downscale_df.filter(variable=lead).append(res)
 
     def test_relationship_usage_no_overlap(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db.filter(year=2015))

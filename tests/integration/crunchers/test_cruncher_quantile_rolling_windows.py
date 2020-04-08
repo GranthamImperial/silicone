@@ -209,7 +209,8 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
             expected = interpolate_fn(xs_to_interp)
         assert all(crunched["value"].values == expected)
 
-    def test_extreme_values_relationship(self):
+    @pytest.mark.parametrize("add_col", [None, "extra_col"])
+    def test_extreme_values_relationship(self, add_col):
         # Our cruncher has a closest-point extrapolation algorithm and therefore
         # should return the same values when filling for data outside tht limits of
         # its cruncher
@@ -217,8 +218,12 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         # Calculate the values using the cruncher for a fairly detailed dataset
         large_db = IamDataFrame(self.large_db.copy())
         tcruncher = self.tclass(large_db)
-        res = tcruncher.derive_relationship("Emissions|CH4", ["Emissions|CO2"])
+        lead = ["Emissions|CO2"]
+        res = tcruncher.derive_relationship("Emissions|CH4", lead)
         assert callable(res)
+        if add_col:
+            large_db[add_col] = "blah"
+            large_db = IamDataFrame(large_db.data)
         crunched = res(large_db)
 
         # Increase the maximum values
@@ -233,6 +238,9 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         modify_extreme_db["value"].loc[ind] -= 10
         extreme_crunched = res(modify_extreme_db)
         assert all(crunched["value"] == extreme_crunched["value"])
+
+        # Check that we can append the answer
+        large_db.filter(variable=lead).append(crunched)
 
     def test_derive_relationship_same_gas(self, test_db, test_downscale_df):
         # Given only a single data series, we recreate the original pattern
