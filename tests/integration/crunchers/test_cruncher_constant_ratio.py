@@ -92,11 +92,14 @@ class TestDatabaseCruncherTimeDepRatio:
                 "Emissions|HFC|C5F12", ["a", "b"], ratio=0.5, units="Some_unit"
             )
 
-    def test_relationship_usage(self, unequal_df, test_downscale_df):
-        equal_df = unequal_df.filter(model="model_a")
+    @pytest.mark.parametrize("add_col", [None, "extra_col"])
+    def test_relationship_usage(self, test_downscale_df, add_col):
         units = "new units"
         tcruncher = self.tclass()
         test_downscale_df = test_downscale_df.filter(year=[2010, 2015])
+        if add_col:
+            test_downscale_df[add_col] = "blah"
+            test_downscale_df = IamDataFrame(test_downscale_df.data)
         filler = tcruncher.derive_relationship(
             "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"], ratio=2, units=units
         )
@@ -116,6 +119,9 @@ class TestDatabaseCruncherTimeDepRatio:
             res.timeseries().columns.values.squeeze(),
             test_downscale_df.timeseries().columns.values.squeeze(),
         )
+
+        # Test we can append the results correctly
+        test_downscale_df.append(res)
 
     def test_relationship_usage_set_0(self, test_downscale_df):
         tcruncher = self.tclass()

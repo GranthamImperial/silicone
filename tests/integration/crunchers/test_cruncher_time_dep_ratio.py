@@ -120,18 +120,25 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
                 "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
             )
 
-    @pytest.mark.parametrize("match_sign", [True, False])
+    @pytest.mark.parametrize(
+        "match_sign,add_col",
+        [(True, None), (True, "extra"), (False, None), (False, "extra")]
+                             )
     def test_relationship_usage_multiple_data(
-        self, unequal_df, test_downscale_df, match_sign
+        self, unequal_df, test_downscale_df, match_sign, add_col
     ):
         equal_df = unequal_df.filter(model="model_a")
         tcruncher = self.tclass(equal_df)
         test_downscale_df = self._adjust_time_style_to_match(
             test_downscale_df, equal_df
         ).filter(year=[2010, 2015])
+        lead = ["Emissions|HFC|C2F6"]
         filler = tcruncher.derive_relationship(
-            "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"], match_sign
+            "Emissions|HFC|C5F12", lead, match_sign
         )
+        if add_col:
+            test_downscale_df[add_col] = "blah"
+            test_downscale_df = IamDataFrame(test_downscale_df.data)
         res = filler(test_downscale_df)
 
         lead_iamdf = test_downscale_df.filter(variable="Emissions|HFC|C2F6")
@@ -154,6 +161,9 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             res.timeseries().columns.values.squeeze(),
             test_downscale_df.timeseries().columns.values.squeeze(),
         )
+
+        # Test we can append our answer
+        test_downscale_df.filter(variable=lead).append(res)
 
     @pytest.mark.parametrize("match_sign", [True, False])
     def test_relationship_negative_specific(
