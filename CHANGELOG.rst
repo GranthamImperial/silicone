@@ -4,6 +4,7 @@ Changelog
 master
 ------
 
+- (`#83 <https://github.com/znicholls/silicone/pull/83>`_) Ensured that all results of crunching can be appended to the input. 
 - (`#82 <https://github.com/znicholls/silicone/pull/82>`_) Updated to a later version of pyam and solved todos associated with this. Also added a ``kwargs`` argument to ``infill_all_required``.
 - (`#80 <https://github.com/znicholls/silicone/pull/80>`_) Changed the names of crunchers for brevity. Also changed ``lead_gas`` to ``latest_time_ratio`` and included it in ratio notebook.
 - (`#78 <https://github.com/znicholls/silicone/pull/78>`_) Changed how quantile rolling windows works by adding an extra interpolate step for smoothness
