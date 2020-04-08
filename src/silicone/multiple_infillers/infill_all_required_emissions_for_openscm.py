@@ -175,9 +175,13 @@ def infill_all_required_variables(
         if variab not in database.variables().values
     ]
     if unavailable_variables:
-        warnings.warn(UserWarning(
-            "No data for {}, it will be infilled with 0s".format(unavailable_variables)
-        ))
+        warnings.warn(
+            UserWarning(
+                "No data for {}, it will be infilled with 0s".format(
+                    unavailable_variables
+                )
+            )
+        )
         # Infill the required variables with 0s.
         kwarg_dict = {"ratio": 0, "units": "Mt CO2-equiv/yr"}
         to_fill = _perform_crunch_and_check(
