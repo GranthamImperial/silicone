@@ -9,6 +9,7 @@ import pytest
 from silicone.multiple_infillers.infill_all_required_emissions_for_openscm import (
     infill_all_required_variables,
 )
+from silicone.database_crunchers.constant_ratio import ConstantRatio
 from silicone.utils import _adjust_time_style_to_match
 
 
@@ -66,6 +67,7 @@ class TestGasDecomposeTimeDepRatio:
     def test_infillallrequiredvariables_warning(self, test_db):
         output_times = list(set(test_db[test_db.time_col]))
         required_variables_list = ["Emissions|HFC|C5F12"]
+        leader = ["Emissions|HFC|C2F6"]
         to_fill = test_db.filter(variable=required_variables_list, keep=False)
         database = test_db.copy()
         database.data["variable"].loc[
@@ -75,20 +77,21 @@ class TestGasDecomposeTimeDepRatio:
             "Missing some requested variables: {}".format(required_variables_list[0])
         )
         with pytest.warns(UserWarning):
-            infill_all_required_variables(
+            output_df = infill_all_required_variables(
                 to_fill,
                 database,
-                variable_leaders=["Emissions|HFC|C2F6"],
+                variable_leaders=leader,
                 output_timesteps=output_times,
                 required_variables_list=required_variables_list,
             )
+        assert all(output_df.filter(variable=leader, keep=False)["value"] == 0)
         # We should also get the same warning if we do not set an explicit
         # required_variables_list
         with pytest.warns(UserWarning):
             infill_all_required_variables(
                 to_fill,
                 database,
-                variable_leaders=["Emissions|HFC|C2F6"],
+                variable_leaders=leader,
                 output_timesteps=output_times,
             )
 
@@ -276,3 +279,30 @@ class TestGasDecomposeTimeDepRatio:
             output_df.data["value"][0], (3 * 0.5 + 2 * 1.5) / 5, atol=1e-5
         )
         assert np.isclose(output_df.data["value"][1], (3 * 2 + 2 * 3) / 5, atol=1e-5)
+
+    def test_infillallrequiredvariables_check_results_kwargs(self, test_db):
+        required_variables_list = ["Emissions|HFC|C5F12"]
+        leader = ["Emissions|HFC|C2F6"]
+        kwargs = {"ratio": 1, "units": "Mt CO2-equiv/yr"}
+        if test_db.time_col == "year":
+            output_times = [2010]
+        else:
+            output_times = [datetime.datetime(year=2010, day=15, month=6)]
+        to_fill = test_db.filter(variable=leader)
+        output_df = infill_all_required_variables(
+            to_fill,
+            test_db,
+            leader,
+            required_variables_list,
+            cruncher=ConstantRatio,
+            check_data_returned=True,
+            output_timesteps=output_times,
+            **kwargs
+        )
+        assert np.allclose(
+            output_df.filter(variable=required_variables_list)["value"].values,
+            output_df.filter(variable=leader)["value"].values,
+        )
+        assert output_df.filter(
+            variable=required_variables_list
+        )["unit"].values == "Mt CO2-equiv/yr"
