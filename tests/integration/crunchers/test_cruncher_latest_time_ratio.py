@@ -149,9 +149,7 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
     def test_relationship_usage(self, test_db, test_downscale_df, add_col):
         tcruncher = self.tclass(test_db)
         lead = ["Emissions|HFC|C2F6"]
-        filler = tcruncher.derive_relationship(
-            "Emissions|HFC|C5F12", lead
-        )
+        filler = tcruncher.derive_relationship("Emissions|HFC|C5F12", lead)
         if add_col:
             test_downscale_df[add_col] = "blah"
             test_downscale_df = IamDataFrame(test_downscale_df.data)

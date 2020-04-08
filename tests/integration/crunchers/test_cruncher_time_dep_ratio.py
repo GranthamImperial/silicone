@@ -122,8 +122,8 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
 
     @pytest.mark.parametrize(
         "match_sign,add_col",
-        [(True, None), (True, "extra"), (False, None), (False, "extra")]
-                             )
+        [(True, None), (True, "extra"), (False, None), (False, "extra")],
+    )
     def test_relationship_usage_multiple_data(
         self, unequal_df, test_downscale_df, match_sign, add_col
     ):
@@ -133,9 +133,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             test_downscale_df, equal_df
         ).filter(year=[2010, 2015])
         lead = ["Emissions|HFC|C2F6"]
-        filler = tcruncher.derive_relationship(
-            "Emissions|HFC|C5F12", lead, match_sign
-        )
+        filler = tcruncher.derive_relationship("Emissions|HFC|C5F12", lead, match_sign)
         if add_col:
             test_downscale_df[add_col] = "blah"
             test_downscale_df = IamDataFrame(test_downscale_df.data)

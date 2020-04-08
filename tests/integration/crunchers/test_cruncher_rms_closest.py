@@ -346,9 +346,7 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
     def test_relationship_usage(self, test_db, test_downscale_df, add_col):
         tcruncher = self.tclass(test_db)
         lead = ["Emissions|HFC|C2F6"]
-        filler = tcruncher.derive_relationship(
-            "Emissions|HFC|C5F12", lead
-        )
+        filler = tcruncher.derive_relationship("Emissions|HFC|C5F12", lead)
 
         test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db)
         if add_col:
