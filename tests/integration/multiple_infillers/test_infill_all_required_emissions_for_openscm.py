@@ -1,7 +1,8 @@
+import datetime
 import re
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 import pyam
 import pytest
 
@@ -183,8 +184,8 @@ class TestGasDecomposeTimeDepRatio:
         else:
             # No default timeslist is available.
             timesteps = [
-                pd.datetime(year=2010, day=15, month=6),
-                pd.datetime(year=2030, day=15, month=6),
+                datetime.datetime(year=2010, day=15, month=6),
+                datetime.datetime(year=2030, day=15, month=6),
             ]
         err_msg = re.escape("We do not have data for all required timesteps")
         with pytest.raises(AssertionError, match=err_msg):
@@ -240,8 +241,8 @@ class TestGasDecomposeTimeDepRatio:
             output_times = [2010, 2015]
         else:
             output_times = [
-                pd.datetime(year=2010, day=15, month=6),
-                pd.datetime(year=2015, day=15, month=6),
+                datetime.datetime(year=2010, day=15, month=6),
+                datetime.datetime(year=2015, day=15, month=6),
             ]
         err_msg = re.escape(
             "This data already contains values with the expected final "
