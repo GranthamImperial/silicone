@@ -6,10 +6,10 @@ import pandas as pd
 import pyam
 import pytest
 
+from silicone.database_crunchers.constant_ratio import ConstantRatio
 from silicone.multiple_infillers.infill_all_required_emissions_for_openscm import (
     infill_all_required_variables,
 )
-from silicone.database_crunchers.constant_ratio import ConstantRatio
 from silicone.utils import _adjust_time_style_to_match
 
 
@@ -176,7 +176,7 @@ class TestGasDecomposeTimeDepRatio:
         if test_db.time_col == "year":
             timesteps = None
         else:
-            # No default timeslist is available.
+            # No default times list is available.
             timesteps = [
                 datetime.datetime(year=2010, day=15, month=6),
                 datetime.datetime(year=2030, day=15, month=6),
@@ -255,6 +255,7 @@ class TestGasDecomposeTimeDepRatio:
     def test_infillallrequiredvariables_check_results_interp_times(
         self, test_db, additional_cols
     ):
+        # Check that we can get valid results at interpolated times
         required_variables_list = ["Emissions|HFC|C5F12"]
         leader = ["Emissions|HFC|C2F6"]
         if additional_cols:
@@ -281,6 +282,7 @@ class TestGasDecomposeTimeDepRatio:
         assert np.isclose(output_df.data["value"][1], (3 * 2 + 2 * 3) / 5, atol=1e-5)
 
     def test_infillallrequiredvariables_check_results_kwargs(self, test_db):
+        # Test that we can use the kwargs option for the multiple infiller
         required_variables_list = ["Emissions|HFC|C5F12"]
         leader = ["Emissions|HFC|C2F6"]
         kwargs = {"ratio": 1, "units": "Mt CO2-equiv/yr"}
