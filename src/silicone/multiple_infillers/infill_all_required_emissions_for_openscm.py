@@ -2,6 +2,7 @@ import logging
 import re
 import warnings
 
+import pandas as pd
 import pyam
 import tqdm
 
@@ -77,7 +78,13 @@ def infill_all_required_variables(
     """
     # Use default arguments for unfilled options:
     if output_timesteps is None:
+        if to_fill.time_col == "time":
+            raise ValueError(
+                "No default behaviour for output_timesteps when dataframe has time "
+                "column instead of years"
+            )
         output_timesteps = [2015] + list(range(2020, 2101, 10))
+
     if required_variables_list is None:
         required_variables_list = [
             "Emissions|BC",
@@ -150,8 +157,11 @@ def infill_all_required_variables(
         database = database.filter(year=output_timesteps)
         to_fill = to_fill.filter(year=output_timesteps)
     else:
-        database = database.filter(time=output_timesteps)
-        to_fill = to_fill.filter(time=output_timesteps)
+        # TODO: this filter switchup is needed because of a problem with filter.
+        #  If the pyam bug clears we can remove it.
+        output_timesteps_datetime = pd.to_datetime(output_timesteps)
+        database = database.filter(time=output_timesteps_datetime)
+        to_fill = to_fill.filter(time=output_timesteps_datetime)
     # Infill unavailable data
     assert not database.data.isnull().any().any()
     assert not to_fill.data.isnull().any().any()
@@ -268,9 +278,19 @@ def _perform_crunch_and_check(
             msvdf_data = msvdf.data
             assert not msvdf_data.isnull().any().any()
             assert not msvdf_data.empty
-            assert all(
-                [y in msvdf_data[df.time_col].values for y in output_timesteps]
-            ), "We do not have data for all required timesteps"
+            if df.time_col == "year":
+                assert all(
+                 [y in msvdf_data[df.time_col].values for y in output_timesteps]
+                ), "We do not have data for all required timesteps"
+            else:
+                output_timesteps_datetime = pd.to_datetime(output_timesteps)
+                assert all(
+                    [
+                        y in msvdf_data[
+                            df.time_col
+                        ].values for y in output_timesteps_datetime.values
+                    ]
+                ), "We do not have data for all required timesteps"
 
     # Check no data was overwritten by accident
     for model in tqdm.tqdm(
