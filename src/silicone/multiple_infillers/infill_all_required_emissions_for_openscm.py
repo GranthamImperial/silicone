@@ -175,7 +175,9 @@ def infill_all_required_variables(
         if variab not in database.variables().values
     ]
     if unavailable_variables:
-        warnings.warn(UserWarning("No data for {}".format(unavailable_variables)))
+        warnings.warn(UserWarning(
+            "No data for {}, it will be infilled with 0s".format(unavailable_variables)
+        ))
         # Infill the required variables with 0s.
         kwarg_dict = {"ratio": 0, "units": "Mt CO2-equiv/yr"}
         to_fill = _perform_crunch_and_check(
@@ -260,12 +262,6 @@ def _perform_crunch_and_check(
         :obj:IamDataFrame
             The infilled dataframe
         """
-    if (
-        not all(x in df.variables().values for x in required_variables)
-        and type_of_cruncher != ConstantRatio
-    ):
-        not_present = [x for x in required_variables if x not in df.variables().values]
-        raise Warning("Missing some requested variables: {}".format(not_present))
     cruncher = type_of_cruncher(df)
     for req_var in tqdm.tqdm(required_variables, desc="Filling required variables"):
         interpolated = _infill_variable(cruncher, req_var, leaders, to_fill, **kwargs)
