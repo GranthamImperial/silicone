@@ -280,15 +280,14 @@ def _perform_crunch_and_check(
             assert not msvdf_data.empty
             if df.time_col == "year":
                 assert all(
-                 [y in msvdf_data[df.time_col].values for y in output_timesteps]
+                    [y in msvdf_data[df.time_col].values for y in output_timesteps]
                 ), "We do not have data for all required timesteps"
             else:
                 output_timesteps_datetime = pd.to_datetime(output_timesteps)
                 assert all(
                     [
-                        y in msvdf_data[
-                            df.time_col
-                        ].values for y in output_timesteps_datetime.values
+                        y in msvdf_data[df.time_col].values
+                        for y in output_timesteps_datetime.values
                     ]
                 ), "We do not have data for all required timesteps"
 
