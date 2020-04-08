@@ -303,6 +303,7 @@ class TestGasDecomposeTimeDepRatio:
             output_df.filter(variable=required_variables_list)["value"].values,
             output_df.filter(variable=leader)["value"].values,
         )
-        assert output_df.filter(
-            variable=required_variables_list
-        )["unit"].values == "Mt CO2-equiv/yr"
+        assert (
+            output_df.filter(variable=required_variables_list)["unit"].values
+            == "Mt CO2-equiv/yr"
+        )
