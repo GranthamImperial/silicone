@@ -24,7 +24,7 @@ def infill_all_required_variables(
     infilled_data_prefix=None,
     to_fill_old_prefix=None,
     check_data_returned=False,
-    **cruncher_kwargs,
+    **kwargs,
 ):
     """
     This is function designed to infill all required data given a minimal amount of
@@ -71,7 +71,7 @@ def infill_all_required_variables(
         reasons for failing this include requesting results at times outside our input
         time range, as well as code bugs.
 
-    cruncher_kwargs : dict
+    ** kwargs :
         An optional dictionary of keyword : arguments to be used with the cruncher.
 
     Returns
@@ -210,7 +210,7 @@ def infill_all_required_variables(
             output_timesteps,
             to_fill_orig,
             check_data_returned=check_data_returned,
-            **cruncher_kwargs,
+            **kwargs,
         )
     if infilled_data_prefix:
         to_fill.data["variable"] = infilled_data_prefix + "|" + to_fill.data["variable"]
