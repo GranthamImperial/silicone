@@ -139,18 +139,11 @@ class LatestTimeRatio(_DatabaseCruncher):
                         )
                     )
                     raise ValueError(error_msg)
-                else:
-                    lead_var_interp = lead_var.timeseries()
-                    lead_var_interp[data_follower_key_timepoint] = np.nan
-                    lead_var_interp = lead_var_interp.reindex(
-                        sorted(lead_var_interp.columns), axis=1
-                    )
-                    lead_var_interp = IamDataFrame(
-                        lead_var_interp.interpolate(method="index", axis=1)
-                    )
-                    lead_var_val_in_key_timepoint = get_values_in_key_timepoint(
-                        lead_var_interp
-                    )
+                lead_var.interpolate(data_follower_key_timepoint)
+                lead_var_val_in_key_timepoint = get_values_in_key_timepoint(
+                    lead_var
+                )
+                lead_var.filter(**key_timepoint_filter, keep=False, inplace=True)
 
             lead_var_val_in_key_timepoint = lead_var_val_in_key_timepoint.timeseries()
             if not lead_var_val_in_key_timepoint.shape[1] == 1:  # pragma: no cover
