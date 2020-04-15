@@ -102,9 +102,7 @@ class TestDatabaseCruncherTimeDepRatio:
             test_downscale_df = IamDataFrame(test_downscale_df.data)
         lead = ["Emissions|HFC|C2F6"]
         follow = "Emissions|HFC|C5F12"
-        filler = tcruncher.derive_relationship(
-            follow, lead, ratio=2, units=units
-        )
+        filler = tcruncher.derive_relationship(follow, lead, ratio=2, units=units)
         res = filler(test_downscale_df)
 
         exp = test_downscale_df.filter(variable=lead)
