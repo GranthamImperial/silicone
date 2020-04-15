@@ -219,7 +219,8 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         large_db = IamDataFrame(self.large_db.copy())
         tcruncher = self.tclass(large_db)
         lead = ["Emissions|CO2"]
-        res = tcruncher.derive_relationship("Emissions|CH4", lead)
+        follow = "Emissions|CH4"
+        res = tcruncher.derive_relationship(follow, lead)
         assert callable(res)
         if add_col:
             large_db[add_col] = "blah"
@@ -240,7 +241,8 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         assert all(crunched["value"] == extreme_crunched["value"])
 
         # Check that we can append the answer
-        large_db.filter(variable=lead).append(crunched)
+        appended_df = large_db.filter(variable=lead).append(crunched)
+        assert appended_df.filter(variable=follow).equals(crunched)
 
     def test_derive_relationship_same_gas(self, test_db, test_downscale_df):
         # Given only a single data series, we recreate the original pattern

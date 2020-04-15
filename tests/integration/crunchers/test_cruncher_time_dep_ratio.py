@@ -133,20 +133,21 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             test_downscale_df, equal_df
         ).filter(year=[2010, 2015])
         lead = ["Emissions|HFC|C2F6"]
-        filler = tcruncher.derive_relationship("Emissions|HFC|C5F12", lead, match_sign)
+        follow = "Emissions|HFC|C5F12"
+        filler = tcruncher.derive_relationship(follow, lead, match_sign)
         if add_col:
             test_downscale_df[add_col] = "blah"
             test_downscale_df = IamDataFrame(test_downscale_df.data)
         res = filler(test_downscale_df)
 
-        lead_iamdf = test_downscale_df.filter(variable="Emissions|HFC|C2F6")
+        lead_iamdf = test_downscale_df.filter(variable=lead)
 
         exp = lead_iamdf.timeseries()
         # The follower values are 1 and 9 (average 5), the leader values are all 1
         # hence we expect the input * 5 as output.
         exp[exp.columns[0]] = exp[exp.columns[0]] * 5
         exp = exp.reset_index()
-        exp["variable"] = "Emissions|HFC|C5F12"
+        exp["variable"] = follow
         exp["unit"] = "kt C5F12/yr"
         exp = IamDataFrame(exp)
 
@@ -161,7 +162,8 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         )
 
         # Test we can append our answer
-        test_downscale_df.filter(variable=lead).append(res)
+        appended_df = test_downscale_df.filter(variable=lead).append(res)
+        assert appended_df.filter(variable=follow).equals(res)
 
     @pytest.mark.parametrize("match_sign", [True, False])
     def test_relationship_negative_specific(

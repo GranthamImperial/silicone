@@ -346,7 +346,8 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
     def test_relationship_usage(self, test_db, test_downscale_df, add_col):
         tcruncher = self.tclass(test_db)
         lead = ["Emissions|HFC|C2F6"]
-        filler = tcruncher.derive_relationship("Emissions|HFC|C5F12", lead)
+        follow = "Emissions|HFC|C5F12"
+        filler = tcruncher.derive_relationship(follow, lead)
 
         test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db)
         if add_col:
@@ -378,7 +379,9 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         )
 
         # Test we can append the answer to the original
-        test_downscale_df.filter(variable=lead).append(res)
+        appended_df = test_downscale_df.filter(variable=lead).append(res, inplace=True)
+        assert appended_df.filter(variable=follow).equals(res)
+
 
     def test_relationship_usage_no_overlap(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db.filter(year=2015))
