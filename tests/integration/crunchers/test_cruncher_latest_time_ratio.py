@@ -150,19 +150,21 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
     def test_relationship_usage(self, test_db, test_downscale_df, add_col):
         tcruncher = self.tclass(test_db)
         lead = ["Emissions|HFC|C2F6"]
-        filler = tcruncher.derive_relationship("Emissions|HFC|C5F12", lead)
+        follow = "Emissions|HFC|C5F12"
+        filler = tcruncher.derive_relationship(follow, lead)
         if add_col:
             test_downscale_df[add_col] = "blah"
             test_downscale_df = IamDataFrame(test_downscale_df.data)
+            assert test_downscale_df.extra_cols[0] == add_col
         test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db)
         res = filler(test_downscale_df)
 
-        lead_iamdf = test_downscale_df.filter(variable="Emissions|HFC|C2F6")
+        lead_iamdf = test_downscale_df.filter(variable=lead)
         lead_val_2015 = lead_iamdf.filter(year=2015).timeseries().values.squeeze()
 
         exp = (lead_iamdf.timeseries().T * 3.14 / lead_val_2015).T
         exp = exp.reset_index()
-        exp["variable"] = "Emissions|HFC|C5F12"
+        exp["variable"] = follow
         exp["unit"] = "kt C5F12/yr"
         if add_col:
             exp[add_col] = ""
@@ -179,7 +181,8 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
         )
 
         # Test that we can append the output to the input
-        test_downscale_df.filter(variable=lead).append(res)
+        append_df = test_downscale_df.filter(variable=lead).append(res)
+        assert append_df.filter(variable=follow).equals(res)
 
     @pytest.mark.parametrize("interpolate", [True, False])
     def test_relationship_usage_interpolation(

@@ -138,6 +138,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         if add_col:
             test_downscale_df[add_col] = "blah"
             test_downscale_df = IamDataFrame(test_downscale_df.data)
+            assert test_downscale_df.extra_cols[0] == add_col
         res = filler(test_downscale_df)
 
         lead_iamdf = test_downscale_df.filter(variable=lead)

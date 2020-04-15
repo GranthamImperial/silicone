@@ -225,6 +225,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         if add_col:
             large_db[add_col] = "blah"
             large_db = IamDataFrame(large_db.data)
+            assert large_db.extra_cols[0] == add_col
         crunched = res(large_db)
 
         # Increase the maximum values
