@@ -154,8 +154,9 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
     def test_relationship_usage(self, simple_df, add_col):
         tcruncher = self.tclass(simple_df)
         lead = ["Emissions|CH4"]
+        follow = "Emissions|CO2"
         res = tcruncher.derive_relationship(
-            "Emissions|CO2", lead, required_scenario="scen_a"
+            follow, lead, required_scenario="scen_a"
         )
         if add_col:
             simple_df[add_col] = "blah"
@@ -177,7 +178,9 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         assert all(expect_01.filter(year=2050)["value"] == 5000)
 
         # Test we can append our answer
-        simple_df.filter(variable=lead).append(expect_01)
+        append_df = simple_df.filter(variable=lead).append(expect_01)
+        assert append_df.filter(variable=follow).equals(expect_01)
+
 
     def test_numerical_relationship(self):
         # Calculate the values using the cruncher for a fairly detailed dataset

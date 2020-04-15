@@ -100,13 +100,15 @@ class TestDatabaseCruncherTimeDepRatio:
         if add_col:
             test_downscale_df[add_col] = "blah"
             test_downscale_df = IamDataFrame(test_downscale_df.data)
+        lead = ["Emissions|HFC|C2F6"]
+        follow = "Emissions|HFC|C5F12"
         filler = tcruncher.derive_relationship(
-            "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"], ratio=2, units=units
+            follow, lead, ratio=2, units=units
         )
         res = filler(test_downscale_df)
 
-        exp = test_downscale_df.filter(variable="Emissions|HFC|C2F6")
-        exp.data["variable"] = "Emissions|HFC|C5F12"
+        exp = test_downscale_df.filter(variable=lead)
+        exp.data["variable"] = follow
         exp.data["value"] = exp.data["value"] * 2
         exp.data["unit"] = units
 
@@ -121,7 +123,8 @@ class TestDatabaseCruncherTimeDepRatio:
         )
 
         # Test we can append the results correctly
-        test_downscale_df.append(res)
+        test_downscale_df.append(res, inplace=True)
+        assert test_downscale_df.filter(variable=follow).equals(res)
 
     def test_relationship_usage_set_0(self, test_downscale_df):
         tcruncher = self.tclass()

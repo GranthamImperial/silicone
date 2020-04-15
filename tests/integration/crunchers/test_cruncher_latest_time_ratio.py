@@ -113,12 +113,12 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
     def test_derive_relationship_averaging_info(self, test_db, extra_info):
         # test that crunching uses average values if there's more than a single point
         # in the latest year for the lead gas in the database
-        tdb = test_db.filter(variable="Emissions|HFC|C5F12", keep=False)
+        variable_follower = "Emissions|HFC|C5F12"
+        variable_leader = ["Emissions|HFC|C2F6"]
+        tdb = test_db.filter(variable=variable_follower, keep=False)
         tcruncher = self.tclass(
             self._join_iamdfs_time_wrangle(tdb, IamDataFrame(extra_info))
         )
-        variable_follower = "Emissions|HFC|C5F12"
-        variable_leader = ["Emissions|HFC|C2F6"]
         cruncher = tcruncher.derive_relationship(variable_follower, variable_leader)
         lead_db = test_db.filter(variable=variable_leader)
         infilled = cruncher(lead_db)
@@ -131,7 +131,8 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
         )
         assert np.allclose(infilled.data["value"], expected)
         # Test that the result can be appended without problems.
-        lead_db.append(infilled)
+        lead_db.append(infilled, inplace=True)
+        assert lead_db.filter(variable=variable_follower).equals(infilled)
 
     def test_derive_relationship_error_no_info(self, test_db):
         # test that crunching fails if there's no data for the gas to downscale to in
