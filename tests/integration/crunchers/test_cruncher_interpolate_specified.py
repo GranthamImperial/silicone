@@ -157,9 +157,12 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         follow = "Emissions|CO2"
         res = tcruncher.derive_relationship(follow, lead, required_scenario="scen_a")
         if add_col:
-            simple_df[add_col] = "blah"
+            # what should happen if there's more than one value in the `add_col`?
+            add_col_val = "blah"
+            simple_df[add_col] = add_col_val
             simple_df = IamDataFrame(simple_df.data)
             assert simple_df.extra_cols[0] == add_col
+
         expect_00 = res(simple_df)
         assert expect_00.filter(scenario="scen_a", year=2010)["value"].iloc[0] == 0
         assert expect_00.filter(scenario="scen_b", year=2010)["value"].iloc[0] == 0
@@ -179,6 +182,10 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         # Test we can append our answer
         append_df = simple_df.filter(variable=lead).append(expect_01)
         assert append_df.filter(variable=follow).equals(expect_01)
+
+        if add_col:
+            assert (append_df.filter(variable=follow)[add_col] == add_col_val).all()
+            assert (append_df.filter(variable=follow, keep=False)[add_col] == add_col_val).all()
 
     def test_numerical_relationship(self):
         # Calculate the values using the cruncher for a fairly detailed dataset
