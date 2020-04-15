@@ -125,13 +125,11 @@ class TestDatabaseCruncherTimeDepRatio:
         )
 
         # Test we can append the results correctly
-        test_downscale_df.append(res, inplace=True)
-        assert test_downscale_df.filter(variable=follow).equals(res)
+        append_df = test_downscale_df.append(res)
+        assert append_df.filter(variable=follow).equals(res)
 
         if add_col:
-            assert (test_downscale_df.filter(variable=follow)[add_col] == add_col_val).all()
-            assert (test_downscale_df.filter(variable=follow, keep=False)[add_col] == add_col_val).all()
-
+            assert all(append_df.filter(variable=lead)[add_col] == add_col_val)
 
     def test_relationship_usage_set_0(self, test_downscale_df):
         tcruncher = self.tclass()

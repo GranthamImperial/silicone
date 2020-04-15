@@ -351,7 +351,8 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
 
         test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db)
         if add_col:
-            test_downscale_df[add_col] = "blah"
+            add_col_val = "blah"
+            test_downscale_df[add_col] = add_col_val
             test_downscale_df = IamDataFrame(test_downscale_df.data)
             assert test_downscale_df.extra_cols[0] == add_col
         res = filler(test_downscale_df)
@@ -382,6 +383,10 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         # Test we can append the answer to the original
         appended_df = test_downscale_df.filter(variable=lead).append(res)
         assert appended_df.filter(variable=follow).equals(res)
+        if add_col:
+            # Currently we infill with blanks because added columns do not correspond to
+            # unique entries
+            assert all(appended_df.filter(variable=follow)[add_col] == "")
 
     def test_relationship_usage_no_overlap(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db.filter(year=2015))
