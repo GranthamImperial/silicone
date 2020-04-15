@@ -379,9 +379,8 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         )
 
         # Test we can append the answer to the original
-        appended_df = test_downscale_df.filter(variable=lead).append(res, inplace=True)
+        appended_df = test_downscale_df.filter(variable=lead).append(res)
         assert appended_df.filter(variable=follow).equals(res)
-
 
     def test_relationship_usage_no_overlap(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db.filter(year=2015))
