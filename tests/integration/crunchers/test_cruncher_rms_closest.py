@@ -353,6 +353,7 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         if add_col:
             test_downscale_df[add_col] = "blah"
             test_downscale_df = IamDataFrame(test_downscale_df.data)
+            assert test_downscale_df.extra_cols[0] == add_col
         res = filler(test_downscale_df)
 
         scen_b_df = test_db.filter(variable="Emissions|HFC|C5F12")

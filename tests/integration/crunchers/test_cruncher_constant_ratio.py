@@ -100,6 +100,7 @@ class TestDatabaseCruncherTimeDepRatio:
         if add_col:
             test_downscale_df[add_col] = "blah"
             test_downscale_df = IamDataFrame(test_downscale_df.data)
+            assert test_downscale_df.extra_cols[0] == add_col
         lead = ["Emissions|HFC|C2F6"]
         follow = "Emissions|HFC|C5F12"
         filler = tcruncher.derive_relationship(follow, lead, ratio=2, units=units)

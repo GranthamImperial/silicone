@@ -159,6 +159,7 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         if add_col:
             simple_df[add_col] = "blah"
             simple_df = IamDataFrame(simple_df.data)
+            assert simple_df.extra_cols[0] == add_col
         expect_00 = res(simple_df)
         assert expect_00.filter(scenario="scen_a", year=2010)["value"].iloc[0] == 0
         assert expect_00.filter(scenario="scen_b", year=2010)["value"].iloc[0] == 0
