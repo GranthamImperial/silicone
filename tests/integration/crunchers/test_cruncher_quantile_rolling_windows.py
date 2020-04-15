@@ -223,7 +223,8 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         res = tcruncher.derive_relationship(follow, lead)
         assert callable(res)
         if add_col:
-            large_db[add_col] = "blah"
+            add_col_val = "blah"
+            large_db[add_col] = add_col_val
             large_db = IamDataFrame(large_db.data)
             assert large_db.extra_cols[0] == add_col
         crunched = res(large_db)
@@ -244,6 +245,8 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         # Check that we can append the answer
         appended_df = large_db.filter(variable=lead).append(crunched)
         assert appended_df.filter(variable=follow).equals(crunched)
+        if add_col:
+            assert all(appended_df[add_col] == add_col_val)
 
     def test_derive_relationship_same_gas(self, test_db, test_downscale_df):
         # Given only a single data series, we recreate the original pattern

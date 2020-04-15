@@ -11,7 +11,7 @@ from silicone.database_crunchers import LatestTimeRatio
 _msa = ["model_a", "scen_a"]
 
 
-class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
+class TestDatabaseCruncherLatestTimeRatio(_DataBaseCruncherTester):
     tclass = LatestTimeRatio
     tdb = pd.DataFrame(
         [
@@ -153,7 +153,8 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
         follow = "Emissions|HFC|C5F12"
         filler = tcruncher.derive_relationship(follow, lead)
         if add_col:
-            test_downscale_df[add_col] = "blah"
+            add_col_val = "blah"
+            test_downscale_df[add_col] = add_col_val
             test_downscale_df = IamDataFrame(test_downscale_df.data)
             assert test_downscale_df.extra_cols[0] == add_col
         test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db)
@@ -167,7 +168,7 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
         exp["variable"] = follow
         exp["unit"] = "kt C5F12/yr"
         if add_col:
-            exp[add_col] = ""
+            exp[add_col] = add_col_val
         exp = IamDataFrame(exp)
 
         pd.testing.assert_frame_equal(
@@ -183,6 +184,8 @@ class TestDatabaseCruncherLeadGas(_DataBaseCruncherTester):
         # Test that we can append the output to the input
         append_df = test_downscale_df.filter(variable=lead).append(res)
         assert append_df.filter(variable=follow).equals(res)
+        if add_col:
+            assert all(append_df[add_col] == add_col_val)
 
     @pytest.mark.parametrize("interpolate", [True, False])
     def test_relationship_usage_interpolation(
