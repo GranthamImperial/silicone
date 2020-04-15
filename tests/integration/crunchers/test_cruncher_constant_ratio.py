@@ -98,9 +98,12 @@ class TestDatabaseCruncherTimeDepRatio:
         tcruncher = self.tclass()
         test_downscale_df = test_downscale_df.filter(year=[2010, 2015])
         if add_col:
-            test_downscale_df[add_col] = "blah"
+            # what should happen if there's more than one value in the `add_col`?
+            add_col_val = "blah"
+            test_downscale_df[add_col] = add_col_val
             test_downscale_df = IamDataFrame(test_downscale_df.data)
             assert test_downscale_df.extra_cols[0] == add_col
+
         lead = ["Emissions|HFC|C2F6"]
         follow = "Emissions|HFC|C5F12"
         filler = tcruncher.derive_relationship(follow, lead, ratio=2, units=units)
@@ -124,6 +127,11 @@ class TestDatabaseCruncherTimeDepRatio:
         # Test we can append the results correctly
         test_downscale_df.append(res, inplace=True)
         assert test_downscale_df.filter(variable=follow).equals(res)
+
+        if add_col:
+            assert (test_downscale_df.filter(variable=follow)[add_col] == add_col_val).all()
+            assert (test_downscale_df.filter(variable=follow, keep=False)[add_col] == add_col_val).all()
+
 
     def test_relationship_usage_set_0(self, test_downscale_df):
         tcruncher = self.tclass()
