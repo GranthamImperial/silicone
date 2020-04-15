@@ -364,9 +364,9 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         scen_c_df["model"] = "model_b"
         scen_c_df["scenario"] = "scen_c"
         if add_col:
-            scen_c_df[add_col] = ""
+            scen_c_df[add_col] = add_col_val
             scen_c_df = IamDataFrame(scen_c_df.data)
-            scen_b_df[add_col] = ""
+            scen_b_df[add_col] = add_col_val
             scen_b_df = IamDataFrame(scen_b_df.data)
         exp = concat([scen_b_df, scen_c_df])
 
@@ -386,7 +386,7 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         if add_col:
             # Currently we infill with blanks because added columns do not correspond to
             # unique entries
-            assert all(appended_df.filter(variable=follow)[add_col] == "")
+            assert all(appended_df.filter(variable=follow)[add_col] == add_col_val)
 
     def test_relationship_usage_no_overlap(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db.filter(year=2015))

@@ -153,12 +153,9 @@ class RMSClosest(_DatabaseCruncher):
                     lead_var_timeseries.index.names.index("scenario")
                 ]
                 output_ts_list.append(tmp)
-            if in_iamdf.extra_cols:
-                output = pyam.concat(output_ts_list)
-                for col in in_iamdf.extra_cols:
-                    output[col] = ""
-                output = pyam.IamDataFrame(output.data)
-                return output
+                if in_iamdf.extra_cols:
+                    for col in in_iamdf.extra_cols:
+                        tmp[col] = label[lead_var_timeseries.index.names.index(col)]
             return pyam.concat(output_ts_list)
 
         return filler
