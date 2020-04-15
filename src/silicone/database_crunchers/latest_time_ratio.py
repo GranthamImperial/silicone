@@ -157,9 +157,6 @@ class LatestTimeRatio(_DatabaseCruncher):
 
             output_ts["variable"] = variable_follower
             output_ts["unit"] = data_follower_unit
-            for col in in_iamdf.extra_cols:
-                output_ts[col] = ""
-
             return IamDataFrame(output_ts)
 
         return filler
