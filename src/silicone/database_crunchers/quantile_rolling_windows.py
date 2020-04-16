@@ -53,7 +53,10 @@ class QuantileRollingWindows(_DatabaseCruncher):
 
     With these weightings, the desired quantile of the data is then calculated. This
     calculation is done by sorting the data and interpolating the value where the
-    cumulative sum of weights equals the quantile.
+    cumulative sum of weights equals the quantile. Quantiles less than half the weight
+    of the smallest follow value, or more than 1 - half the weight of the largest follow
+    value, return the smallest/largest values respectively.
+
 
     If the option ``use_ratio`` is set to ``True``, instead of returning the absolute
     value of the follow at this quantile, we return the quantile of the ratio between
@@ -64,7 +67,10 @@ class QuantileRollingWindows(_DatabaseCruncher):
     between different variables. For example, it can provide the 90th percentile (i.e.
     high end) of the relationship between e.g. ``Emissions|CH4`` and ``Emissions|CO2``
     or the 50th percentile (i.e. median) or any other arbitrary percentile/quantile
-    choice.
+    choice. Note that the impact of this will strongly depend on nwindows and
+    decay_length_factor. Using TimeDepQuantileRollingWindows instead of this function,
+    it is possible to specify a dictionary of dates to quantiles, in which case we
+    return that quantile for that year or date.
     """
 
     def derive_relationship(
@@ -92,7 +98,7 @@ class QuantileRollingWindows(_DatabaseCruncher):
         quantile : float
             The quantile to return in each window.
 
-        nboxes : int
+        nwindows : int
             The number of windows to use when calculating the relationship between the
             follower and lead gases.
 
