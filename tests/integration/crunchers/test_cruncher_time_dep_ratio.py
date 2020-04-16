@@ -136,8 +136,8 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         follow = "Emissions|HFC|C5F12"
         filler = tcruncher.derive_relationship(follow, lead, match_sign)
         if add_col:
-
-            test_downscale_df[add_col] = "blah"
+            add_col_val = "blah"
+            test_downscale_df[add_col] = add_col_val
             test_downscale_df = IamDataFrame(test_downscale_df.data)
             assert test_downscale_df.extra_cols[0] == add_col
         res = filler(test_downscale_df)
@@ -166,6 +166,8 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         # Test we can append our answer
         appended_df = test_downscale_df.filter(variable=lead).append(res)
         assert appended_df.filter(variable=follow).equals(res)
+        if add_col:
+            assert all(appended_df[add_col] == add_col_val)
 
     @pytest.mark.parametrize("match_sign", [True, False])
     def test_relationship_negative_specific(

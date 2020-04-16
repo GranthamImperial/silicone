@@ -384,8 +384,6 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         appended_df = test_downscale_df.filter(variable=lead).append(res)
         assert appended_df.filter(variable=follow).equals(res)
         if add_col:
-            # Currently we infill with blanks because added columns do not correspond to
-            # unique entries
             assert all(appended_df.filter(variable=follow)[add_col] == add_col_val)
 
     def test_relationship_usage_no_overlap(self, test_db, test_downscale_df):
