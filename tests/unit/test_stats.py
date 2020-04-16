@@ -36,21 +36,26 @@ def test_rolling_window_find_quantiles():
     desired_quantiles = [0.4, 0.5, 0.6]
     # We have points at 0 and 1 in both x and y. We set the decay length to 20 so 0
     # and 1 get weightings of 1/3 at their own end and 1/6 at the other end.
-    # This then means gradient of either 3 or 6, depending on whether you encounter the
-    # 3 first (nearer 0, which occurs first above) or 6 first (nearer 1, occurs later)
+    # Subtracting half from each of these, for quantiles above 5/12 we get q - 5/12
+    # of the way up a line of gradient 1 / (4/6 - 5/12)
     quantiles = stats.rolling_window_find_quantiles(xs, ys, desired_quantiles, 9, 20)
-    assert np.allclose(quantiles.iloc[0].tolist(), [0, 0, 0.1 * 3])
-    assert np.allclose(quantiles.iloc[-1].tolist(), [0, 0, 0.1 * 6])
+    assert np.allclose(
+        quantiles.iloc[0].tolist(),
+        np.array([0, (0.5 - 5 / 12), (0.6 - 5 / 12)]) * 1 / (4 / 6 - 5 / 12),
+    )
+    # At the far side, we have switched the weights around, so that cumulative weights
+    # are 1/12 and 1/3 for y = 0 and 7 / 12 and 5 / 12 for y = 1.
+    assert np.allclose(
+        quantiles.iloc[-1].tolist(), [(0.4 - 1 / 3) * 4, (0.5 - 1 / 3) * 4, 1]
+    )
 
     xs = np.array([0, 0, 1, 1])
     ys = np.array([0, 0, 1, 1])
     quantiles = stats.rolling_window_find_quantiles(xs, ys, desired_quantiles, 9, 20)
-    assert all(quantiles.iloc[0] == 0)
-    # And a gradient of 3 starting from 1/3 at x = 1
-    assert np.allclose(
-        quantiles.iloc[-1, :].tolist(),
-        [(0.4 - 1 / 3) * 3, (0.5 - 1 / 3) * 3, (0.6 - 1 / 3) * 3],
-    )
+    # And x = 0, a gradient of 4 starting from 1/2 at q > 0.5
+    assert np.allclose(quantiles.iloc[0].tolist(), [0, 0, 0.1 * 4],)
+    # at x = 1 we have the exact opposite
+    assert np.allclose(quantiles.iloc[-1, :].tolist(), [(0.4 - 1 / 4) * 4, 1, 1],)
 
     desired_quantiles = [0, 0.5, 1]
     quantiles = stats.rolling_window_find_quantiles(
@@ -73,7 +78,7 @@ def test_rolling_window_find_quantiles_same_points():
     desired_quantiles = [0, 0.4, 0.5, 0.6, 0.85, 1]
     quantiles = stats.rolling_window_find_quantiles(xs, ys, desired_quantiles, 9, 20)
 
-    cumsum_weights = (1 + np.arange(11)) / 11
+    cumsum_weights = (0.5 + np.arange(11)) / 11
     calculated_quantiles = []
     for quant in desired_quantiles:
         calculated_quantiles.append(
