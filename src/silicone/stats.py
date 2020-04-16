@@ -73,7 +73,8 @@ def rolling_window_find_quantiles(
     for ind in range(box_centers.size):
         weights = 1.0 / (1.0 + ((xs - box_centers[ind]) / decay_length) ** 2)
         weights /= sum(weights)
-        cumsum_weights = np.cumsum(weights)
+        # Subtract half of the lead weight to get midpoints at the middle of the weights
+        cumsum_weights = np.cumsum(weights) - 0.5 * weights
         for i_quantile in range(quantiles.__len__()):
             quantmatrix.iloc[ind, i_quantile] = scipy.interpolate.interp1d(
                 cumsum_weights,

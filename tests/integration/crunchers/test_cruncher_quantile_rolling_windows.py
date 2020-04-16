@@ -120,7 +120,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         # choosing one of two values) produces the expected results. We test the
         # quantiles that should result in a flip between the two states.
         tcruncher = self.tclass(simple_df)
-        quant = 0.833
+        quant = 0.58
         res = tcruncher.derive_relationship(
             "Emissions|CO2",
             ["Emissions|CH4"],
@@ -133,39 +133,44 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         if use_ratio:
             # We have a 0/0*0 in the calculation, so no value appears.
             assert len(caplog.record_tuples) == 1
+            assert returned.filter(scenario="scen_a", year=2010)["value"].iloc[0] == 0
         else:
             assert len(caplog.record_tuples) == 0
+            assert np.isclose(
+                returned.filter(scenario="scen_a", year=2010)["value"].iloc[0],
+                (quant - 5 / 12) * 2,
+            )
         # We are below the lower quantile limit at the bottom, as we have weighting of
         # 5/6 and 1/6 for 1 and 0 respectively
-        assert returned.filter(scenario="scen_a", year=2010)["value"].iloc[0] == 0
-        # We are (quant - 1/6) along a gradient of 1/(5/6)
+
+        # We are (quant - 1/12) along a gradient of 2
         assert np.isclose(
             returned.filter(scenario="scen_b", year=2010)["value"].iloc[0],
-            (quant - 1 / 6) / (5 / 6),
+            (quant - 1 / 12) * 2,
         )
         assert all(returned.filter(year=2030)["value"] == 1000)
         assert all(returned.filter(year=2050)["value"] == 5000)
 
-        # Now repeat with a higher quantile
-        quant = 0.834
+        # Now repeat with a higher quantile. This time we are too high in the second
+        # case.
+        quant = 0.59
         res = tcruncher.derive_relationship(
             "Emissions|CO2", ["Emissions|CH4"], quantile=quant, nwindows=1
         )
         result_2 = res(simple_df)
         assert np.isclose(
             result_2.filter(scenario="scen_a", year=2010)["value"].iloc[0],
-            (quant - 5 / 6) / (1 / 6),
+            (quant - 5 / 12) * 2,
         )
         assert np.isclose(
-            result_2.filter(scenario="scen_b", year=2010)["value"].iloc[0],
-            (quant - 1 / 6) / (5 / 6),
+            result_2.filter(scenario="scen_b", year=2010)["value"].iloc[0], 1,
         )
         assert all(result_2.filter(year=2030)["value"] == 1000)
         assert all(result_2.filter(year=2050)["value"] == 5000)
 
-        # Similarly quantiles below 1/6 are 0 for the second case.
+        # Similarly quantiles below 1/12 are 0 for the second case.
         res = tcruncher.derive_relationship(
-            "Emissions|CO2", ["Emissions|CH4"], quantile=0.165, nwindows=1
+            "Emissions|CO2", ["Emissions|CH4"], quantile=0.083, nwindows=1
         )
         with caplog.at_level(logging.INFO, logger="silicone.database_crunchers."):
             expect_00 = res(simple_df)

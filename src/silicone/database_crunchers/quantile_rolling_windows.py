@@ -216,7 +216,7 @@ class QuantileRollingWindows(_DatabaseCruncher):
                     weights /= sum(weights)
                     # We want to calculate the weights at the midpoint of step
                     # corresponding to the y-value.
-                    cumsum_weights = np.cumsum(weights)
+                    cumsum_weights = np.cumsum(weights) - 0.5 * weights
                     db_time_table.loc[
                         (db_time, quantile), window_center
                     ] = scipy.interpolate.interp1d(
