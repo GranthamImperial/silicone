@@ -4,6 +4,7 @@ Changelog
 master
 ------
 
+- (`#86 <https://github.com/znicholls/silicone/pull/86>`_) Slightly changed the definition of quantile rolling windows to make it symmetric (not rounding down).
 - (`#83 <https://github.com/znicholls/silicone/pull/83>`_) Added tests for appending results of crunching to the input.
 - (`#82 <https://github.com/znicholls/silicone/pull/82>`_) Updated to a later version of pyam and solved todos associated with this. Also added a ``kwargs`` argument to ``infill_all_required``.
 - (`#80 <https://github.com/znicholls/silicone/pull/80>`_) Changed the names of crunchers for brevity. Also changed ``lead_gas`` to ``latest_time_ratio`` and included it in ratio notebook.
