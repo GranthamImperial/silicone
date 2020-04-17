@@ -16,7 +16,7 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
         self,
         variable_follower,
         variable_leaders,
-        time_quantile_dict,
+        time_quantile_dict={},
         nwindows=10,
         decay_length_factor=1,
         use_ratio=False,
@@ -32,7 +32,7 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
             quantile value is strongly dependent on the choice of nwindows and
             decay_length_factor. This replaces quantile.
         """
-        times_known = self.db[self.db.time_col].unique()
+        times_known = list(self._db[self._db.time_col].unique())
         # This check implicitly checks for date type agreement
         if any(time not in times_known for time in time_quantile_dict.keys()):
             raise ValueError(
@@ -40,10 +40,12 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
             )
         filler_fns = []
         for time, quantile in time_quantile_dict.items():
-            if self.db.time_col == "year":
-                cruncher = QuantileRollingWindows(self.db.filter(year=time))
+            if self._db.time_col == "year":
+                cruncher = QuantileRollingWindows(self._db.filter(year=int(time)))
             else:
-                cruncher = QuantileRollingWindows(self.db.filter(time=time))
+                cruncher = QuantileRollingWindows(
+                    self._db.filter(time=time)
+                )
             filler_fns.append(
                 cruncher.derive_relationship(
                     variable_follower,
@@ -59,14 +61,19 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
             iamdf_times_known = in_iamdf[in_iamdf.time_col]
             if any(time not in time_quantile_dict.keys() for time in iamdf_times_known):
                 raise ValueError(
-                    "Not all required times in the infillee database can be found in"
-                    " the dictionary."
+                    "Not all required times in the infillee database can be found in "
+                    "the dictionary."
                 )
             for time in time_quantile_dict.keys():
                 if in_iamdf.time_col == "year":
-                    filler_fns[0](in_iamdf.filter(year=time))
+                    tmp = filler_fns[0](in_iamdf.filter(year=time))
                 else:
-                    filler_fns[0](in_iamdf.filter(timw=time))
+                    tmp = filler_fns[0](in_iamdf.filter(timw=time))
                 filler_fns.pop(0)
+                try:
+                    to_return.append(tmp, inplace=True)
+                except NameError:
+                    to_return = tmp.copy()
+            return to_return
 
         return filler
