@@ -219,6 +219,41 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
             expected = interpolate_fn(xs_to_interp)
         assert all(crunched["value"].values == expected)
 
+    def test_limit_of_similar_xs(self, test_db):
+        # Check that the function returns the correct behaviour in the limit of similar
+        # lead values. We construct a db for exactly identical CH4 and for near-
+        # identical CH4.
+        range_db = pd.DataFrame(
+            [[_ma, str(val), "World", _ech4, _gtc, val] for val in range(10)],
+            columns=_msrvu + [2010],
+        )
+        range_db = IamDataFrame(range_db)
+        range_db = self._adjust_time_style_to_match(range_db, test_db)
+        same_db = range_db.copy()
+        same_db["variable"] = _eco2
+        same_db["value"] = 1
+        same_db.append(range_db, inplace=True)
+        nearly_same_db = same_db.copy()
+        # We change the value of one point on the nearly_same and remove it on the same
+        nearly_same_db.data["value"].iloc[1] = 0
+        same_db.filter(scenario="0", keep=False, inplace=True)
+        same_db = IamDataFrame(same_db.data)
+        nearly_same_db = IamDataFrame(nearly_same_db.data)
+        same_cruncher = self.tclass(same_db)
+        nearly_same_cruncher = self.tclass(nearly_same_db)
+        # Derive crunchers and compare results from the two values
+        if test_db.time_col == "year":
+            single_date_df = test_db.filter(year=int(same_db[same_db.time_col][0]))
+        else:
+            single_date_df = test_db.filter(time=(same_db[same_db.time_col][0]))
+        # We choose the case model a, which has only values over 1.
+        single_date_df.filter(model=_mb, scenario=_sa, keep=False, inplace=True)
+        same_res = same_cruncher.derive_relationship(_ech4, [_eco2])(single_date_df)
+        nearly_same_res = nearly_same_cruncher.derive_relationship(_ech4, [_eco2])(
+            single_date_df
+        )
+        assert np.allclose(same_res["value"], nearly_same_res["value"], rtol=5e-4)
+
     @pytest.mark.parametrize("add_col", [None, "extra_col"])
     def test_extreme_values_relationship(self, add_col):
         # Our cruncher has a closest-point extrapolation algorithm and therefore
