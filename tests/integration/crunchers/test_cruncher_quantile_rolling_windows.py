@@ -187,8 +187,12 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
     @pytest.mark.parametrize("use_ratio", [True, False])
     def test_numerical_relationship(self, use_ratio):
         # Calculate the values using the cruncher for a fairly detailed dataset
-        large_db = IamDataFrame(self.large_db.copy())
-        tcruncher = self.tclass(large_db)
+        larger_db = IamDataFrame(self.large_db)
+        larger_db["model"] = larger_db["model"] + "_2"
+        larger_db["value"] = larger_db["value"] - 0.5
+        larger_db.append(IamDataFrame(self.large_db), inplace=True)
+        larger_db = IamDataFrame(larger_db.data)
+        tcruncher = self.tclass(larger_db)
         res = tcruncher.derive_relationship(
             "Emissions|CH4", ["Emissions|CO2"], use_ratio=use_ratio
         )
@@ -197,15 +201,16 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         crunched = res(to_find)
 
         # Calculate the same values numerically
-        xs = large_db.filter(variable="Emissions|CO2")["value"].values
-        ys = large_db.filter(variable="Emissions|CH4")["value"].values
+        xs = larger_db.filter(variable="Emissions|CO2")["value"].values
+        ys = larger_db.filter(variable="Emissions|CH4")["value"].values
         if use_ratio:
             ys = ys / xs
+        # Note that the definition of windows differs between the codes
         quantile_expected = silicone.stats.rolling_window_find_quantiles(
             xs, ys, [0.5], nwindows=9
         )
         interpolate_fn = scipy.interpolate.interp1d(
-            np.array(quantile_expected.index), quantile_expected.values.squeeze()
+            np.array(quantile_expected.index), quantile_expected.values.squeeze(),
         )
         xs_to_interp = to_find.filter(variable="Emissions|CO2")["value"].values
         if use_ratio:
