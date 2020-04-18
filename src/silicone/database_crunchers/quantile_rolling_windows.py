@@ -196,12 +196,20 @@ class QuantileRollingWindows(_DatabaseCruncher):
             if max(xs) == min(xs):
                 # We must prevent singularity behaviour if all the points are at the
                 # same x value.
-                cumsum_weights = np.array([(1 + x) / len(ys) for x in range(len(ys))])
+                cumsum_weights = np.array([(0.5 + x) / len(ys) for x in range(len(ys))])
 
                 def same_x_val_workaround(
                     _, ys=ys, cumsum_weights=cumsum_weights, quantile=quantile
                 ):
-                    return min(ys[cumsum_weights >= quantile])
+                    if min(ys) == max(ys):
+                        return ys[0]
+                    return scipy.interpolate.interp1d(
+                        cumsum_weights,
+                        ys,
+                        bounds_error=False,
+                        fill_value=(ys[0], ys[-1]),
+                        assume_sorted=True,
+                    )(quantile)
 
                 derived_relationships[db_time] = same_x_val_workaround
             else:
