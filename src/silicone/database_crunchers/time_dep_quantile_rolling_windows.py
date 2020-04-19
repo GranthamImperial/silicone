@@ -8,6 +8,10 @@ from . import QuantileRollingWindows
 from .base import _DatabaseCruncher
 
 
+def _convert_dt64_todt(time):
+    return time.astype("M8[m]").astype(datetime)
+
+
 class TimeDepQuantileRollingWindows(_DatabaseCruncher):
     """
     Database cruncher which uses QuantileRollingWindows with different quantiles in
@@ -48,7 +52,7 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
                 cruncher = QuantileRollingWindows(self._db.filter(year=int(time)))
             else:
                 cruncher = QuantileRollingWindows(
-                    self._db.filter(time=time.astype("M8[m]").astype(datetime))
+                    self._db.filter(time=_convert_dt64_todt(time))
                 )
             filler_fns.append(
                 cruncher.derive_relationship(
@@ -76,9 +80,7 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
                     # TODO: remove int specification from here when pyam bug is fixed
                     tmp = filler_fns[0](in_iamdf.filter(year=int(time)))
                 else:
-                    tmp = filler_fns[0](
-                        in_iamdf.filter(time=time.astype("M8[m]").astype(datetime))
-                    )
+                    tmp = filler_fns[0](in_iamdf.filter(time=_convert_dt64_todt(time)))
                 filler_fns.pop(0)
                 try:
                     to_return.append(tmp, inplace=True)

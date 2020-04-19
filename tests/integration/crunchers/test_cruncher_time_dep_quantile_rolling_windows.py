@@ -57,14 +57,14 @@ class TestDatabaseTimeDepCruncherRollingWindows:
 
     def test_derive_relationship(self, test_db):
         tcruncher = self.tclass(test_db)
-        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CH4"])
+        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CH4"], {})
         assert callable(res)
 
     def test_derive_relationship_with_nans(self):
         tdb = self.tdb.copy()
         tdb.loc[(tdb["variable"] == _eco2) & (tdb["model"] == _ma), 2050] = np.nan
         tcruncher = self.tclass(IamDataFrame(tdb))
-        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CH4"])
+        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CH4"], {})
         # just make sure that this runs through and no error is raised
         assert callable(res)
 
@@ -83,7 +83,7 @@ class TestDatabaseTimeDepCruncherRollingWindows:
     def test_derive_relationship_wrong_times_input(self, test_db):
         tcruncher = self.tclass(test_db)
         # Due to a current bug in pyam, we need to ensure this is not a 64-type value
-        t_0 = [item for item in test_db[test_db.time_col]][0]
+        t_0 = list(test_db[test_db.time_col].unique())[0]
         times_quant = {t_0: 0.5}
         res = tcruncher.derive_relationship(
             "Emissions|CO2", ["Emissions|CH4"], times_quant
@@ -92,9 +92,12 @@ class TestDatabaseTimeDepCruncherRollingWindows:
             "Not all required times in the infillee database can be found in "
             "the dictionary."
         )
-        filter_dict = {test_db.time_col: t_0}
+        if test_db.time_col == "year":
+            filtered_db = test_db.filter(year=int(t_0), keep=False)
+        else:
+            filtered_db = test_db.filter(time=self._convert_dt64_todt(t_0), keep=False)
         with pytest.raises(ValueError, match=error_msg):
-            res(test_db.filter(**filter_dict, keep=False))
+            res(filtered_db)
 
     @pytest.mark.parametrize("timecol", ["year", "time"])
     def test_relationship_usage(self, timecol):
@@ -137,9 +140,9 @@ class TestDatabaseTimeDepCruncherRollingWindows:
             if timecol == "year":
                 filtered_ans = returned.filter(year=int(time))["value"]
             else:
-                filtered_ans = returned.filter(
-                    time=time.astype("M8[m]").astype(datetime)
-                )["value"]
+                filtered_ans = returned.filter(time=self._convert_dt64_todt(time))[
+                    "value"
+                ]
             assert np.allclose(filtered_ans, 11 * (quantile - 1 / 22))
 
     def test_derive_relationship_same_gas(self, test_db):
@@ -148,8 +151,6 @@ class TestDatabaseTimeDepCruncherRollingWindows:
         test_db_redux = test_db.filter(scenario=_sa, model=_ma)
         # need to prevent times from being int64 etc. format
         times = list(test_db_redux[test_db_redux.time_col].unique())
-        # if test_db.time_col == "datetime":
-        #    times = times.astype('datetime64[s]').tolist()
         tcruncher = self.tclass(test_db_redux)
         quantile_dict = {times[0]: 0.4, times[1]: 0.9, times[2]: 0.01, times[3]: 0.99}
         res = tcruncher.derive_relationship(
@@ -159,3 +160,6 @@ class TestDatabaseTimeDepCruncherRollingWindows:
         assert np.allclose(
             crunched["value"], test_db_redux.filter(variable="Emissions|CO2")["value"]
         )
+
+    def _convert_dt64_todt(self, time):
+        return time.astype("M8[m]").astype(datetime)
