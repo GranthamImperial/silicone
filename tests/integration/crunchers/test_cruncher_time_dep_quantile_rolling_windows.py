@@ -1,15 +1,9 @@
-import datetime as dt
-import logging
 import re
 
 import numpy as np
 import pandas as pd
 import pytest
-import scipy.interpolate
-from base import _DataBaseCruncherTester
 from pyam import IamDataFrame
-
-import silicone.stats
 from silicone.database_crunchers import TimeDepQuantileRollingWindows
 
 _ma = "model_a"
@@ -31,7 +25,7 @@ _ktc2f6 = "kt C2F6/yr"
 _msrvu = ["model", "scenario", "region", "variable", "unit"]
 
 
-class TestDatabaseTimeDepCruncherRollingWindows(_DataBaseCruncherTester):
+class TestDatabaseTimeDepCruncherRollingWindows():
     tclass = TimeDepQuantileRollingWindows
     # The units in this dataframe are intentionally illogical for C5F12
     tdb = pd.DataFrame(
@@ -49,7 +43,15 @@ class TestDatabaseTimeDepCruncherRollingWindows(_DataBaseCruncherTester):
         ],
         columns=_msrvu + [2010, 2030, 2050, 2070],
     )
-
+    tdownscale_df = pd.DataFrame(
+        [
+            [_mc, _sa, "World", _eco2, _gtc, 1, 2, 3, 4],
+            [_mc, _sb, "World", _eco2, _gtc, 0.5, 0.5, 0.5, 0.5],
+            [_mc, _sc, "World", _eco2, _gtc, 5, 5, 5, 5],
+            [_ma, _sc, "World", _eco2, _gtc, 1.5, 2.5, 2.8, 1.8],
+        ],
+        columns=_msrvu + [2010, 2030, 2050, 2070],
+    )
 
     def test_derive_relationship(self, test_db):
         tcruncher = self.tclass(test_db)
@@ -121,23 +123,28 @@ class TestDatabaseTimeDepCruncherRollingWindows(_DataBaseCruncherTester):
         for time, quantile in quant.items():
             assert np.allclose(
                 returned.filter(year=time)["value"],
-                10 * (quantile - 1 / 22)
+                11 * (quantile - 1 / 22)
             )
 
 
-    def test_derive_relationship_same_gas(self, test_db, test_downscale_df):
+    def test_derive_relationship_same_gas(self, test_db):
         # Given only a single data series, we recreate the original pattern for any
         # quantile
-        tcruncher = self.tclass(test_db)
-        quantile_dict = {2010: 0.4, 2030: 0.9, 2050: 0.01, 2070: 0.99}
+        test_db_redux = test_db.filter(scenario=_sa, model=_ma)
+        # need to prevent times from being int64 etc. format
+        times = list(test_db_redux[test_db_redux.time_col].unique())
+        #if test_db.time_col == "datetime":
+        #    times = times.astype('datetime64[s]').tolist()
+        tcruncher = self.tclass(test_db_redux)
+        quantile_dict = {times[0]: 0.4, times[1]: 0.9, times[2]: 0.01, times[3]: 0.99}
         res = tcruncher.derive_relationship(
             "Emissions|CO2",
             ["Emissions|CO2"],
             quantile_dict,
         )
-        crunched = res(test_db)
+        crunched = res(test_db_redux)
         assert np.allclose(
-            crunched["value"].reset_index(),
-            test_db.filter(variable="Emissions|CO2")["value"].reset_index()
+            crunched["value"],
+            test_db_redux.filter(variable="Emissions|CO2")["value"]
         )
 

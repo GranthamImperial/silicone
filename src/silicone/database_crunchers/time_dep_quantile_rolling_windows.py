@@ -2,9 +2,10 @@
 Module for the database cruncher which uses the 'rolling windows' technique with
 different quantiles in different years.
 """
-from .base import _DatabaseCruncher
 from . import QuantileRollingWindows
+from .base import _DatabaseCruncher
 
+from datetime import datetime
 
 class TimeDepQuantileRollingWindows(_DatabaseCruncher):
     """
@@ -16,7 +17,7 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
         self,
         variable_follower,
         variable_leaders,
-        time_quantile_dict={},
+        time_quantile_dict=None,
         nwindows=10,
         decay_length_factor=1,
         use_ratio=False,
@@ -40,11 +41,13 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
             )
         filler_fns = []
         for time, quantile in time_quantile_dict.items():
+            # TODO: this section can be rewritten to avoid conversions when the pyam
+            # bug is fixed
             if self._db.time_col == "year":
                 cruncher = QuantileRollingWindows(self._db.filter(year=int(time)))
             else:
                 cruncher = QuantileRollingWindows(
-                    self._db.filter(time=time)
+                    self._db.filter(time=time.astype('M8[m]').astype(datetime))
                 )
             filler_fns.append(
                 cruncher.derive_relationship(
@@ -59,16 +62,23 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
 
         def filler(in_iamdf):
             iamdf_times_known = in_iamdf[in_iamdf.time_col]
-            if any(time not in time_quantile_dict.keys() for time in iamdf_times_known):
+            if any(
+                    time not in list(
+                        time_quantile_dict.keys()
+                    ) for time in iamdf_times_known
+            ):
                 raise ValueError(
                     "Not all required times in the infillee database can be found in "
                     "the dictionary."
                 )
             for time in time_quantile_dict.keys():
                 if in_iamdf.time_col == "year":
-                    tmp = filler_fns[0](in_iamdf.filter(year=time))
+                    # TODO: remove int specification from here when pyam bug is fixed
+                    tmp = filler_fns[0](in_iamdf.filter(year=int(time)))
                 else:
-                    tmp = filler_fns[0](in_iamdf.filter(timw=time))
+                    tmp = filler_fns[0](in_iamdf.filter(
+                        time=time.astype('M8[m]').astype(datetime))
+                    )
                 filler_fns.pop(0)
                 try:
                     to_return.append(tmp, inplace=True)
