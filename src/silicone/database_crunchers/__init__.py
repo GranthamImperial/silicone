@@ -15,7 +15,7 @@ from .latest_time_ratio import LatestTimeRatio  # noqa: F401
 from .linear_interpolation import LinearInterpolation  # noqa: F401
 from .quantile_rolling_windows import QuantileRollingWindows  # noqa: F401
 from .rms_closest import RMSClosest  # noqa: F401
-from .time_dep_quantile_rolling_windows import (
+from .time_dep_quantile_rolling_windows import (  # noqa: F401
     TimeDepQuantileRollingWindows,
-)  # noqa: F401
+)
 from .time_dep_ratio import TimeDepRatio  # noqa: F401

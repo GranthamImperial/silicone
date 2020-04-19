@@ -2,10 +2,11 @@
 Module for the database cruncher which uses the 'rolling windows' technique with
 different quantiles in different years.
 """
+from datetime import datetime
+
 from . import QuantileRollingWindows
 from .base import _DatabaseCruncher
 
-from datetime import datetime
 
 class TimeDepQuantileRollingWindows(_DatabaseCruncher):
     """
@@ -47,7 +48,7 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
                 cruncher = QuantileRollingWindows(self._db.filter(year=int(time)))
             else:
                 cruncher = QuantileRollingWindows(
-                    self._db.filter(time=time.astype('M8[m]').astype(datetime))
+                    self._db.filter(time=time.astype("M8[m]").astype(datetime))
                 )
             filler_fns.append(
                 cruncher.derive_relationship(
@@ -63,9 +64,8 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
         def filler(in_iamdf):
             iamdf_times_known = in_iamdf[in_iamdf.time_col]
             if any(
-                    time not in list(
-                        time_quantile_dict.keys()
-                    ) for time in iamdf_times_known
+                time not in list(time_quantile_dict.keys())
+                for time in iamdf_times_known
             ):
                 raise ValueError(
                     "Not all required times in the infillee database can be found in "
@@ -76,8 +76,8 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
                     # TODO: remove int specification from here when pyam bug is fixed
                     tmp = filler_fns[0](in_iamdf.filter(year=int(time)))
                 else:
-                    tmp = filler_fns[0](in_iamdf.filter(
-                        time=time.astype('M8[m]').astype(datetime))
+                    tmp = filler_fns[0](
+                        in_iamdf.filter(time=time.astype("M8[m]").astype(datetime))
                     )
                 filler_fns.pop(0)
                 try:
