@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
@@ -95,15 +96,24 @@ class TestDatabaseTimeDepCruncherRollingWindows:
         with pytest.raises(ValueError, match=error_msg):
             res(test_db.filter(**filter_dict, keep=False))
 
-    def test_relationship_usage(self):
+    @pytest.mark.parametrize("timecol", ["year", "time"])
+    def test_relationship_usage(self, timecol):
         # Define a regular set of values and check that we return the correct quantiles
         # of it
+        if timecol == "year":
+            dates = [2010, 2020, 2030]
+        else:
+            dates = [
+                datetime(year=2010, month=6, day=6),
+                datetime(year=2020, month=6, day=6),
+                datetime(year=2030, month=6, day=6),
+            ]
         regular_db = pd.DataFrame(
             [
                 [_ma, _sa + str(val), "World", _eco2, _gtc, val, val, val]
                 for val in range(11)
             ],
-            columns=_msrvu + [2010, 2020, 2030],
+            columns=_msrvu + dates,
         )
         regular_data = IamDataFrame(regular_db)
         regular_data["variable"] = _ech4
@@ -112,16 +122,25 @@ class TestDatabaseTimeDepCruncherRollingWindows:
         regular_data = IamDataFrame(regular_data.data)
         tcruncher = self.tclass(regular_data)
         follow = _eco2
-        quant = {2010: 0.4, 2020: 0.5, 2030: 0.6}
+        formatted_dates = list(regular_data[regular_data.time_col].unique())
+        quant = {
+            formatted_dates[0]: 0.4,
+            formatted_dates[1]: 0.5,
+            formatted_dates[2]: 0.6,
+        }
         res = tcruncher.derive_relationship(
             follow, [_ech4], time_quantile_dict=quant, nwindows=1,
         )
         to_infill = regular_data.filter(variable=_ech4)
         returned = res(to_infill)
         for time, quantile in quant.items():
-            assert np.allclose(
-                returned.filter(year=time)["value"], 11 * (quantile - 1 / 22)
-            )
+            if timecol == "year":
+                filtered_ans = returned.filter(year=int(time))["value"]
+            else:
+                filtered_ans = returned.filter(
+                    time=time.astype("M8[m]").astype(datetime)
+                )["value"]
+            assert np.allclose(filtered_ans, 11 * (quantile - 1 / 22))
 
     def test_derive_relationship_same_gas(self, test_db):
         # Given only a single data series, we recreate the original pattern for any
