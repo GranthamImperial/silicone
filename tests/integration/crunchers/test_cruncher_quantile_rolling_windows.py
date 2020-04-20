@@ -207,7 +207,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
             ys = ys / xs
         # Note that the definition of windows differs between the codes
         quantile_expected = silicone.stats.rolling_window_find_quantiles(
-            xs, ys, [0.5], nwindows=9
+            xs, ys, [0.5], nwindows=10
         )
         interpolate_fn = scipy.interpolate.interp1d(
             np.array(quantile_expected.index), quantile_expected.values.squeeze(),
@@ -222,7 +222,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
     def test_limit_of_similar_xs(self, test_db):
         # Check that the function returns the correct behaviour in the limit of similar
         # lead values. We construct a db for exactly identical CH4 and for near-
-        # identical CH4.
+        # identical CH4 (one point is far away and in the wrong direction).
         range_db = pd.DataFrame(
             [[_ma, str(val), "World", _ech4, _gtc, val] for val in range(10)],
             columns=_msrvu + [2010],
@@ -239,9 +239,9 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         same_db.filter(scenario="0", keep=False, inplace=True)
         same_db = IamDataFrame(same_db.data)
         nearly_same_db = IamDataFrame(nearly_same_db.data)
+        # Derive crunchers and compare results from the two values
         same_cruncher = self.tclass(same_db)
         nearly_same_cruncher = self.tclass(nearly_same_db)
-        # Derive crunchers and compare results from the two values
         if test_db.time_col == "year":
             single_date_df = test_db.filter(year=int(same_db[same_db.time_col][0]))
         else:
