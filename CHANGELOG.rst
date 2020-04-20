@@ -4,7 +4,7 @@ Changelog
 master
 ------
 
-- (`#87 <https://github.com/znicholls/silicone/pull/87>`_) Added a cruncher to wrap the
+- (`#87 <https://github.com/znicholls/silicone/pull/87>`_) Added a cruncher to wrap the quantile rolling windows for different quantiles in different years. 
 - (`#86 <https://github.com/znicholls/silicone/pull/86>`_) Slightly changed the definition of quantile rolling windows to make it symmetric (not rounding down).
 - (`#83 <https://github.com/znicholls/silicone/pull/83>`_) Added tests for appending results of crunching to the input.
 - (`#82 <https://github.com/znicholls/silicone/pull/82>`_) Updated to a later version of pyam and solved todos associated with this. Also added a ``kwargs`` argument to ``infill_all_required``.
