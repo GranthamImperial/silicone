@@ -54,8 +54,8 @@ class QuantileRollingWindows(_DatabaseCruncher):
     With these weightings, the desired quantile of the data is then calculated. This
     calculation is done by sorting the data and interpolating the value where the
     cumulative sum of weights equals the quantile. Quantiles less than half the weight
-    of the smallest follow value, or more than 1 - half the weight of the largest follow
-    value, return the smallest/largest values respectively.
+    of the smallest follow value, or more than one minus half the weight of the largest
+    follow value, return the smallest/largest values respectively.
 
 
     If the option ``use_ratio`` is set to ``True``, instead of returning the absolute
@@ -68,7 +68,7 @@ class QuantileRollingWindows(_DatabaseCruncher):
     high end) of the relationship between e.g. ``Emissions|CH4`` and ``Emissions|CO2``
     or the 50th percentile (i.e. median) or any other arbitrary percentile/quantile
     choice. Note that the impact of this will strongly depend on nwindows and
-    decay_length_factor. Using TimeDepQuantileRollingWindows instead of this function,
+    decay_length_factor. Using the :class:`TimeDepQuantileRollingWindows` class makes
     it is possible to specify a dictionary of dates to quantiles, in which case we
     return that quantile for that year or date.
     """
@@ -193,7 +193,7 @@ class QuantileRollingWindows(_DatabaseCruncher):
             sort_order = np.argsort(ys)
             ys = ys[sort_order]
             xs = xs[sort_order]
-            if max(xs) == min(xs):
+            if np.equal(max(xs), min(xs)):
                 # We must prevent singularity behaviour if all the points are at the
                 # same x value.
                 cumsum_weights = np.array([(0.5 + x) / len(ys) for x in range(len(ys))])
@@ -201,7 +201,7 @@ class QuantileRollingWindows(_DatabaseCruncher):
                 def same_x_val_workaround(
                     _, ys=ys, cumsum_weights=cumsum_weights, quantile=quantile
                 ):
-                    if min(ys) == max(ys):
+                    if np.equal(min(ys), max(ys)):
                         return ys[0]
                     return scipy.interpolate.interp1d(
                         cumsum_weights,

@@ -131,19 +131,19 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         with caplog.at_level(logging.INFO, logger="silicone.database_crunchers."):
             returned = res(simple_df)
         if use_ratio:
-            # We have a 0/0*0 in the calculation, so no value appears.
+            # We have a 0/0*0 in the calculation, so error message happens and 0 is
+            # infilled.
             assert len(caplog.record_tuples) == 1
             assert returned.filter(scenario="scen_a", year=2010)["value"].iloc[0] == 0
         else:
             assert len(caplog.record_tuples) == 0
+            # We are (quant - 5 / 12) along a gradient of 2
             assert np.isclose(
                 returned.filter(scenario="scen_a", year=2010)["value"].iloc[0],
                 (quant - 5 / 12) * 2,
             )
-        # We are below the lower quantile limit at the bottom, as we have weighting of
-        # 5/6 and 1/6 for 1 and 0 respectively
 
-        # We are (quant - 1/12) along a gradient of 2
+        # We are (quant - 1 / 12) along a gradient of 2
         assert np.isclose(
             returned.filter(scenario="scen_b", year=2010)["value"].iloc[0],
             (quant - 1 / 12) * 2,
