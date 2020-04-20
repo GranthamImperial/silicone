@@ -100,7 +100,9 @@ def test_rolling_window_find_quantiles_one():
     xs = np.array([1])
     ys = np.array([2])
     desired_quantiles = [0, 0.4, 0.5, 0.6, 0.85, 1]
-    quantiles = stats.rolling_window_find_quantiles(xs, ys, desired_quantiles, 10, 2 * 9)
+    quantiles = stats.rolling_window_find_quantiles(
+        xs, ys, desired_quantiles, 10, 2 * 9
+    )
 
     assert np.allclose(quantiles.values.squeeze(), 2)
 
