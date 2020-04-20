@@ -54,7 +54,7 @@ def rolling_window_find_quantiles(
     assert xs.size == ys.size
     if xs.size == 1:
         return pd.DataFrame(index=[xs[0]] * nwindows, columns=quantiles, data=ys[0])
-    step = (max(xs) - min(xs)) / (nwindows + 1)
+    step = (max(xs) - min(xs)) / nwindows
     decay_length = step / 2 * decay_length_factor
     # We re-form the arrays in case they were pandas series with integer labels that
     # would mess up the sorting.
