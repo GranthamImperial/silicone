@@ -94,10 +94,18 @@ class EqualQuantileWalk(_DatabaseCruncher):
                         data_follower_time_col
                     )
                 )
+            if lead_in.data.empty:
+                raise ValueError(
+                    "There is no data for {} so it cannot be infilled".format(
+                        variable_leaders
+                    )
+                )
             output_ts = lead_in.timeseries()
             if any(
-                [(time not in lead_ts.columns) or (time not in follower_ts.columns)
-                 for time in output_ts.columns]
+                [
+                    (time not in lead_ts.columns) or (time not in follower_ts.columns)
+                    for time in output_ts.columns
+                ]
             ):
                 raise ValueError(
                     "Time value in the infillee dataframe is not found in the infiller "
@@ -105,9 +113,7 @@ class EqualQuantileWalk(_DatabaseCruncher):
                 )
             for col in output_ts.columns:
                 output_ts[col] = self._find_same_quantile(
-                    follower_ts[col],
-                    lead_ts[col],
-                    output_ts[col]
+                    follower_ts[col], lead_ts[col], output_ts[col]
                 )
             output_ts = output_ts.reset_index()
             output_ts["variable"] = variable_follower
@@ -128,9 +134,15 @@ class EqualQuantileWalk(_DatabaseCruncher):
         return self._db.filter(variable=variable_follower)
 
     def _find_same_quantile(self, lead_vals, follow_vals, lead_input):
-        lead_vals = lead_vals.sorted().reset_index()
-        quant_of_lead_vals = lead_vals.index / len(lead_vals)
+        if len(lead_vals) == 1:
+            warnings.warn(
+                "Equal quantile calculation being used with a single entry"
+            )
+        lead_vals = lead_vals.sort_values()
+        quant_of_lead_vals = np.arange(len(lead_vals)) / (len(lead_vals) - 1)
         if any(quant_of_lead_vals > 1) or any(quant_of_lead_vals < 0):
             raise NotImplementedError("Impossible quantiles!")
-        input_quantiles = scipy.interpolate(quant_of_lead_vals, lead_vals, lead_input)
+        input_quantiles = scipy.interpolate.interp1d(
+            lead_vals, quant_of_lead_vals, bounds_error=False, fill_value=(0, 1)
+        )(lead_input)
         return np.nanquantile(follow_vals, input_quantiles)

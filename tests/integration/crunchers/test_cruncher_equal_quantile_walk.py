@@ -91,18 +91,14 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
 
     def test_derive_relationship(self, test_db):
         tcruncher = self.tclass(test_db)
-        res = tcruncher.derive_relationship(
-            "Emissions|CO2", ["Emissions|CH4"]
-        )
+        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CH4"])
         assert callable(res)
 
     def test_derive_relationship_with_nans(self):
         tdb = self.tdb.copy()
         tdb.loc[(tdb["variable"] == _eco2) & (tdb["model"] == _ma), 2050] = np.nan
         tcruncher = self.tclass(IamDataFrame(tdb))
-        res = tcruncher.derive_relationship(
-            "Emissions|CO2", ["Emissions|CH4"]
-        )
+        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CH4"])
         # just make sure that this runs through and no error is raised
         assert callable(res)
 
@@ -115,8 +111,7 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         )
         with pytest.raises(ValueError, match=error_msg):
             tcruncher.derive_relationship(
-                "Emissions|CO2",
-                ["Emissions|CH4", "Emissions|HFC|C5F12"],
+                "Emissions|CO2", ["Emissions|CH4", "Emissions|HFC|C5F12"],
             )
 
     @pytest.mark.parametrize("add_col", [None, "extra_col"])
@@ -124,9 +119,7 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         tcruncher = self.tclass(test_db)
         lead = ["Emissions|CH4"]
         follow = "Emissions|CO2"
-        simple_df = self._adjust_time_style_to_match(
-            simple_df, test_db
-        )
+        simple_df = self._adjust_time_style_to_match(simple_df, test_db)
         res = tcruncher.derive_relationship(follow, lead)
         if add_col:
             add_col_val = "blah"
@@ -135,11 +128,11 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
             assert simple_df.extra_cols[0] == add_col
 
         infilled = res(simple_df)
-
-
+        time_filter = {infilled.time_col: [infilled[infilled.time_col][0]]}
+        assert np.allclose(infilled.filter(**time_filter)["value"].values, [50, 100])
         # Test we can append our answer
-        append_df = simple_df.filter(variable=lead).append(expect_01)
-        assert append_df.filter(variable=follow).equals(expect_01)
+        append_df = simple_df.filter(variable=lead).append(infilled)
+        assert append_df.filter(variable=follow).equals(infilled)
 
         if add_col:
             assert all(append_df[add_col] == add_col_val)
@@ -148,9 +141,7 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         # Calculate the values using the cruncher for a fairly detailed dataset
         large_db = IamDataFrame(self.large_db.copy())
         tcruncher = self.tclass(large_db)
-        res = tcruncher.derive_relationship(
-            "Emissions|CH4", ["Emissions|CO2"]
-        )
+        res = tcruncher.derive_relationship("Emissions|CH4", ["Emissions|CO2"])
         assert callable(res)
         to_find = IamDataFrame(self.small_db.copy())
         crunched = res(to_find)
@@ -200,9 +191,7 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
     def test_derive_relationship_same_gas(self, test_db, test_downscale_df):
         # Given only a single data series, we recreate the original pattern
         tcruncher = self.tclass(test_db)
-        res = tcruncher.derive_relationship(
-            "Emissions|CO2", ["Emissions|CO2"]
-        )
+        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CO2"])
         crunched = res(test_db)
         assert all(
             abs(
@@ -222,18 +211,14 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
             "No data for `variable_leaders` ({}) in database".format(variable_leaders)
         )
         with pytest.raises(ValueError, match=error_msg):
-            tcruncher.derive_relationship(
-                "Emissions|CH4", variable_leaders
-            )
+            tcruncher.derive_relationship("Emissions|CH4", variable_leaders)
 
     def test_crunch_error_no_info_leader(self, test_db):
         # test that crunching fails if there's no data about the lead gas in the
         # database
         variable_leaders = ["Emissions|CO2"]
         tcruncher = self.tclass(test_db)
-        res = tcruncher.derive_relationship(
-            "Emissions|CH4", variable_leaders
-        )
+        res = tcruncher.derive_relationship("Emissions|CH4", variable_leaders)
         error_msg = re.escape(
             "There is no data for {} so it cannot be infilled".format(variable_leaders)
         )
@@ -250,23 +235,17 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
             "No data for `variable_follower` ({}) in database".format(variable_follower)
         )
         with pytest.raises(ValueError, match=error_msg):
-            tcruncher.derive_relationship(
-                variable_follower, ["Emissions|CO2"]
-            )
+            tcruncher.derive_relationship(variable_follower, ["Emissions|CO2"])
 
     def test_relationship_no_data(self, test_db):
         tcruncher = self.tclass(test_db)
         err_mssg = "There is no data of the appropriate type in the database."
         with pytest.raises(ValueError, match=err_mssg):
-            tcruncher.derive_relationship(
-                "Silly name", ["other silly name"]
-            )
+            tcruncher.derive_relationship("Silly name", ["other silly name"])
 
     def test_relationship_usage_wrong_unit(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db)
-        res = tcruncher.derive_relationship(
-            "Emissions|CO2", ["Emissions|CO2"]
-        )
+        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CO2"])
 
         exp_units = test_db.filter(variable="Emissions|CO2")["unit"].iloc[0]
 
@@ -285,9 +264,7 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
     def test_relationship_usage_wrong_time(self):
         tdb = IamDataFrame(self.tdb)
         tcruncher = self.tclass(tdb)
-        res = tcruncher.derive_relationship(
-            "Emissions|CO2", ["Emissions|CO2"]
-        )
+        res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CO2"])
 
         test_downscale_df = IamDataFrame(self.tdb).timeseries()
         test_downscale_df.columns = test_downscale_df.columns.map(
@@ -307,9 +284,7 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
     ):
         tcruncher = self.tclass(test_db.filter(year=2030, keep=False))
 
-        filler = tcruncher.derive_relationship(
-            "Emissions|CH4", ["Emissions|CO2"]
-        )
+        filler = tcruncher.derive_relationship("Emissions|CH4", ["Emissions|CO2"])
 
         test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db)
 
