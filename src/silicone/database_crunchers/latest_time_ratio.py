@@ -34,9 +34,9 @@ class LatestTimeRatio(_DatabaseCruncher):
     .. math::
         R = \\frac{ E_f(t_{\\text{last}}) }{ e_l(t_{\\text{last}}) }
 
-    where :math:`t_{\\text{last}}` is the average of all values of the follower gas at the latest time it
-    appears in the database, and the lower case :math:`e` represents the infiller
-    database.
+    where :math:`t_{\\text{last}}` is the average of all values of the follower gas at
+    the latest time it appears in the database, and the lower case :math:`e` represents
+    the infiller database.
     """
 
     def derive_relationship(self, variable_follower, variable_leaders):
@@ -51,8 +51,8 @@ class LatestTimeRatio(_DatabaseCruncher):
 
         variable_leaders : list[str]
             The variable we want to use in order to infer timeseries of
-            ``variable_follower`` (e.g. ``["Emissions|CO2"]``). Note that the 'lead
-            gas' methodology gives the same result, independent of the value of
+            ``variable_follower`` (e.g. ``["Emissions|CO2"]``). Note that the 'latest
+            time ratio' methodology gives the same result, independent of the value of
             ``variable_leaders`` in the database.
 
         Returns
@@ -170,6 +170,4 @@ class LatestTimeRatio(_DatabaseCruncher):
 
         self._check_follower_and_leader_in_db(variable_follower, variable_leaders)
 
-        iamdf_follower = self._db.filter(variable=variable_follower)
-        data_follower = iamdf_follower.data
-        return iamdf_follower
+        return self._db.filter(variable=variable_follower)
