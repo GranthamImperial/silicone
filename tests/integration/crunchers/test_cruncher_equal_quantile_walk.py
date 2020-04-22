@@ -202,7 +202,7 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         # Check results are the same
         assert crunched.equals(extreme_crunched)
         # Also check that the results are correct
-        assert crunched["value"][crunched["scenario"] == max_scen].iloc[0] == max(
+        assert crunched.filter(scenario=max_scen)["value"].iloc[0] == max(
             large_db_int.filter(variable=follow)["value"].values
         )
 
