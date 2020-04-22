@@ -60,6 +60,7 @@ class EqualQuantileWalk(_DatabaseCruncher):
         data_follower_time_col = iamdf_follower.time_col
         data_follower_unit = iamdf_follower["unit"].values[0]
         lead_ts = self._db.filter(variable=variable_leaders).timeseries()
+        lead_unit = lead_ts.index.get_level_values("unit")[0]
 
         def filler(in_iamdf, interpolate=False):
             """
@@ -86,6 +87,12 @@ class EqualQuantileWalk(_DatabaseCruncher):
                 False``.
             """
             lead_in = in_iamdf.filter(variable=variable_leaders)
+            if not all(lead_in.variables(True)["unit"] == lead_unit):
+                raise ValueError(
+                    "Units of lead variable is meant to be `{}`, found `{}`".format(
+                        lead_unit, lead_in.variables(True)["unit"].tolist()
+                    )
+                )
 
             if data_follower_time_col != in_iamdf.time_col:
                 raise ValueError(
@@ -108,8 +115,11 @@ class EqualQuantileWalk(_DatabaseCruncher):
                 ]
             ):
                 raise ValueError(
-                    "Time value in the infillee dataframe is not found in the infiller "
-                    "dataframe."
+                    "Not all required timepoints are present in the database we "
+                    "crunched, we crunched \n\t{} for the lead and \n\t{} for the follow"
+                    " \nbut you passed in \n\t{}".format(
+                        lead_ts.columns, follower_ts.columns, output_ts.columns
+                    )
                 )
             for col in output_ts.columns:
                 output_ts[col] = self._find_same_quantile(
@@ -133,7 +143,7 @@ class EqualQuantileWalk(_DatabaseCruncher):
 
         return self._db.filter(variable=variable_follower)
 
-    def _find_same_quantile(self, lead_vals, follow_vals, lead_input):
+    def _find_same_quantile(self, follow_vals, lead_vals, lead_input):
         if len(lead_vals) == 1:
             warnings.warn(
                 "Equal quantile calculation being used with a single entry"
