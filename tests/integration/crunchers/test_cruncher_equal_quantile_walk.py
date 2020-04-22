@@ -117,8 +117,8 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
     @pytest.mark.parametrize("add_col", [None, "extra_col"])
     def test_relationship_usage(self, test_db, simple_df, add_col):
         tcruncher = self.tclass(test_db)
-        lead = ["Emissions|CH4"]
-        follow = "Emissions|CO2"
+        lead = ["Emissions|CO2"]
+        follow = "Emissions|CH4"
         simple_df = self._adjust_time_style_to_match(simple_df, test_db)
         res = tcruncher.derive_relationship(follow, lead)
         if add_col:
@@ -239,9 +239,13 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
 
     def test_relationship_no_data(self, test_db):
         tcruncher = self.tclass(test_db)
-        err_mssg = "There is no data of the appropriate type in the database."
+        follow = "Silly name"
+        lead = ["other silly name"]
+        err_mssg = re.escape(
+            "No data for `variable_leaders` ({}) in database".format(lead)
+        )
         with pytest.raises(ValueError, match=err_mssg):
-            tcruncher.derive_relationship("Silly name", ["other silly name"])
+            tcruncher.derive_relationship(follow, lead)
 
     def test_relationship_usage_wrong_unit(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db)
@@ -255,7 +259,7 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
 
         error_msg = re.escape(
             "Units of lead variable is meant to be `{}`, found `{}`".format(
-                exp_units, wrong_unit
+                exp_units, [wrong_unit]
             )
         )
         with pytest.raises(ValueError, match=error_msg):
@@ -287,14 +291,15 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         filler = tcruncher.derive_relationship("Emissions|CH4", ["Emissions|CO2"])
 
         test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db)
+        times_we_have = test_db.filter(year=2030, keep=False).timeseries().columns
 
         error_msg = re.escape(
             "Not all required timepoints are present in the database we "
-            "crunched, we crunched \n\t`{}`\nbut you passed in \n\t{}".format(
-                list(
-                    test_db.filter(year=2030, keep=False).timeseries().columns.tolist()
-                ),
-                test_db.timeseries().columns.tolist(),
+            "crunched, we crunched \n\t{} for the lead and \n\t{} for the follow"
+            " \nbut you passed in \n\t{}".format(
+                times_we_have,
+                times_we_have,
+                test_db.timeseries().columns,
             )
         )
         with pytest.raises(ValueError, match=error_msg):
