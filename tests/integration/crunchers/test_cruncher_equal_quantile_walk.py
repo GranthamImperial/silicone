@@ -128,8 +128,22 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
             assert simple_df.extra_cols[0] == add_col
 
         infilled = res(simple_df)
+        # We compare the results with the expected results: for T1, we are below the
+        # lower limit on the first, in the middle on the second. At later times we are
+        # always above the highest value.
         time_filter = {infilled.time_col: [infilled[infilled.time_col][0]]}
         assert np.allclose(infilled.filter(**time_filter)["value"].values, [50, 100])
+        for time_ind in range(1, 3):
+            time_filter = {infilled.time_col: [infilled[infilled.time_col][time_ind]]}
+            assert np.allclose(
+                infilled.filter(**time_filter)["value"].values,
+                max(
+                    test_db.filter(variable=follow)
+                    .filter(**time_filter)["value"]
+                    .values
+                ),
+            )
+
         # Test we can append our answer
         append_df = simple_df.filter(variable=lead).append(infilled)
         assert append_df.filter(variable=follow).equals(infilled)
@@ -137,23 +151,29 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         if add_col:
             assert all(append_df[add_col] == add_col_val)
 
-    def test_numerical_relationship(self):
+    def test_numerical_relationship(self, test_db):
         # Calculate the values using the cruncher for a fairly detailed dataset
         large_db = IamDataFrame(self.large_db.copy())
+        large_db = self._adjust_time_style_to_match(large_db, test_db,)
+        large_db["value"] -= 0.1
+        test_db.filter(year=2010, inplace=True)
         tcruncher = self.tclass(large_db)
-        res = tcruncher.derive_relationship("Emissions|CH4", ["Emissions|CO2"])
+        lead = ["Emissions|CO2"]
+        follow = "Emissions|CH4"
+        res = tcruncher.derive_relationship(follow, lead)
         assert callable(res)
-        to_find = IamDataFrame(self.small_db.copy())
+        to_find = test_db
         crunched = res(to_find)
 
         # Calculate the same values numerically
-        xs = large_db.filter(variable="Emissions|CO2")["value"].values
-        ys = large_db.filter(variable="Emissions|CH4")["value"].values
-        ys = [np.mean(ys[xs == x]) for x in xs]
-        interpolate_fn = scipy.interpolate.interp1d(xs, ys)
-        xs_to_interp = to_find.filter(variable="Emissions|CO2")["value"].values
+        xs = np.sort(large_db.filter(variable="Emissions|CO2")["value"].values)
+        ys = np.sort(large_db.filter(variable="Emissions|CH4")["value"].values)
+        quantiles_of_x = np.arange(len(xs)) / (len(xs) - 1)
+        quant_of_y = scipy.interpolate.interp1d(
+            xs, quantiles_of_x, bounds_error=False, fill_value=(0, 1)
+        )(to_find.filter(variable=lead)["value"].values)
 
-        expected = interpolate_fn(xs_to_interp)
+        expected = np.quantile(ys, quant_of_y)
 
         assert all(crunched["value"].values == expected)
 
@@ -163,42 +183,53 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         # its cruncher
 
         # Calculate the values using the cruncher for a fairly detailed dataset
-        large_db = IamDataFrame(self.large_db.copy())
-        tcruncher = self.tclass(large_db)
-        res = tcruncher.derive_relationship("Emissions|CH4", ["Emissions|CO2"])
+        large_db_int = IamDataFrame(self.large_db)
+        tcruncher = self.tclass(large_db_int)
+        follow = "Emissions|CH4"
+        lead = ["Emissions|CO2"]
+        res = tcruncher.derive_relationship(follow, lead)
         assert callable(res)
-        crunched = res(large_db)
+        crunched = res(large_db_int)
 
         # Increase the maximum values
-        modify_extreme_db = large_db.filter(variable="Emissions|CO2").copy()
+        modify_extreme_db = large_db_int.filter(variable="Emissions|CO2").copy()
+        max_scen = modify_extreme_db["scenario"].loc[
+            modify_extreme_db["value"] == max(modify_extreme_db["value"])
+        ]
         ind = modify_extreme_db["value"].idxmax
         modify_extreme_db["value"].loc[ind] += 10
         extreme_crunched = res(modify_extreme_db)
         # Check results are the same
-        assert all(crunched["value"] == extreme_crunched["value"])
+        assert crunched.equals(extreme_crunched)
         # Also check that the results are correct
-        assert crunched["value"][crunched["scenario"] == "scen_b"].iloc[0] == 170
+        assert crunched["value"][crunched["scenario"] == max_scen].iloc[0] == max(
+            large_db_int.filter(variable=follow)["value"].values
+        )
 
-        # Repeat with reducing the minimum value
+        # Repeat with reducing the minimum value. This works differently because the
+        # minimum point is doubled. By default the cruncher selects the higher
+        # quantile but this will make it pick the lower.
+        min_scen = modify_extreme_db["scenario"].loc[
+            modify_extreme_db["value"] == min(modify_extreme_db["value"])
+        ]
         ind = modify_extreme_db["value"].idxmin
         modify_extreme_db["value"].loc[ind] -= 10
         extreme_crunched = res(modify_extreme_db)
-        assert all(crunched["value"] == extreme_crunched["value"])
-        # There are two smallest points, so we expect to see them equal the mean of the
-        # input values for these points
-        assert crunched["value"][crunched["scenario"] == "scen_e"].iloc[0] == 185
+        assert crunched.filter(scenario=min_scen)["value"].iloc[0] != min(
+            large_db_int.filter(variable=follow)["value"].values
+        )
+        assert extreme_crunched.filter(scenario=min_scen)["value"].iloc[0] == min(
+            large_db_int.filter(variable=follow)["value"].values
+        )
 
     def test_derive_relationship_same_gas(self, test_db, test_downscale_df):
         # Given only a single data series, we recreate the original pattern
         tcruncher = self.tclass(test_db)
         res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CO2"])
         crunched = res(test_db)
-        assert all(
-            abs(
-                crunched["value"].reset_index()
-                - test_db.filter(variable="Emissions|CO2")["value"].reset_index()
-            )
-            < 1e15
+        assert np.allclose(
+            crunched["value"].reset_index(drop=True),
+            test_db.filter(variable="Emissions|CO2")["value"].reset_index(drop=True),
         )
 
     def test_derive_relationship_error_no_info_leader(self, test_db):
@@ -297,9 +328,7 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
             "Not all required timepoints are present in the database we "
             "crunched, we crunched \n\t{} for the lead and \n\t{} for the follow"
             " \nbut you passed in \n\t{}".format(
-                times_we_have,
-                times_we_have,
-                test_db.timeseries().columns,
+                times_we_have, times_we_have, test_db.timeseries().columns,
             )
         )
         with pytest.raises(ValueError, match=error_msg):

@@ -114,10 +114,11 @@ class EqualQuantileWalk(_DatabaseCruncher):
                     for time in output_ts.columns
                 ]
             ):
+                # We allow for cases where either lead or follow have gaps
                 raise ValueError(
                     "Not all required timepoints are present in the database we "
-                    "crunched, we crunched \n\t{} for the lead and \n\t{} for the follow"
-                    " \nbut you passed in \n\t{}".format(
+                    "crunched, we crunched \n\t{} for the lead and \n\t{} for the "
+                    "follow \nbut you passed in \n\t{}".format(
                         lead_ts.columns, follower_ts.columns, output_ts.columns
                     )
                 )
@@ -145,9 +146,7 @@ class EqualQuantileWalk(_DatabaseCruncher):
 
     def _find_same_quantile(self, follow_vals, lead_vals, lead_input):
         if len(lead_vals) == 1:
-            warnings.warn(
-                "Equal quantile calculation being used with a single entry"
-            )
+            warnings.warn("Equal quantile calculation being used with a single entry")
         lead_vals = lead_vals.sort_values()
         quant_of_lead_vals = np.arange(len(lead_vals)) / (len(lead_vals) - 1)
         if any(quant_of_lead_vals > 1) or any(quant_of_lead_vals < 0):
