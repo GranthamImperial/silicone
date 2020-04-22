@@ -31,11 +31,13 @@ def main():
         dc.QuantileRollingWindows,
         dc.RMSClosest,
         dc.LinearInterpolation,
+        dc.EqualQuantileWalk,
     ]
     options_list = [
         #  {},
         # {"same_sign": True},
         {"use_ratio": False},
+        {},
         {},
         {},
     ]
