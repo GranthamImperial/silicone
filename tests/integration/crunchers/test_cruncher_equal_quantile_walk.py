@@ -182,8 +182,7 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         # The calculation is different with only one entry in the infiller db. We
         # expect a warning and the only value to be returned in all cases.
         one_entry_db = test_db.filter(
-            scenario=test_db.scenarios()[0],
-            model=test_db.models()[0],
+            scenario=test_db.scenarios()[0], model=test_db.models()[0],
         )
         tcruncher = self.tclass(one_entry_db)
         follow = "Emissions|CH4"
@@ -192,7 +191,7 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         infilled = res(test_db)
         assert np.allclose(
             infilled["value"],
-            one_entry_db.filter(variable=follow)["value"].to_list() * 4
+            one_entry_db.filter(variable=follow)["value"].to_list() * 4,
         )
 
     def test_extreme_values_relationship(self):
