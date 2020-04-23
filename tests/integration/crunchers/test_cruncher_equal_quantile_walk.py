@@ -8,6 +8,7 @@ import scipy.interpolate
 from base import _DataBaseCruncherTester
 from pyam import IamDataFrame
 
+import silicone.multiple_infillers
 from silicone.database_crunchers import EqualQuantileWalk
 
 _ma = "model_a"
@@ -177,6 +178,23 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
 
         assert all(crunched["value"].values == expected)
 
+    def test_with_one_value_in_infiller_db(self, test_db, caplog):
+        # The calculation is different with only one entry in the infiller db. We
+        # expect a warning and the only value to be returned in all cases.
+        one_entry_db = test_db.filter(
+            scenario=test_db.scenarios()[0],
+            model=test_db.models()[0],
+        )
+        tcruncher = self.tclass(one_entry_db)
+        follow = "Emissions|CH4"
+        lead = ["Emissions|CO2"]
+        res = tcruncher.derive_relationship(follow, lead)
+        infilled = res(test_db)
+        assert np.allclose(
+            infilled["value"],
+            one_entry_db.filter(variable=follow)["value"].to_list() * 4
+        )
+
     def test_extreme_values_relationship(self):
         # Our cruncher has a closest-point extrapolation algorithm and therefore
         # should return the same values when filling for data outside tht limits of
@@ -188,7 +206,6 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         follow = "Emissions|CH4"
         lead = ["Emissions|CO2"]
         res = tcruncher.derive_relationship(follow, lead)
-        assert callable(res)
         crunched = res(large_db_int)
 
         # Increase the maximum values

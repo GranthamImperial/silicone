@@ -1,7 +1,6 @@
 """
 Module for the database cruncher which uses the 'equal quantile walk' technique.
 """
-import warnings
 
 import numpy as np
 import scipy.interpolate
@@ -146,7 +145,8 @@ class EqualQuantileWalk(_DatabaseCruncher):
 
     def _find_same_quantile(self, follow_vals, lead_vals, lead_input):
         if len(lead_vals) == 1:
-            warnings.warn("Equal quantile calculation being used with a single entry")
+            # If there is only a single value we have to return that.
+            return follow_vals[0]
         lead_vals = lead_vals.sort_values()
         quant_of_lead_vals = np.arange(len(lead_vals)) / (len(lead_vals) - 1)
         if any(quant_of_lead_vals > 1) or any(quant_of_lead_vals < 0):
