@@ -190,9 +190,8 @@ class QuantileRollingWindows(_DatabaseCruncher):
                         "results).".format(variable_follower)
                     )
                     ys[np.isnan(ys)] = 0
-            sort_order = np.argsort(ys)
-            ys = ys[sort_order]
-            xs = xs[sort_order]
+            # We sort the values by ys, with xs acting as tiebreakers.
+            ys, xs = map(np.array, zip(*sorted(zip(ys, xs))))
             if np.equal(max(xs), min(xs)):
                 # We must prevent singularity behaviour if all the points are at the
                 # same x value.

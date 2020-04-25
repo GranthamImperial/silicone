@@ -205,7 +205,6 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         ys = larger_db.filter(variable="Emissions|CH4")["value"].values
         if use_ratio:
             ys = ys / xs
-        # Note that the definition of windows differs between the codes
         quantile_expected = silicone.stats.rolling_window_find_quantiles(
             xs, ys, [0.5], nwindows=10
         )
@@ -218,6 +217,38 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         else:
             expected = interpolate_fn(xs_to_interp)
         assert all(crunched["value"].values == expected)
+
+    def test_reordering_values_produces_no_change(self, test_db):
+        # We ensure that re-ordering does not change the data. We construct a situation
+        # with ascending and descending relations, and compare the results to when
+        # the ascending
+        time = test_db[test_db.time_col][0]
+        regular_db = IamDataFrame(
+            pd.DataFrame(
+                [[_ma, str(val), "World", _ech4, _gtc, val] for val in range(3)]
+                + [[_ma, str(val), "World", _eco2, _gtc, val] for val in range(3)]
+                + [[_mb, str(-val), "World", _ech4, _gtc, 2 - val] for val in range(3)]
+                + [[_mb, str(-val), "World", _eco2, _gtc, 2 - val] for val in range(3)],
+                columns=_msrvu + [time],
+            )
+        )
+        test_db["value"][test_db["value"] > 50] = (
+            test_db["value"][test_db["value"] > 50] / 100
+        )
+        if test_db.time_col == "year":
+            test_db.filter(year=int(time), inplace=True)
+        else:
+            test_db.filter(time=time, inplace=True)
+        regular_db = self._adjust_time_style_to_match(regular_db, test_db)
+        tcruncher = self.tclass(regular_db)
+        infilled_reg = tcruncher.derive_relationship(_ech4, [_eco2])(test_db)
+        inv_db = regular_db.copy()
+        # We invert the order of values. We don't need to worry about CH4 vs CO2 because
+        # they are always consecutive.
+        inv_db["value"] = inv_db["value"].iloc[len(inv_db)-np.arange(len(inv_db))-1]
+        tcruncher = self.tclass(inv_db)
+        infilled_inv = tcruncher.derive_relationship(_ech4, [_eco2])(test_db)
+        assert infilled_inv.equals(infilled_reg)
 
     def test_limit_of_similar_xs(self, test_db):
         # Check that the function returns the correct behaviour in the limit of similar

@@ -3,6 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 import pyam
+import pytest
 import scipy.interpolate
 
 import silicone.stats as stats
@@ -30,9 +31,15 @@ simple_df = pd.DataFrame(
 simple_df = pyam.IamDataFrame(simple_df)
 
 
-def test_rolling_window_find_quantiles():
-    xs = np.array([0, 0, 1, 1])
-    ys = np.array([0, 1, 0, 1])
+@pytest.mark.parametrize(
+    "xs,ys",
+    (
+        (np.array([0, 0, 1, 1]), np.array([0, 1, 0, 1])),
+        (np.array([0, 0, 1, 1]), np.array([0, 1, 1, 0])),
+        (np.array([0, 1, 0, 1]), np.array([0, 1, 1, 0])),
+    ),
+)
+def test_rolling_window_find_quantiles(xs, ys):
     desired_quantiles = [0.4, 0.5, 0.6]
     # We have points at 0 and 1 in both x and y. We set the decay length to 20 so 0
     # and 1 get weightings of 1/3 at their own end and 1/6 at the other end.
