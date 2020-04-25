@@ -219,16 +219,25 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         assert all(crunched["value"].values == expected)
 
     def test_reordering_values_produces_no_change(self, test_db):
-        # We ensure that re-ordering does not change the data. We construct a situation
-        # with ascending and descending relations, and compare the results to when
-        # the ascending
+        # We ensure that re-ordering does not change the data. We construct a df
+        # with x = [0, 1, 0, 1], y = [0, 1, 1, 0] and then one
+        # with x = [0, 0, 1, 1], y = [0, 1, 0, 1]
         time = test_db[test_db.time_col][0]
         regular_db = IamDataFrame(
             pd.DataFrame(
-                [[_ma, str(val), "World", _ech4, _gtc, val] for val in range(3)]
-                + [[_ma, str(val), "World", _eco2, _gtc, val] for val in range(3)]
-                + [[_mb, str(-val), "World", _ech4, _gtc, 2 - val] for val in range(3)]
-                + [[_mb, str(-val), "World", _eco2, _gtc, 2 - val] for val in range(3)],
+                [[_ma, str(val), "World", _ech4, _mtch4, val] for val in range(2)]
+                + [[_ma, str(val), "World", _eco2, _gtc, val] for val in range(2)]
+                + [[_mb, str(-val), "World", _ech4, _mtch4, val] for val in range(2)]
+                + [[_mb, str(-val), "World", _eco2, _gtc, 1 - val] for val in range(2)],
+                columns=_msrvu + [time],
+            )
+        )
+        irreg_db = IamDataFrame(
+            pd.DataFrame(
+                [[_ma, str(val), "World", _ech4, _mtch4, 0] for val in range(2)]
+                + [[_ma, str(val), "World", _eco2, _gtc, val] for val in range(2)]
+                + [[_mb, str(-val), "World", _ech4, _mtch4, 1] for val in range(2)]
+                + [[_mb, str(-val), "World", _eco2, _gtc, val] for val in range(2)],
                 columns=_msrvu + [time],
             )
         )
@@ -241,13 +250,10 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
             test_db.filter(time=time, inplace=True)
         regular_db = self._adjust_time_style_to_match(regular_db, test_db)
         tcruncher = self.tclass(regular_db)
-        infilled_reg = tcruncher.derive_relationship(_ech4, [_eco2])(test_db)
-        inv_db = regular_db.copy()
-        # We invert the order of values. We don't need to worry about CH4 vs CO2 because
-        # they are always consecutive.
-        inv_db["value"] = inv_db["value"].iloc[len(inv_db)-np.arange(len(inv_db))-1]
-        tcruncher = self.tclass(inv_db)
-        infilled_inv = tcruncher.derive_relationship(_ech4, [_eco2])(test_db)
+        infilled_reg = tcruncher.derive_relationship(_eco2, [_ech4], 0.67)(test_db)
+
+        tcruncher = self.tclass(irreg_db)
+        infilled_inv = tcruncher.derive_relationship(_eco2, [_ech4], 0.67)(test_db)
         assert infilled_inv.equals(infilled_reg)
 
     def test_limit_of_similar_xs(self, test_db):
