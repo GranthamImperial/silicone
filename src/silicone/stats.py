@@ -58,9 +58,7 @@ def rolling_window_find_quantiles(
     decay_length = step / 2 * decay_length_factor
     # We re-form the arrays in case they were pandas series with integer labels that
     # would mess up the sorting.
-    sort_order = np.argsort(ys)
-    ys = ys[sort_order]
-    xs = xs[sort_order]
+    ys, xs = map(np.array, zip(*sorted(zip(ys, xs))))
     if max(xs) == min(xs):
         # We must prevent singularity behaviour if all the points have the same x.
         box_centers = np.array([xs[0]])
