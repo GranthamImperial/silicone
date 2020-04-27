@@ -47,16 +47,27 @@ class QuantileRollingWindows(_DatabaseCruncher):
     timeseries axis, :math:`b` is the distance between window centres and :math:`f` is
     a decay factor which controls how much less points away from
     :math:`x_{\\text{window}}` are weighted.
-    If :math:`f=1` then a point which is halfway between
-    window centres receives a weighting of :math:`1/2`. Lowering the value of
-    :math:`f` cause points further from the window centre to receive less weight.
+    If :math:`f=1` then a point which is half the width between window centres away
+    receives a weighting of :math:`1/2`. Lowering the value of :math:`f` cause points
+    further from the window centre to receive less weight.
 
     With these weightings, the desired quantile of the data is then calculated. This
-    calculation is done by sorting the data and interpolating the value where the
-    cumulative sum of weights equals the quantile. Quantiles less than half the weight
-    of the smallest follow value, or more than one minus half the weight of the largest
-    follow value, return the smallest/largest values respectively.
+    calculation is done by sorting the data by the database's follow timeseries values
+    (then by lead timeseries values in the case of identical follow values). From here,
+    the weight of each point is calculated following the formula given above.
+    We calculate the cumulative sum of weights, and then the cumulative sum up to half
+     weights, defined by
+    .. math::
+        c_{hw} = c_w - 0.5 \\times w
+    where :math:`c_w` is the cumulative weights and :math:`w` is the raw weights. This
+    ensures that quantiles less than half the weight of the smallest follow value return
+    the smallest follow value and more than one minus half the weight of the largest
+    follow value return the largest value. Without such a shift, the largest value is
+    only returned if the quantile is 1, leading to a bias towards smaller values.
 
+    With these calculations, we have determined the relationship between the follow
+    timeseries values and the quantile i.e. cumulative sum of (normalised) weights. We
+    can then determine arbitrary quantiles by linearly interpolating.
 
     If the option ``use_ratio`` is set to ``True``, instead of returning the absolute
     value of the follow at this quantile, we return the quantile of the ratio between
@@ -148,6 +159,7 @@ class QuantileRollingWindows(_DatabaseCruncher):
                 nwindows
             )
             raise ValueError(error_msg)
+
         nwindows = int(nwindows)
 
         if np.equal(decay_length_factor, 0):
@@ -178,6 +190,7 @@ class QuantileRollingWindows(_DatabaseCruncher):
                 # 0D-array, make 1D
                 xs = np.array([xs])
                 ys = np.array([ys])
+
             if use_ratio:
                 # We want the ratio between x and y, not the actual values of y.
                 ys = ys / xs
@@ -207,6 +220,7 @@ class QuantileRollingWindows(_DatabaseCruncher):
                     )(quantile)
 
                 derived_relationships[db_time] = same_x_val_workaround
+
             else:
                 db_time_table = rolling_window_find_quantiles(
                     xs, ys, quantile, nwindows, decay_length_factor
