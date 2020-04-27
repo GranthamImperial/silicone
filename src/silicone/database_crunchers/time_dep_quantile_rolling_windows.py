@@ -29,7 +29,7 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
         Derive the relationship between two variables from the database.
 
         For details of most parameters, see QuantileRollingWindows. The one different
-        parameter is as follows:
+        parameter is time_quantile_dict, described below:
 
         Parameters
         ----------
@@ -72,7 +72,7 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
                 "Not all required times in the dictionary have data in the database."
             )
 
-        filler_fns = []
+        filler_fns = {}
         for time, quantile in time_quantile_dict.items():
             # TODO: this section can be rewritten to avoid conversions when the pyam
             # bug is fixed
@@ -82,13 +82,11 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
                 cruncher = QuantileRollingWindows(
                     self._db.filter(time=_convert_dt64_todt(time))
                 )
-            filler_fns.append(
-                cruncher.derive_relationship(
-                    variable_follower,
-                    variable_leaders,
-                    quantile,
-                    **kwargs
-                )
+            filler_fns[time] = cruncher.derive_relationship(
+                variable_follower,
+                variable_leaders,
+                quantile,
+                **kwargs
             )
 
         def filler(in_iamdf):
@@ -124,13 +122,10 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
             for time in time_quantile_dict.keys():
                 if in_iamdf.time_col == "year":
                     # TODO: remove int specification from here when pyam bug is fixed
-                    tmp = filler_fns[0](in_iamdf.filter(year=int(time)))
+                    tmp = filler_fns[time](in_iamdf.filter(year=int(time)))
                 else:
-                    tmp = filler_fns[0](in_iamdf.filter(time=_convert_dt64_todt(time)))
+                    tmp = filler_fns[time](in_iamdf.filter(time=_convert_dt64_todt(time)))
 
-                # TODO: check - this will make the cruncher useable only once I think
-                # Can we make filler_fns a dictionary instead?
-                filler_fns.pop(0)
                 try:
                     to_return.append(tmp, inplace=True)
                 except NameError:
