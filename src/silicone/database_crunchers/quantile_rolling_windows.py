@@ -59,6 +59,7 @@ class QuantileRollingWindows(_DatabaseCruncher):
     weights, defined by
 
     .. math::
+
         c_{hw} = c_w - 0.5 \\times w
 
     where :math:`c_w` is the cumulative weights and :math:`w` is the raw weights. This
@@ -145,7 +146,7 @@ class QuantileRollingWindows(_DatabaseCruncher):
             ``quantile`` is not between 0 and 1.
 
         ValueError
-            ``nwindows`` is not equivalent to an integer.
+            ``nwindows`` is not equivalent to an integer or is not greater than 1.
 
         ValueError
             ``decay_length_factor`` is 0.
@@ -176,6 +177,7 @@ class QuantileRollingWindows(_DatabaseCruncher):
         wide_db = self._db.filter(
             variable=[variable_follower] + variable_leaders
         ).pivot_table(index=idx, columns=columns, aggfunc="sum")
+
         # make sure we don't have empty strings floating around (pyam bug?)
         wide_db = wide_db.applymap(lambda x: np.nan if isinstance(x, str) else x)
         wide_db = wide_db.dropna(axis=0)
@@ -184,6 +186,7 @@ class QuantileRollingWindows(_DatabaseCruncher):
         for db_time, dbtdf in wide_db.groupby(db_time_col):
             xs = dbtdf[variable_leaders].values.squeeze()
             ys = dbtdf[variable_follower].values.squeeze()
+
             if xs.shape != ys.shape:
                 raise NotImplementedError(
                     "Having more than one `variable_leaders` is not yet implemented"
@@ -203,6 +206,7 @@ class QuantileRollingWindows(_DatabaseCruncher):
                         "results).".format(variable_follower)
                     )
                     ys[np.isnan(ys)] = 0
+
             if np.equal(max(xs), min(xs)):
                 # We must prevent singularity behaviour if all the points are at the
                 # same x value.
