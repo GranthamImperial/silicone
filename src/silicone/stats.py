@@ -8,6 +8,47 @@ import pandas as pd
 import scipy.interpolate
 
 
+def _calculate_rolling_window_quantiles(
+    xs, ys, quantiles, nwindows=10, decay_length_factor=1
+):
+    if isinstance(quantiles, (float, np.float64)):
+        quantiles = [quantiles]
+    # Workhorse function for calculating quantiles according to the quantile rolling
+    # windows procedure. This does not cover the case of min(xs) == max(xs)
+    step = (max(xs) - min(xs)) / nwindows
+    decay_length = step / 2 * decay_length_factor
+    ys, xs = map(np.array, zip(*sorted(zip(ys, xs))))
+
+    # We want to include the max x point, but not any point above it.
+    # The 0.99 factor prevents rounding error inclusion.
+    window_centers = np.arange(min(xs), max(xs) + step * 0.99, step)
+
+    db_time_table = pd.DataFrame(
+        index=quantiles,
+        columns=window_centers,
+    )
+    db_time_table.columns.name = "window_centers"
+
+    for window_center in window_centers:
+        weights = 1.0 / (1.0 + ((xs - window_center) / decay_length) ** 2)
+        weights /= sum(weights)
+        # We want to calculate the weights at the midpoint of step
+        # corresponding to the y-value.
+        cumsum_weights = np.cumsum(weights) - 0.5 * weights
+        db_time_table.loc[
+            quantiles, window_center
+        ] = scipy.interpolate.interp1d(
+            cumsum_weights,
+            ys,
+            bounds_error=False,
+            fill_value=(ys[0], ys[-1]),
+            assume_sorted=True,
+        )(
+            quantiles
+        )
+    return db_time_table
+
+
 def rolling_window_find_quantiles(
     xs, ys, quantiles, nwindows=10, decay_length_factor=1
 ):
@@ -52,14 +93,11 @@ def rolling_window_find_quantiles(
         Quantile values at the window centres.
     """
     assert xs.size == ys.size
-    if xs.size == 1:
-        return pd.DataFrame(index=[xs[0]] * nwindows, columns=quantiles, data=ys[0])
     step = (max(xs) - min(xs)) / nwindows
     decay_length = step / 2 * decay_length_factor
-    # We re-form the arrays in case they were pandas series with integer labels that
-    # would mess up the sorting.
+    # We sort the values by ys, with xs acting as tiebreakers.
     ys, xs = map(np.array, zip(*sorted(zip(ys, xs))))
-    if max(xs) == min(xs):
+    if np.equal(max(xs), min(xs)):
         # We must prevent singularity behaviour if all the points have the same x.
         box_centers = np.array([xs[0]])
         decay_length = 1
