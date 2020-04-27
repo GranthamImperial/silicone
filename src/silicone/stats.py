@@ -9,7 +9,7 @@ import scipy.interpolate
 
 
 def rolling_window_find_quantiles(
-    xs, ys, quantiles, nwindows=10, decay_length_factor=1
+    xs, ys, quantiles, nwindows=11, decay_length_factor=1
 ):
     """
     Perform quantile analysis in the y-direction for x-weighted data.
@@ -38,8 +38,8 @@ def rolling_window_find_quantiles(
     quantiles : list-like
         The quantiles to calculate in each window
 
-    nwindows : positive int
-        How many points to evaluate between x_max and x_min.
+    nwindows : int
+        How many points to evaluate between x_max and x_min. Must be > 1.
 
     decay_length_factor : float
         gives the distance over which the weighting of the values falls to 1/4,
@@ -65,7 +65,7 @@ def rolling_window_find_quantiles(
     else:
         # We want to include the max x point, but not any point above it.
         # The 0.99 factor prevents rounding error inclusion.
-        step = (max(xs) - min(xs)) / nwindows
+        step = (max(xs) - min(xs)) / (nwindows - 1)
         decay_length = step / 2 * decay_length_factor
         window_centers = np.arange(min(xs), max(xs) + step * 0.99, step)
     ys, xs = map(np.array, zip(*sorted(zip(ys, xs))))

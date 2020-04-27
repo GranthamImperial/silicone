@@ -78,7 +78,7 @@ class QuantileRollingWindows(_DatabaseCruncher):
         variable_follower,
         variable_leaders,
         quantile=0.5,
-        nwindows=10,
+        nwindows=11,
         decay_length_factor=1,
         use_ratio=False,
     ):
@@ -99,8 +99,8 @@ class QuantileRollingWindows(_DatabaseCruncher):
             The quantile to return in each window.
 
         nwindows : int
-            The number of windows to use when calculating the relationship between the
-            follower and lead gases.
+            The number of window centers to use when calculating the relationship
+            between the follower and lead gases.
 
         decay_length_factor : float
             Parameter which controls how strongly points away from the window's centre
@@ -143,8 +143,8 @@ class QuantileRollingWindows(_DatabaseCruncher):
             error_msg = "Invalid quantile ({}), it must be in [0, 1]".format(quantile)
             raise ValueError(error_msg)
 
-        if int(nwindows) != nwindows:
-            error_msg = "Invalid nwindows ({}), it must be an integer".format(nwindows)
+        if int(nwindows) != nwindows or nwindows < 2:
+            error_msg = "Invalid nwindows ({}), it must be an integer > 1".format(nwindows)
             raise ValueError(error_msg)
         nwindows = int(nwindows)
 

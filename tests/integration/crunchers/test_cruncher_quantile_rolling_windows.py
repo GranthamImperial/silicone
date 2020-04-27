@@ -125,7 +125,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
             "Emissions|CO2",
             ["Emissions|CH4"],
             quantile=quant,
-            nwindows=1,
+            nwindows=2,
             use_ratio=use_ratio,
         )
         with caplog.at_level(logging.INFO, logger="silicone.database_crunchers."):
@@ -155,7 +155,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         # case.
         quant = 0.59
         res = tcruncher.derive_relationship(
-            "Emissions|CO2", ["Emissions|CH4"], quantile=quant, nwindows=1
+            "Emissions|CO2", ["Emissions|CH4"], quantile=quant, nwindows=2
         )
         result_2 = res(simple_df)
         assert np.isclose(
@@ -170,7 +170,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
 
         # Similarly quantiles below 1/12 are 0 for the second case.
         res = tcruncher.derive_relationship(
-            "Emissions|CO2", ["Emissions|CH4"], quantile=0.083, nwindows=1
+            "Emissions|CO2", ["Emissions|CH4"], quantile=0.083, nwindows=2
         )
         with caplog.at_level(logging.INFO, logger="silicone.database_crunchers."):
             expect_00 = res(simple_df)
@@ -206,7 +206,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         if use_ratio:
             ys = ys / xs
         quantile_expected = silicone.stats.rolling_window_find_quantiles(
-            xs, ys, [0.5], nwindows=10
+            xs, ys, [0.5]
         )
         interpolate_fn = scipy.interpolate.interp1d(
             np.array(quantile_expected.index), quantile_expected.values.squeeze(),
@@ -391,11 +391,11 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
                 "Emissions|CH4", ["Emissions|CO2"], quantile=quantile
             )
 
-    @pytest.mark.parametrize("nwindows", (1.1, 3.1, 101.2))
+    @pytest.mark.parametrize("nwindows", (1.1, 1, 101.2))
     def test_derive_relationship_nwindows_not_integer(self, test_db, nwindows):
         tcruncher = self.tclass(test_db)
         error_msg = re.escape(
-            "Invalid nwindows ({}), it must be an integer".format(nwindows)
+            "Invalid nwindows ({}), it must be an integer > 1".format(nwindows)
         )
 
         with pytest.raises(ValueError, match=error_msg):
