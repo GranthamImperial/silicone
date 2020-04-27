@@ -8,9 +8,9 @@ import numpy as np
 import scipy.interpolate
 from pyam import IamDataFrame
 
-from .base import _DatabaseCruncher
 from ..stats import _calculate_rolling_window_quantiles
 from ..utils import _get_unit_of_variable
+from .base import _DatabaseCruncher
 
 logger = logging.getLogger(__name__)
 
@@ -192,7 +192,7 @@ class QuantileRollingWindows(_DatabaseCruncher):
                 cumsum_weights = np.array([(0.5 + x) / len(ys) for x in range(len(ys))])
 
                 def same_x_val_workaround(
-                        _, ys=ys, cumsum_weights=cumsum_weights, quantile=quantile
+                    _, ys=ys, cumsum_weights=cumsum_weights, quantile=quantile
                 ):
                     if np.equal(min(ys), max(ys)):
                         return ys[0]
