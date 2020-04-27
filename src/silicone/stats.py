@@ -30,10 +30,10 @@ def rolling_window_find_quantiles(
     Parameters
     ----------
     xs : np.ndarray, :obj:`pd.Series`
-        The x co-ordinates to use in regression.
+        The x co-ordinates to use in the regression.
 
-    xs : np.ndarray, :obj:`pd.Series`
-        The x co-ordinates to use in regression.
+    ys : np.ndarray, :obj:`pd.Series`
+        The y co-ordinates to use in the regression.
 
     quantiles : list-like
         The quantiles to calculate in each window
@@ -43,17 +43,25 @@ def rolling_window_find_quantiles(
 
     decay_length_factor : float
         gives the distance over which the weighting of the values falls to 1/4,
-        relative to half the distance between boxes. Defaults to 1. Formula is
+        relative to half the distance between window centres. Defaults to 1. Formula is
         :math:`w = \\left ( 1 + \\left( \\frac{\\text{distance}}{\\text{box\\_length} \\times \\text{decay\\_length\\_factor}} \\right)^2 \\right)^{-1}`.
 
     Returns
     -------
     :obj:`pd.DataFrame`
         Quantile values at the window centres.
+
+    Raises
+    ------
+    AssertionError
+        ``xs`` and ``ys`` don't have the same shape
     """
-    assert len(xs) == len(ys)
+    if xs.shape != ys.shape:
+        raise AssertionError("`xs` and `ys` must be the same shape")
+
     if isinstance(quantiles, (float, np.float64)):
         quantiles = [quantiles]
+
     # min(xs) == max(xs) cannot be accessed via QRW cruncher, as a short-circuit appears
     # earlier in the code.
     if np.equal(max(xs), min(xs)):
@@ -62,12 +70,14 @@ def rolling_window_find_quantiles(
         decay_length = 1
         if np.equal(max(ys), min(ys)):
             return pd.DataFrame(index=window_centers, columns=quantiles, data=ys[0])
+
     else:
         # We want to include the max x point, but not any point above it.
         # The 0.99 factor prevents rounding error inclusion.
         step = (max(xs) - min(xs)) / (nwindows - 1)
         decay_length = step / 2 * decay_length_factor
         window_centers = np.arange(min(xs), max(xs) + step * 0.99, step)
+
     ys, xs = map(np.array, zip(*sorted(zip(ys, xs))))
 
     results = pd.DataFrame(index=window_centers, columns=quantiles)
@@ -76,6 +86,7 @@ def rolling_window_find_quantiles(
     for window_center in window_centers:
         weights = 1.0 / (1.0 + ((xs - window_center) / decay_length) ** 2)
         weights /= sum(weights)
+
         # We want to calculate the weights at the midpoint of step
         # corresponding to the y-value.
         cumsum_weights = np.cumsum(weights) - 0.5 * weights
@@ -86,6 +97,7 @@ def rolling_window_find_quantiles(
             fill_value=(ys[0], ys[-1]),
             assume_sorted=True,
         )(quantiles)
+
     return results
 
 
