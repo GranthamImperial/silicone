@@ -23,7 +23,7 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
         variable_follower,
         variable_leaders,
         time_quantile_dict=None,
-        nwindows=10,
+        nwindows=11,
         decay_length_factor=1,
         use_ratio=False,
     ):
