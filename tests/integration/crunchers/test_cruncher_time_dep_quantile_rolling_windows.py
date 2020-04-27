@@ -132,7 +132,7 @@ class TestDatabaseTimeDepCruncherRollingWindows:
             formatted_dates[2]: 0.6,
         }
         res = tcruncher.derive_relationship(
-            follow, [_ech4], time_quantile_dict=quant, nwindows=1,
+            follow, [_ech4], time_quantile_dict=quant, nwindows=2,
         )
         to_infill = regular_data.filter(variable=_ech4)
         returned = res(to_infill)
