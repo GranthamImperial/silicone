@@ -23,10 +23,7 @@ def _calculate_rolling_window_quantiles(
     # The 0.99 factor prevents rounding error inclusion.
     window_centers = np.arange(min(xs), max(xs) + step * 0.99, step)
 
-    db_time_table = pd.DataFrame(
-        index=quantiles,
-        columns=window_centers,
-    )
+    db_time_table = pd.DataFrame(index=quantiles, columns=window_centers,)
     db_time_table.columns.name = "window_centers"
 
     for window_center in window_centers:
@@ -35,17 +32,13 @@ def _calculate_rolling_window_quantiles(
         # We want to calculate the weights at the midpoint of step
         # corresponding to the y-value.
         cumsum_weights = np.cumsum(weights) - 0.5 * weights
-        db_time_table.loc[
-            quantiles, window_center
-        ] = scipy.interpolate.interp1d(
+        db_time_table.loc[quantiles, window_center] = scipy.interpolate.interp1d(
             cumsum_weights,
             ys,
             bounds_error=False,
             fill_value=(ys[0], ys[-1]),
             assume_sorted=True,
-        )(
-            quantiles
-        )
+        )(quantiles)
     return db_time_table
 
 
