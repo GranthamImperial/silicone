@@ -41,10 +41,21 @@ simple_df = pyam.IamDataFrame(simple_df)
 )
 def test_rolling_window_find_quantiles(xs, ys):
     desired_quantiles = [0.4, 0.5, 0.6]
-    # We have points at 0 and 1 in both x and y. We set the decay length to 20 so 0
-    # and 1 get weightings of 1/3 at their own end and 1/6 at the other end.
-    # Subtracting half from each of these, for quantiles above 5/12 we get q - 5/12
-    # of the way up a line of gradient 1 / (4/6 - 5/12)
+    # Firstly take the window centre at a lead value of 0. With a
+    # decay_length_factor=20 and nwindows=10, the points at a lead value
+    # of 0 are 10 window centres away hence receive a weight of 1/2 relative
+    # to the points at a lead value of 0.
+    # with the points in order of follow values then ordered by lead
+    # values where lead values are the same we have i.e. the points are:
+    # points: [(0, 0), (1, 0), (0, 1), (1, 1)]
+    # we have
+    # unnormalised weights: [2, 1, 2, 1]
+    # normalised weights are: [1/3, 1/6, 1/3, 1/6]
+    # cumulative weights are hence: [2/6, 3/6, 5/6, 1]
+    # subtracting half the weights we get: [1/6, 5/12, 4/6, 11/12]
+    # Hence above quantiles of  quantiles of 5/12, we have a gradient (in
+    # follower value - quantile space) = (1 - 0) / (4/6 - 5/12)
+    # thus our relationship is (quant - 5/12) * grad
     quantiles = stats.rolling_window_find_quantiles(xs, ys, desired_quantiles, 11, 20)
     assert np.allclose(
         quantiles.iloc[0].tolist(),

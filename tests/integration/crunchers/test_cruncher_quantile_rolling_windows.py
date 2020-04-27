@@ -128,7 +128,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
             nwindows=2,
             use_ratio=use_ratio,
         )
-        with caplog.at_level(logging.INFO, logger="silicone.database_crunchers."):
+        with caplog.at_level(logging.INFO, logger="silicone.database_crunchers"):
             returned = res(simple_df)
         if use_ratio:
             # We have a 0/0*0 in the calculation, so error message happens and 0 is
@@ -137,13 +137,35 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
             assert returned.filter(scenario="scen_a", year=2010)["value"].iloc[0] == 0
         else:
             assert len(caplog.record_tuples) == 0
-            # We are (quant - 5 / 12) along a gradient of 2
+            # For the window centre at lead value of 0, given that default
+            # decay_length_factor is 1, the follower value of 1,
+            # which is also at a lead value of 1 and hence  an entire window away,
+            # receives a weight of 1/5 relative to the follower value of 0, which
+            # is at a lead value of zero i.e. the window centre.
+            # unnormalised weights are hence: [1, 0.2]
+            # normalised weights are: [5/6, 1/6]
+            # cumulative weights are hence: [5/6, 1]
+            # subtracting half the weights we get: [5/12, 11/12]
+            # Hence between quantiles of 5/12 and 11/12, we have a gradient (in
+            # follower value - quantile space) = (1 - 0) / (5/12 - 11/12) = 2
+            # thus our relationship is (quant - 5/12) * 2
             assert np.isclose(
                 returned.filter(scenario="scen_a", year=2010)["value"].iloc[0],
                 (quant - 5 / 12) * 2,
             )
 
-        # We are (quant - 1 / 12) along a gradient of 2
+        # For the window centre at lead value of 1, given that default
+        # decay_length_factor is 1, the follower value of 0,
+        # which is also at a lead value of 0 and hence  an entire window away,
+        # receives a weight of 1/5 relative to the follower value of 0, which
+        # is at a lead value of zero i.e. the window centre.
+        # unnormalised weights are hence: [0.2, 1]
+        # normalised weights are: [1/6, 5/6]
+        # cumulative weights are hence: [1/6, 1]
+        # subtracting half the weights we get: [1/12, 7/12]
+        # Hence between quantiles of 1/12 and 7/12, we have a gradient (in
+        # follower value - quantile space) = (1 - 0) / (7/12 - 1/12) = 2
+        # thus our relationship is (quant - 1/12) * 2
         assert np.isclose(
             returned.filter(scenario="scen_b", year=2010)["value"].iloc[0],
             (quant - 1 / 12) * 2,
@@ -168,11 +190,11 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         assert all(result_2.filter(year=2030)["value"] == 1000)
         assert all(result_2.filter(year=2050)["value"] == 5000)
 
-        # Similarly quantiles below 1/12 are 0 for the second case.
+        # Similarly quantiles below 1/12 are 0.
         res = tcruncher.derive_relationship(
             "Emissions|CO2", ["Emissions|CH4"], quantile=0.083, nwindows=2
         )
-        with caplog.at_level(logging.INFO, logger="silicone.database_crunchers."):
+        with caplog.at_level(logging.INFO, logger="silicone.database_crunchers"):
             expect_00 = res(simple_df)
         if use_ratio:
             # We have 0/0*0, so no value appears.
