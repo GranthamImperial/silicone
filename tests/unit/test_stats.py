@@ -45,7 +45,7 @@ def test_rolling_window_find_quantiles(xs, ys):
     # and 1 get weightings of 1/3 at their own end and 1/6 at the other end.
     # Subtracting half from each of these, for quantiles above 5/12 we get q - 5/12
     # of the way up a line of gradient 1 / (4/6 - 5/12)
-    quantiles = stats.rolling_window_find_quantiles(xs, ys, desired_quantiles, 10, 20)
+    quantiles = stats.rolling_window_find_quantiles(xs, ys, desired_quantiles, 11, 20)
     assert np.allclose(
         quantiles.iloc[0].tolist(),
         np.array([0, (0.5 - 5 / 12), (0.6 - 5 / 12)]) * 1 / (4 / 6 - 5 / 12),
@@ -58,7 +58,7 @@ def test_rolling_window_find_quantiles(xs, ys):
 
     xs = np.array([0, 0, 1, 1])
     ys = np.array([0, 0, 1, 1])
-    quantiles = stats.rolling_window_find_quantiles(xs, ys, desired_quantiles, 10, 20)
+    quantiles = stats.rolling_window_find_quantiles(xs, ys, desired_quantiles, 11, 20)
     # And x = 0, a gradient of 4 starting from 1/2 at q > 0.5
     assert np.allclose(quantiles.iloc[0].tolist(), [0, 0, 0.1 * 4],)
     # at x = 1 we have the exact opposite
@@ -66,13 +66,13 @@ def test_rolling_window_find_quantiles(xs, ys):
 
     desired_quantiles = [0, 0.5, 1]
     quantiles = stats.rolling_window_find_quantiles(
-        np.array([1]), np.array([1]), desired_quantiles, 10, 20
+        np.array([1]), np.array([1]), desired_quantiles, 11, 20
     )
     assert all(quantiles.iloc[0, :] == [1, 1, 1])
 
     desired_quantiles = [0, 0.5, 1]
     quantiles = stats.rolling_window_find_quantiles(
-        np.array([1, 1]), np.array([1, 1]), desired_quantiles, 10, 20
+        np.array([1, 1]), np.array([1, 1]), desired_quantiles, 11, 20
     )
     assert all(quantiles.iloc[0, :] == [1, 1, 1])
 
@@ -83,7 +83,7 @@ def test_rolling_window_find_quantiles_same_points():
     xs = np.array([1] * 11)
     ys = np.array(range(11))
     desired_quantiles = [0, 0.4, 0.5, 0.6, 0.85, 1]
-    quantiles = stats.rolling_window_find_quantiles(xs, ys, desired_quantiles, 10, 20)
+    quantiles = stats.rolling_window_find_quantiles(xs, ys, desired_quantiles, 11, 20)
 
     cumsum_weights = (0.5 + np.arange(11)) / 11
     calculated_quantiles = []
@@ -108,7 +108,7 @@ def test_rolling_window_find_quantiles_one():
     ys = np.array([2])
     desired_quantiles = [0, 0.4, 0.5, 0.6, 0.85, 1]
     quantiles = stats.rolling_window_find_quantiles(
-        xs, ys, desired_quantiles, 10, 2 * 9
+        xs, ys, desired_quantiles, 11, 2 * 9
     )
 
     assert np.allclose(quantiles.values.squeeze(), 2)
