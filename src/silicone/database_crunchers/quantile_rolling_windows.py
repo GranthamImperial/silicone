@@ -5,12 +5,12 @@ Module for the database cruncher which uses the 'rolling windows' technique.
 import logging
 
 import numpy as np
-import pandas as pd
 import scipy.interpolate
 from pyam import IamDataFrame
 
-from ..utils import _get_unit_of_variable
 from .base import _DatabaseCruncher
+from ..stats import _calculate_rolling_window_quantiles
+from ..utils import _get_unit_of_variable
 
 logger = logging.getLogger(__name__)
 
@@ -172,14 +172,10 @@ class QuantileRollingWindows(_DatabaseCruncher):
                 raise NotImplementedError(
                     "Having more than one `variable_leaders` is not yet implemented"
                 )
-
             if not xs.shape:
                 # 0D-array, make 1D
                 xs = np.array([xs])
                 ys = np.array([ys])
-
-            step = (max(xs) - min(xs)) / nwindows
-            decay_length = step / 2 * decay_length_factor
             if use_ratio:
                 # We want the ratio between x and y, not the actual values of y.
                 ys = ys / xs
@@ -190,15 +186,13 @@ class QuantileRollingWindows(_DatabaseCruncher):
                         "results).".format(variable_follower)
                     )
                     ys[np.isnan(ys)] = 0
-            # We sort the values by ys, with xs acting as tiebreakers.
-            ys, xs = map(np.array, zip(*sorted(zip(ys, xs))))
             if np.equal(max(xs), min(xs)):
                 # We must prevent singularity behaviour if all the points are at the
                 # same x value.
                 cumsum_weights = np.array([(0.5 + x) / len(ys) for x in range(len(ys))])
 
                 def same_x_val_workaround(
-                    _, ys=ys, cumsum_weights=cumsum_weights, quantile=quantile
+                        _, ys=ys, cumsum_weights=cumsum_weights, quantile=quantile
                 ):
                     if np.equal(min(ys), max(ys)):
                         return ys[0]
@@ -212,43 +206,17 @@ class QuantileRollingWindows(_DatabaseCruncher):
 
                 derived_relationships[db_time] = same_x_val_workaround
             else:
-                # We want to include the max x point, but not any point above it.
-                # The 0.99 factor prevents rounding error inclusion.
-                window_centers = np.arange(min(xs), max(xs) + step * 0.99, step)
-
-                db_time_table = pd.DataFrame(
-                    index=pd.MultiIndex.from_arrays(
-                        ([db_time], [quantile]), names=["db_time", "quantile"]
-                    ),
-                    columns=window_centers,
+                db_time_table = _calculate_rolling_window_quantiles(
+                    xs, ys, quantile, nwindows, decay_length_factor
                 )
-                db_time_table.columns.name = "window_centers"
-
-                for window_center in window_centers:
-                    weights = 1.0 / (1.0 + ((xs - window_center) / decay_length) ** 2)
-                    weights /= sum(weights)
-                    # We want to calculate the weights at the midpoint of step
-                    # corresponding to the y-value.
-                    cumsum_weights = np.cumsum(weights) - 0.5 * weights
-                    db_time_table.loc[
-                        (db_time, quantile), window_center
-                    ] = scipy.interpolate.interp1d(
-                        cumsum_weights,
-                        ys,
-                        bounds_error=False,
-                        fill_value=(ys[0], ys[-1]),
-                        assume_sorted=True,
-                    )(
-                        quantile
-                    )
 
                 derived_relationships[db_time] = scipy.interpolate.interp1d(
                     db_time_table.columns.values.squeeze(),
-                    db_time_table.loc[(db_time, quantile), :].values.squeeze(),
+                    db_time_table.loc[quantile, :].values.squeeze(),
                     bounds_error=False,
                     fill_value=(
-                        db_time_table.loc[(db_time, quantile)].iloc[0],
-                        db_time_table.loc[(db_time, quantile)].iloc[-1],
+                        db_time_table.loc[quantile].iloc[0],
+                        db_time_table.loc[quantile].iloc[-1],
                     ),
                 )
 
