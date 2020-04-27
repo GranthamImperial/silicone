@@ -144,7 +144,9 @@ class QuantileRollingWindows(_DatabaseCruncher):
             raise ValueError(error_msg)
 
         if int(nwindows) != nwindows or nwindows < 2:
-            error_msg = "Invalid nwindows ({}), it must be an integer > 1".format(nwindows)
+            error_msg = "Invalid nwindows ({}), it must be an integer > 1".format(
+                nwindows
+            )
             raise ValueError(error_msg)
         nwindows = int(nwindows)
 
