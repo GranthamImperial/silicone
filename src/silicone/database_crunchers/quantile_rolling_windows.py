@@ -56,9 +56,11 @@ class QuantileRollingWindows(_DatabaseCruncher):
     (then by lead timeseries values in the case of identical follow values). From here,
     the weight of each point is calculated following the formula given above.
     We calculate the cumulative sum of weights, and then the cumulative sum up to half
-     weights, defined by
+    weights, defined by
+
     .. math::
         c_{hw} = c_w - 0.5 \\times w
+
     where :math:`c_w` is the cumulative weights and :math:`w` is the raw weights. This
     ensures that quantiles less than half the weight of the smallest follow value return
     the smallest follow value and more than one minus half the weight of the largest
