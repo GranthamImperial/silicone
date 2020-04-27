@@ -95,7 +95,9 @@ class TestDatabaseTimeDepCruncherRollingWindows:
         if test_db.time_col == "year":
             filtered_db = test_db.filter(year=int(t_0), keep=False)
         else:
-            filtered_db = test_db.filter(time=self._convert_dt64_todt(t_0), keep=False)
+            filtered_db = test_db.filter(
+                time=TimeDepQuantileRollingWindows._convert_dt64_todt(t_0), keep=False
+            )
         with pytest.raises(ValueError, match=error_msg):
             res(filtered_db)
 
@@ -140,16 +142,15 @@ class TestDatabaseTimeDepCruncherRollingWindows:
             if timecol == "year":
                 filtered_ans = returned.filter(year=int(time))["value"]
             else:
-                filtered_ans = returned.filter(time=self._convert_dt64_todt(time))[
-                    "value"
-                ]
+                filtered_ans = returned.filter(
+                    time=TimeDepQuantileRollingWindows._convert_dt64_todt(time)
+                )["value"]
             assert np.allclose(filtered_ans, 11 * (quantile - 1 / 22))
 
     def test_derive_relationship_same_gas(self, test_db):
         # Given only a single data series, we recreate the original pattern for any
         # quantile
         test_db_redux = test_db.filter(scenario=_sa, model=_ma)
-        # need to prevent times from being int64 etc. format
         times = list(test_db_redux[test_db_redux.time_col].unique())
         tcruncher = self.tclass(test_db_redux)
         quantile_dict = {times[0]: 0.4, times[1]: 0.9, times[2]: 0.01, times[3]: 0.99}
@@ -160,6 +161,3 @@ class TestDatabaseTimeDepCruncherRollingWindows:
         assert np.allclose(
             crunched["value"], test_db_redux.filter(variable="Emissions|CO2")["value"]
         )
-
-    def _convert_dt64_todt(self, time):
-        return time.astype("M8[m]").astype(datetime)
