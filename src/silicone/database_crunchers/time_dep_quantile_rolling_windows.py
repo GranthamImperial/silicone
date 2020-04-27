@@ -22,28 +22,56 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
         self,
         variable_follower,
         variable_leaders,
-        time_quantile_dict=None,
-        nwindows=10,
-        decay_length_factor=1,
-        use_ratio=False,
+        time_quantile_dict,
+        **kwargs,
     ):
         """
+        Derive the relationship between two variables from the database.
+
         For details of most parameters, see QuantileRollingWindows. The one different
         parameter is as follows:
+
         Parameters
         ----------
+        variable_follower : str
+            The variable for which we want to calculate timeseries (e.g.
+            ``"Emissions|CH4"``).
+
+        variable_leaders : list[str]
+            The variable(s) we want to use in order to infer timeseries of
+            ``variable_follower`` (e.g. ``["Emissions|CO2"]``).
+
         time_quantile_dict : dict{datetime or int: float}
             Every year or datetime in the infillee database must be specified as a key.
             The value is the quantile to use in that year. Note that the impact of the
-            quantile value is strongly dependent on the choice of nwindows and
-            decay_length_factor. This replaces quantile.
+            quantile value is strongly dependent on the arguments passed to
+            :class:`QuantileRollingWindows`.
+
+        **kwargs
+            Passed to :class:`QuantileRollingWindows`.
+
+        Returns
+        -------
+        :obj:`func`
+            Function which takes a :obj:`pyam.IamDataFrame` containing
+            ``variable_leaders`` timeseries and returns timeseries for
+            ``variable_follower`` based on the derived relationship between the two.
+            Please see the source code for the exact definition (and docstring) of the
+            returned function.
+
+        Raises
+        ------
+        ValueError
+            Not all times in ``time_quantile_dict`` have data in the database.
         """
         times_known = list(self._db[self._db.time_col].unique())
+
         # This check implicitly checks for date type agreement
         if any(time not in times_known for time in time_quantile_dict.keys()):
             raise ValueError(
                 "Not all required times in the dictionary have data in the database."
             )
+
         filler_fns = []
         for time, quantile in time_quantile_dict.items():
             # TODO: this section can be rewritten to avoid conversions when the pyam
@@ -59,13 +87,30 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
                     variable_follower,
                     variable_leaders,
                     quantile,
-                    nwindows,
-                    decay_length_factor,
-                    use_ratio,
+                    **kwargs
                 )
             )
 
         def filler(in_iamdf):
+            """
+            Filler function derived from :class:`TimeDepQuantileRollingWindows`.
+
+            Parameters
+            ----------
+            in_iamdf : :obj:`pyam.IamDataFrame`
+                Input data to fill data in
+
+            Returns
+            -------
+            :obj:`pyam.IamDataFrame`
+                Filled in data (without original source data)
+
+            Raises
+            ------
+            ValueError
+                Not all required times in the infillee database have had an
+                available interpolation.
+            """
             iamdf_times_known = in_iamdf[in_iamdf.time_col]
             if any(
                 time not in list(time_quantile_dict.keys())
@@ -75,12 +120,16 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
                     "Not all required times in the infillee database can be found in "
                     "the dictionary."
                 )
+
             for time in time_quantile_dict.keys():
                 if in_iamdf.time_col == "year":
                     # TODO: remove int specification from here when pyam bug is fixed
                     tmp = filler_fns[0](in_iamdf.filter(year=int(time)))
                 else:
                     tmp = filler_fns[0](in_iamdf.filter(time=_convert_dt64_todt(time)))
+
+                # TODO: check - this will make the cruncher useable only once I think
+                # Can we make filler_fns a dictionary instead?
                 filler_fns.pop(0)
                 try:
                     to_return.append(tmp, inplace=True)

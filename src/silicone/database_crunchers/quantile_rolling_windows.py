@@ -244,7 +244,7 @@ class QuantileRollingWindows(_DatabaseCruncher):
 
         def filler(in_iamdf):
             """
-            Filler function derived from :obj:`QuantileRollingWindows`.
+            Filler function derived from :class:`QuantileRollingWindows`.
 
             Parameters
             ----------
