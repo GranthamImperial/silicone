@@ -205,9 +205,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         ys = larger_db.filter(variable="Emissions|CH4")["value"].values
         if use_ratio:
             ys = ys / xs
-        quantile_expected = silicone.stats.rolling_window_find_quantiles(
-            xs, ys, [0.5]
-        )
+        quantile_expected = silicone.stats.rolling_window_find_quantiles(xs, ys, [0.5])
         interpolate_fn = scipy.interpolate.interp1d(
             np.array(quantile_expected.index), quantile_expected.values.squeeze(),
         )
