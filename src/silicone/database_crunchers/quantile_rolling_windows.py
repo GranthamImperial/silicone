@@ -212,6 +212,7 @@ class QuantileRollingWindows(_DatabaseCruncher):
                 # same x value.
                 cumsum_weights = np.array([(0.5 + x) / len(ys) for x in range(len(ys))])
                 ys.sort()
+
                 def same_x_val_workaround(
                     _, ys=ys, cumsum_weights=cumsum_weights, quantile=quantile
                 ):
