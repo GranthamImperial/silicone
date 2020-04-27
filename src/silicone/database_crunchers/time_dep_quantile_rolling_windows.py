@@ -19,11 +19,7 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
     """
 
     def derive_relationship(
-        self,
-        variable_follower,
-        variable_leaders,
-        time_quantile_dict,
-        **kwargs,
+        self, variable_follower, variable_leaders, time_quantile_dict, **kwargs,
     ):
         """
         Derive the relationship between two variables from the database.
@@ -83,10 +79,7 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
                     self._db.filter(time=_convert_dt64_todt(time))
                 )
             filler_fns[time] = cruncher.derive_relationship(
-                variable_follower,
-                variable_leaders,
-                quantile,
-                **kwargs
+                variable_follower, variable_leaders, quantile, **kwargs
             )
 
         def filler(in_iamdf):
@@ -124,7 +117,9 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
                     # TODO: remove int specification from here when pyam bug is fixed
                     tmp = filler_fns[time](in_iamdf.filter(year=int(time)))
                 else:
-                    tmp = filler_fns[time](in_iamdf.filter(time=_convert_dt64_todt(time)))
+                    tmp = filler_fns[time](
+                        in_iamdf.filter(time=_convert_dt64_todt(time))
+                    )
 
                 try:
                     to_return.append(tmp, inplace=True)
