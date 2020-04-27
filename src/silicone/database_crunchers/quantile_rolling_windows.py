@@ -8,7 +8,7 @@ import numpy as np
 import scipy.interpolate
 from pyam import IamDataFrame
 
-from ..stats import _calculate_rolling_window_quantiles
+from ..stats import rolling_window_find_quantiles
 from ..utils import _get_unit_of_variable
 from .base import _DatabaseCruncher
 
@@ -206,17 +206,17 @@ class QuantileRollingWindows(_DatabaseCruncher):
 
                 derived_relationships[db_time] = same_x_val_workaround
             else:
-                db_time_table = _calculate_rolling_window_quantiles(
+                db_time_table = rolling_window_find_quantiles(
                     xs, ys, quantile, nwindows, decay_length_factor
                 )
 
                 derived_relationships[db_time] = scipy.interpolate.interp1d(
-                    db_time_table.columns.values.squeeze(),
-                    db_time_table.loc[quantile, :].values.squeeze(),
+                    db_time_table.index.values,
+                    db_time_table.loc[:, quantile].values.squeeze(),
                     bounds_error=False,
                     fill_value=(
-                        db_time_table.loc[quantile].iloc[0],
-                        db_time_table.loc[quantile].iloc[-1],
+                        db_time_table[quantile].iloc[0],
+                        db_time_table[quantile].iloc[-1],
                     ),
                 )
 
