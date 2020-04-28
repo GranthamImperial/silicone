@@ -4,6 +4,7 @@ Changelog
 master
 ------
 
+- (`#88 <https://github.com/znicholls/silicone/pull/88>`_) Added :class:`EqualQuantileWalk`, a cruncher which finds the quantile of the lead variable in the infiller database and returns that quantile of the follow variable.
 - (`#87 <https://github.com/znicholls/silicone/pull/87>`_) Added :class:`TimeDepQuantileRollingWindows`, a cruncher which allows the user to crunch different quantiles in different years.
 - (`#86 <https://github.com/znicholls/silicone/pull/86>`_) Slightly changed the definition of quantile rolling windows to make it symmetric (not rounding down).
 - (`#83 <https://github.com/znicholls/silicone/pull/83>`_) Added tests for appending results of crunching to the input.
