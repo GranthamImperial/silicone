@@ -8,10 +8,6 @@ from . import QuantileRollingWindows
 from .base import _DatabaseCruncher
 
 
-def _convert_dt64_todt(time):
-    return time.astype("M8[m]").astype(datetime)
-
-
 class TimeDepQuantileRollingWindows(_DatabaseCruncher):
     """
     Database cruncher which uses QuantileRollingWindows with different quantiles in
@@ -76,7 +72,7 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
                 cruncher = QuantileRollingWindows(self._db.filter(year=int(time)))
             else:
                 cruncher = QuantileRollingWindows(
-                    self._db.filter(time=_convert_dt64_todt(time))
+                    self._db.filter(time=self._convert_dt64_todt(time))
                 )
             filler_fns[time] = cruncher.derive_relationship(
                 variable_follower, variable_leaders, quantile, **kwargs
@@ -118,7 +114,7 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
                     tmp = filler_fns[time](in_iamdf.filter(year=int(time)))
                 else:
                     tmp = filler_fns[time](
-                        in_iamdf.filter(time=_convert_dt64_todt(time))
+                        in_iamdf.filter(time=self._convert_dt64_todt(time))
                     )
 
                 try:
@@ -128,3 +124,6 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
             return to_return
 
         return filler
+
+    def _convert_dt64_todt(self, time):
+        return time.astype("M8[m]").astype(datetime)
