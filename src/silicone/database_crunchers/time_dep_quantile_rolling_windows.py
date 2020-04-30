@@ -58,10 +58,12 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
         ValueError
             Not all times in ``time_quantile_dict`` have data in the database.
         """
-        if self._db.time_col == "year" and set(map(type, time_quantile_dict)) == {int}:
-            time_quantile_dict = dict(
-                (np.int64(key), value) for key, value in time_quantile_dict.items()
-            )
+        if self._db.time_col == "year" and all(
+                [isinstance(k, int) for k in time_quantile_dict]
+        ):
+            time_quantile_dict = {
+                np.int64(k): v for k, v in time_quantile_dict.items()
+            }
 
         times_known = list(self._db[self._db.time_col].unique())
 
