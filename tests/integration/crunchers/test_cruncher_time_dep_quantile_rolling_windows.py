@@ -161,3 +161,25 @@ class TestDatabaseTimeDepCruncherRollingWindows:
         assert np.allclose(
             crunched["value"], test_db_redux.filter(variable="Emissions|CO2")["value"]
         )
+
+    def test_derive_relationship_int_years(self):
+        # The code should be able to use ether int or int64 years
+        times = [2010, 2020, 2030]
+        regular_db = IamDataFrame(
+            pd.DataFrame(
+                [
+                    [_ma, _sa + str(val), "World", _eco2, _gtc, val, val, val]
+                    for val in range(4)
+                ],
+                columns=_msrvu + times,
+            )
+        )
+        tcruncher = self.tclass(regular_db)
+        quantile_dict = {times[0]: 0.4, times[1]: 0.9, times[2]: 0.01}
+        res = tcruncher.derive_relationship(
+            "Emissions|CO2", ["Emissions|CO2"], quantile_dict,
+        )
+        crunched = res(regular_db)
+        assert len(crunched["value"]) == len(
+            regular_db.filter(variable="Emissions|CO2")["value"]
+        )

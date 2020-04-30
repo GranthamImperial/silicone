@@ -6,6 +6,7 @@ from datetime import datetime
 
 from . import QuantileRollingWindows
 from .base import _DatabaseCruncher
+import numpy as np
 
 
 class TimeDepQuantileRollingWindows(_DatabaseCruncher):
@@ -56,6 +57,11 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
         ValueError
             Not all times in ``time_quantile_dict`` have data in the database.
         """
+        if self._db.time_col == "year" and set(map(type, time_quantile_dict)) == {int}:
+            time_quantile_dict = dict(
+                (np.int64(key), value) for key, value in time_quantile_dict.items()
+            )
+
         times_known = list(self._db[self._db.time_col].unique())
 
         # This check implicitly checks for date type agreement
