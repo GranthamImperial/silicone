@@ -27,6 +27,7 @@ Silicone
     :caption: API reference
 
     database-crunchers
+    multiple-infillers
     stats
     utils
 
