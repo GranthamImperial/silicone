@@ -15,8 +15,8 @@ class EqualQuantileWalk(_DatabaseCruncher):
 
     This cruncher assumes that the amount of effort going into reducing one emission set
     is equal to that for another emission, therefore the lead and follow data should be
-    the same quantile of all pathways in the infiller database.
-    It calculates what quantile the lead infillee data is in the lead infiller database,
+    at the same quantile of all pathways in the infiller database.
+    It calculates the quantile of the lead infillee data in the lead infiller database,
     then outputs that quantile of the follow data in the infiller database.
     """
 
@@ -150,7 +150,7 @@ class EqualQuantileWalk(_DatabaseCruncher):
         lead_vals = lead_vals.sort_values()
         quant_of_lead_vals = np.arange(len(lead_vals)) / (len(lead_vals) - 1)
         if any(quant_of_lead_vals > 1) or any(quant_of_lead_vals < 0):
-            raise NotImplementedError("Impossible quantiles!")
+            raise ValueError("Impossible quantiles!")
         input_quantiles = scipy.interpolate.interp1d(
             lead_vals, quant_of_lead_vals, bounds_error=False, fill_value=(0, 1)
         )(lead_input)
