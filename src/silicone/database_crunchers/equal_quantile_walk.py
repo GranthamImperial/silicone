@@ -144,11 +144,12 @@ class EqualQuantileWalk(_DatabaseCruncher):
         return self._db.filter(variable=variable_follower)
 
     def _find_same_quantile(self, follow_vals, lead_vals, lead_input):
-        if len(lead_vals) == 1:
+        len_lead_not_nan = np.count_nonzero(~np.isnan(lead_vals))
+        if len_lead_not_nan <= 1:
             # If there is only a single value we have to return that.
-            return follow_vals[0]
+            return np.nanmean(follow_vals)
         lead_vals = lead_vals.sort_values()
-        quant_of_lead_vals = np.arange(len(lead_vals)) / (len(lead_vals) - 1)
+        quant_of_lead_vals = np.arange(len_lead_not_nan) / (len_lead_not_nan - 1)
         if any(quant_of_lead_vals > 1) or any(quant_of_lead_vals < 0):
             raise ValueError("Impossible quantiles!")
         input_quantiles = scipy.interpolate.interp1d(

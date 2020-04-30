@@ -178,6 +178,24 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
 
         assert all(crunched["value"].values == expected)
 
+    def test_uneven_lead_follow_len(self, test_db):
+        # In the event that there is only one set of lead data, all follow data should
+        # be the same at a given time, and should equal the mean value in the input
+        test_db.filter(model=_ma, inplace=True)
+        lead = ["Emissions|CH4"]
+        follow = "Emissions|CO2"
+        one_lead = test_db.copy()
+        one_lead.data = one_lead.data.iloc[4:]
+        tcruncher = self.tclass(one_lead)
+        res = tcruncher.derive_relationship(follow, lead)
+        infilled = res(test_db)
+        assert np.allclose(
+            infilled.filter(scenario=_sa)["value"]._values,
+            infilled.filter(scenario=_sb)["value"]._values,
+        )
+        # We expect the specific values to equal the means of the two follow scenarios
+        assert np.allclose(infilled.filter(scenario=_sa)["value"], [1, 2, 2.5, 2.5])
+
     def test_with_one_value_in_infiller_db(self, test_db, caplog):
         # The calculation is different with only one entry in the infiller db. We
         # expect a warning and the only value to be returned in all cases.
