@@ -130,10 +130,16 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
 
         infilled = res(simple_df)
         # We compare the results with the expected results: for T1, we are below the
-        # lower limit on the first, in the middle on the second. At later times we are
-        # always above the highest value.
+        # lower limit on the first, in the middle on the second scenario. At later times
+        # we are always above the highest value.
         time_filter = {infilled.time_col: [infilled[infilled.time_col][0]]}
-        assert np.allclose(infilled.filter(**time_filter)["value"].values, [50, 100])
+        sorted_follow_t0 = np.sort(
+            test_db.filter(variable=follow, **time_filter)["value"].values
+        )
+        assert np.allclose(
+            infilled.filter(**time_filter)["value"].values,
+            [sorted_follow_t0[0], sorted_follow_t0[1],],
+        )
         for time_ind in range(1, 3):
             time_filter = {infilled.time_col: [infilled[infilled.time_col][time_ind]]}
             assert np.allclose(
@@ -180,7 +186,7 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
 
     def test_uneven_lead_follow_len(self, test_db):
         # In the event that there is only one set of lead data, all follow data should
-        # be the same at a given time, and should equal the mean value in the input
+        # be the same at a given time, and should equal the mean value in the input.
         test_db.filter(model=_ma, inplace=True)
         lead = ["Emissions|CH4"]
         follow = "Emissions|CO2"
@@ -197,8 +203,9 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         assert np.allclose(infilled.filter(scenario=_sa)["value"], [1, 2, 2.5, 2.5])
 
     def test_with_one_value_in_infiller_db(self, test_db, caplog):
-        # The calculation is different with only one entry in the infiller db. We
-        # expect a warning and the only value to be returned in all cases.
+        # The calculation is different with only one entry in the infiller db, as in the
+        # uneven lead case above, although this time there are no nans involved in the
+        # calculation.
         one_entry_db = test_db.filter(
             scenario=test_db.scenarios()[0], model=test_db.models()[0],
         )
@@ -241,8 +248,8 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         )
 
         # Repeat with reducing the minimum value. This works differently because the
-        # minimum point is doubled. By default the cruncher selects the higher
-        # quantile but this will make it pick the lower.
+        # minimum point is doubled. This modification causes the cruncher to pick the
+        # lower value.
         min_scen = modify_extreme_db["scenario"].loc[
             modify_extreme_db["value"] == min(modify_extreme_db["value"])
         ]
