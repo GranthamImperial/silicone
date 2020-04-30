@@ -4,9 +4,10 @@ different quantiles in different years.
 """
 from datetime import datetime
 
+import numpy as np
+
 from . import QuantileRollingWindows
 from .base import _DatabaseCruncher
-import numpy as np
 
 
 class TimeDepQuantileRollingWindows(_DatabaseCruncher):
