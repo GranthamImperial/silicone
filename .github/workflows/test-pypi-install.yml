@@ -20,10 +20,16 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
+
+    - name: Install freetype (${{ runner.os }})
+      if: startsWith(runner.os, 'macOS')
+      run: |
+        brew install pkg-config
+
     - name: Install package
       run: |
-        pip install --upgrade pip
         pip install silicone --pre
+
     - name: Checkout repository
       uses: actions/checkout@v2
     - name: Test installation
