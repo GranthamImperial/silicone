@@ -1,5 +1,6 @@
 import os
 import re
+from requests.exceptions import ConnectionError
 
 import numpy as np
 import pandas as pd
@@ -496,9 +497,9 @@ def test_get_files_and_use_them():
         ).variables()
         assert all([y not in blank_variables.values for y in min_expected_var])
         os.remove(SR15_SCENARIOS)
-    except Exception as e:
-        print(e)
-        pass
+    except ConnectionError as e:
+        pytest.skip("Could not connect to the IIASA database: {}".format(e))
+
 
 
 def test__construct_consistent_values():
