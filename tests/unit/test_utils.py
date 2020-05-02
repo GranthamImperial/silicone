@@ -1,6 +1,5 @@
 import os
 import re
-from requests.exceptions import ConnectionError
 
 import numpy as np
 import pandas as pd
@@ -8,6 +7,7 @@ import pyam
 import pytest
 from openscm_units.unit_registry import ScmUnitRegistry
 from pint.errors import UndefinedUnitError
+from requests.exceptions import ConnectionError
 
 from silicone.utils import (
     _construct_consistent_values,
@@ -499,7 +499,6 @@ def test_get_files_and_use_them():
         os.remove(SR15_SCENARIOS)
     except ConnectionError as e:
         pytest.skip("Could not connect to the IIASA database: {}".format(e))
-
 
 
 def test__construct_consistent_values():

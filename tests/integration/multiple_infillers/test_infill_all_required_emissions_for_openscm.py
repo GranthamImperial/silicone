@@ -299,7 +299,7 @@ class TestGasDecomposeTimeDepRatio:
             cruncher=ConstantRatio,
             check_data_returned=True,
             output_timesteps=output_times,
-            **kwargs
+            **kwargs,
         )
         assert np.allclose(
             output_df.filter(variable=required_variables_list)["value"].values,
