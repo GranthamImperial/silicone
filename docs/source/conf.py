@@ -194,7 +194,7 @@ epub_exclude_files = ["search.html"]
 
 # -- Extension configuration -------------------------------------------------
 
-coverage_write_headline = True  # do not write headlines.
+coverage_write_headline = False  # do not write headlines.
 
 # -- Options for intersphinx extension ---------------------------------------
 
