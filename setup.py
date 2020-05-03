@@ -33,7 +33,6 @@ CLASSIFIERS = [
 ]
 
 REQUIREMENTS_INSTALL = [
-    "click",
     "openscm-units>=0.1.1",
     "pint",
     "pyam-iamc>=0.5.0",
@@ -52,10 +51,9 @@ REQUIREMENTS_TESTS = [
     "pytest-cov",
 ]
 REQUIREMENTS_DOCS = [
-    "sphinx>=1.4,<2.1",
+    "sphinx>2.1",
     "sphinx_rtd_theme",
     "sphinx-autodoc-typehints",
-    "sphinx-click",
 ]
 REQUIREMENTS_DEPLOY = ["setuptools>=38.6.0", "twine>=1.11.0", "wheel>=0.31.0"]
 REQUIREMENTS_DEV = (
