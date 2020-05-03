@@ -9,14 +9,17 @@
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+
+import os
+import sys
+
+from silicone._version import get_versions
+
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+sys.path.append(os.path.join(os.path.dirname(__file__), "../../src/silicone"))
 
 # -- Import packages ---------------------------------------------------------
 
-from silicone._version import get_versions
 
 # -- Project information -----------------------------------------------------
 
@@ -47,25 +50,14 @@ extensions = [
     "sphinx.ext.ifconfig",
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",  # pass numpy style docstrings
-    "sphinx_click.ext",
 ]
 
-autodoc_default_flags = [
-    "members",
-    # "undoc-members",
-    # "private-members",
-    "inherited-members",
-    "show-inheritance",
-]
-# change to below when upgrading to Sphinx >= 2.1
-# autodoc_default_options = {
-#     "undoc-members": False,
-#     "private-members": False,
-#     "special-members": False,
-#     "inherited-members": False,
-#     "show-inheritance": False,
-# }
-coverage_write_headline = False  # do not write headlines.
+autodoc_default_options = {
+    "inherited-members": None,
+    "members": None,
+    "show-inheritance": None,
+    "undoc-members": None,
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -120,7 +112,7 @@ html_static_path = ["_static"]
 html_context = {
     "display_github": False,
     "github_user": "znicholls",
-    "github_repo": "netcdf-scm",
+    "github_repo": "silicone",
     "github_version": "master",
     "conf_py_path": "/docs/source",
 }
@@ -202,6 +194,8 @@ epub_exclude_files = ["search.html"]
 
 # -- Extension configuration -------------------------------------------------
 
+coverage_write_headline = True  # do not write headlines.
+
 # -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
@@ -209,8 +203,18 @@ intersphinx_mapping = {"https://docs.python.org/": None}
 
 # -- Options for todo extension ----------------------------------------------
 
-# If true, `todo` and `todoList` produce output, else they produce nothing.
-todo_include_todos = True
+# Example configuration for intersphinx: refer to the Python standard library.
+intersphinx_mapping = {
+    "numpy": ("https://docs.scipy.org/doc/numpy", None),
+    "pandas": ("https://pandas.pydata.org/pandas-docs/stable", None),
+    "python": ("https://docs.python.org/3", None),
+    "pyam": ("https://pyam-iamc.readthedocs.io/en/latest", None),
+    "scmdata": ("https://scmdata.readthedocs.io/en/latest", None),
+    # "pint": ("https://pint.readthedocs.io/en/latest", None), # no full API doc here, unfortunately
+}
+napoleon_google_docstring = False
+napoleon_numpy_docstring = True
+set_type_checking_flag = False
 
 # # -- Logos -------------------------------------------------------------------
 
