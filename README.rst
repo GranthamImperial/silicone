@@ -23,13 +23,16 @@ Silicone
 
 Silicone is a Python package which can be used to infer emissions from other emissions data.
 It is intended to 'infill' integrated assessment model (IAM) data so that their scenarios
-quantify more climate-relevant emissions than is natively reported by the IAMs themselves.
+quantify more climate-relevant emissions than are natively reported by the IAMs themselves.
 It does this by comparing the incomplete emissions set to complete data from other sources.
 It uses the relationships within the complete data to make informed infilling estimates of
 otherwise missing emissions timeseries.
 For example, it can add emissions of aerosol precurors based on carbon dioxide emissions
 and infill nitrous oxide emissions based on methane, or split HFC emissions pathways into
 emissions of different specific HFC gases.
+
+This project has received funding from the European Union’s Horizon 2020 research and
+innovation programme under grant agreement No 820829.
 
 .. sec-end-index
 
