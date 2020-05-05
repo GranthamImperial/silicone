@@ -31,8 +31,6 @@ For example, it can add emissions of aerosol precurors based on carbon dioxide e
 and infill nitrous oxide emissions based on methane, or split HFC emissions pathways into
 emissions of different specific HFC gases.
 
-This project has received funding from the European Union’s Horizon 2020 research and
-innovation programme under grant agreement No 820829.
 
 .. sec-end-index
 
@@ -45,6 +43,15 @@ Silicone is free software under a BSD 3-Clause License, see
 `LICENSE <https://github.com/znicholls/silicone/blob/master/LICENSE>`_.
 
 .. sec-end-license
+
+.. sec-begin-funders
+
+Funders
+-------
+This project has received funding from the European Union Horizon 2020 research and
+innovation programme under grant agreement No 820829.
+
+.. sec-end-funders
 .. sec-end-long-description
 
 .. sec-begin-installation
