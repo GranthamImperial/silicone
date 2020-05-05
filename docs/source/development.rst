@@ -153,32 +153,22 @@ First step
     - this should leave the section underneath the master header empty
 
 #. ``git add .``
-#. ``git commit -m "Prepare for release of vX.Y.Z"``
+#. ``git commit -m "Release vX.Y.Z"``
 #. ``git tag vX.Y.Z``
 #. Test version updated as intended with ``make test-install``
 
-PyPI
-~~~~
-
-If uploading to PyPI, do the following (otherwise skip these steps)
-
-#. ``make publish-on-testpypi``
-#. Go to `test PyPI <https://test.pypi.org/project/silicone/>`_ and check that the new release is as intended. If it isn't, stop and debug.
-#. Test the install with ``make test-testpypi-install`` (this doesn't test all the imports as most required packages are not on test PyPI).
-
-Assuming test PyPI worked, now upload to the main repository
-
-#. ``make publish-on-pypi``
-#. Go to `Silicone's PyPI`_ and check that the new release is as intended.
-#. Test the install with ``make test-pypi-install``
-
-Push to repository
+Hitting the button
 ~~~~~~~~~~~~~~~~~~
 
-Finally, push the tags and the repository state
+Our releases are handled automatically as part of our CI-CD pipeline.
+Hence all that needs to be done now is simply push to the repository, this will trigger an automatic release to PyPI.
 
 #. ``git push``
 #. ``git push --tags``
+
+If the pipeline fails, one of the developers will receive a notification (and the reasons can then be debugged).
+If the pipeline passes, it's worth going to `Silicone's PyPI`_ and checking that the new release is as intended.
+You can also check that a fresh install would install the released version using ``make test-pypi-install``.
 
 Why is there a ``Makefile`` in a pure Python repository?
 --------------------------------------------------------
