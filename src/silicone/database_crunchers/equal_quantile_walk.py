@@ -144,8 +144,10 @@ class EqualQuantileWalk(_DatabaseCruncher):
         return self._db.filter(variable=variable_follower)
 
     def _find_same_quantile(self, follow_vals, lead_vals, lead_input):
-        # Length of non-nan lead values
-        len_lead_not_nan = np.count_nonzero(~np.isnan(lead_vals))
+        # Dispose of nans that can cloud the calculation
+        follow_vals = follow_vals[~np.isnan(follow_vals)]
+        lead_vals = lead_vals[~np.isnan(lead_vals)]
+        len_lead_not_nan = len(lead_vals)
         if len_lead_not_nan <= 1:
             # If there is only a single value we have to return the best guess.
             return np.nanmean(follow_vals)

@@ -184,7 +184,7 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
 
         assert all(crunched["value"].values == expected)
 
-    def test_uneven_lead_follow_len(self, test_db):
+    def test_uneven_lead_follow_len_short_lead(self, test_db):
         # In the event that there is only one set of lead data, all follow data should
         # be the same at a given time, and should equal the mean value in the input.
         test_db.filter(model=_ma, inplace=True)
@@ -201,6 +201,24 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         )
         # We expect the specific values to equal the means of the two follow scenarios
         assert np.allclose(infilled.filter(scenario=_sa)["value"], [1, 2, 2.5, 2.5])
+
+    def test_uneven_lead_timeseries(self, test_db):
+        # In the event that some of the data is missing at one time, we get nans in a
+        # timeseries. This checks that the calculation still works.
+        test_db.filter(model=_ma, inplace=True)
+        lead = ["Emissions|CH4"]
+        follow = "Emissions|CO2"
+        one_follow = test_db.copy()
+        # We remove two of the CH4 values at the same time
+        one_follow.data = one_follow.data.drop([0, 16])
+        one_follow.data["scenario"] += "_orig"
+        one_follow.append(test_db, inplace=True)
+        one_follow = IamDataFrame(one_follow.data)
+        tcruncher = self.tclass(one_follow)
+        res = tcruncher.derive_relationship(follow, lead)
+        infilled = res(test_db)
+
+        assert all(~np.isnan(infilled["value"]))
 
     def test_with_one_value_in_infiller_db(self, test_db, caplog):
         # The calculation is different with only one entry in the infiller db, as in the
