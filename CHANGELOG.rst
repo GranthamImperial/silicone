@@ -4,7 +4,7 @@ Changelog
 master
 ------
 
-- (`#102 <https://github.com/znicholls/silicone/pull/102>`_) Minor bugfix for Equal Quantile Walk.
+- (`#102 <https://github.com/znicholls/silicone/pull/102>`_) Minor bugfix for nan handling in Equal Quantile Walk.
 - (`#100 <https://github.com/znicholls/silicone/pull/100>`_) Added funding info to readme and removed unnecessary files.
 - (`#97 <https://github.com/znicholls/silicone/pull/97>`_) Added sections to documentation file so that newer crunchers and multiple infillers are included.
 - (`#95 <https://github.com/znicholls/silicone/pull/95>`_) Added sections to notebooks covering all the recent changes.
