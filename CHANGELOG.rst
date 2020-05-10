@@ -4,6 +4,7 @@ Changelog
 master
 ------
 
+- (`#101 <https://github.com/znicholls/silicone/pull/101>`_) Update release docs
 - (`#93 <https://github.com/znicholls/silicone/pull/93>`_) Add regular test of install from PyPI
 - (`#102 <https://github.com/znicholls/silicone/pull/102>`_) Minor bugfix for nan handling in Equal Quantile Walk.
 - (`#100 <https://github.com/znicholls/silicone/pull/100>`_) Added funding info to readme and removed unnecessary files.
