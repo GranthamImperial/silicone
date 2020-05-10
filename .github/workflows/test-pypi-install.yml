@@ -21,10 +21,11 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install freetype (${{ runner.os }})
+    - name: Set matplotlib backend (${{ runner.os }})
       if: startsWith(runner.os, 'macOS')
       run: |
-        brew install pkg-config
+        mkdir -p ~/.matplotlib
+        echo 'backend: TkAgg' >> ~/.matplotlib/matplotlibrc
 
     - name: Install package
       run: |
