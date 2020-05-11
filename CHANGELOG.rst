@@ -4,6 +4,7 @@ Changelog
 master
 ------
 
+- (`#103 <https://github.com/GranthamImperial/silicone/pull/101>`_) Update github address to GranthamImperial.
 - (`#101 <https://github.com/GranthamImperial/silicone/pull/101>`_) Update release docs
 - (`#93 <https://github.com/GranthamImperial/silicone/pull/93>`_) Add regular test of install from PyPI
 - (`#102 <https://github.com/GranthamImperial/silicone/pull/102>`_) Minor bugfix for nan handling in Equal Quantile Walk.
