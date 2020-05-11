@@ -10,11 +10,11 @@ AUTHORS = [
     ("Zebedee Nicholls", "zebedee.nicholls@climate-energy-college.org"),
     ("Jarmo Kikstra", "kikstra@iiasa.ac.at"),
 ]
-URL = "https://github.com/znicholls/silicone"
+URL = "https://github.com/GranthamImperial/silicone"
 PROJECT_URLS = {
-    "Bug Reports": "https://github.com/znicholls/silicone/issues",
+    "Bug Reports": "https://github.com/GranthamImperial/silicone/issues",
     "Documentation": "https://silicone.readthedocs.io/en/latest",
-    "Source": "https://github.com/znicholls/silicone",
+    "Source": "https://github.com/GranthamImperial/silicone",
 }
 README = "README.rst"
 
