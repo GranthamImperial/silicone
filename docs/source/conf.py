@@ -111,7 +111,7 @@ html_static_path = ["_static"]
 
 html_context = {
     "display_github": False,
-    "github_user": "znicholls",
+    "github_user": "GranthamImperial",
     "github_repo": "silicone",
     "github_version": "master",
     "conf_py_path": "/docs/source",
