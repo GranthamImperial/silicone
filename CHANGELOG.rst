@@ -4,52 +4,52 @@ Changelog
 master
 ------
 
-- (`#101 <https://github.com/znicholls/silicone/pull/101>`_) Update release docs
-- (`#93 <https://github.com/znicholls/silicone/pull/93>`_) Add regular test of install from PyPI
-- (`#102 <https://github.com/znicholls/silicone/pull/102>`_) Minor bugfix for nan handling in Equal Quantile Walk.
-- (`#100 <https://github.com/znicholls/silicone/pull/100>`_) Added funding info to readme and removed unnecessary files.
-- (`#97 <https://github.com/znicholls/silicone/pull/97>`_) Added sections to documentation file so that newer crunchers and multiple infillers are included.
-- (`#95 <https://github.com/znicholls/silicone/pull/95>`_) Added sections to notebooks covering all the recent changes.
-- (`#94 <https://github.com/znicholls/silicone/pull/94>`_) Added :class:`EqualQuantileWalk`, a cruncher which finds the quantile of the lead variable in the infiller database and returns the same quantile of the follow variable.
-- (`#87 <https://github.com/znicholls/silicone/pull/87>`_) Added :class:`TimeDepQuantileRollingWindows`, a cruncher which allows the user to crunch different quantiles in different years.
-- (`#86 <https://github.com/znicholls/silicone/pull/86>`_) Slightly changed the definition of quantile rolling windows to make it symmetric (not rounding down).
-- (`#83 <https://github.com/znicholls/silicone/pull/83>`_) Added tests for appending results of crunching to the input.
-- (`#82 <https://github.com/znicholls/silicone/pull/82>`_) Updated to a later version of pyam and solved todos associated with this. Also added a ``kwargs`` argument to ``infill_all_required``.
-- (`#80 <https://github.com/znicholls/silicone/pull/80>`_) Changed the names of crunchers for brevity. Also changed ``lead_gas`` to ``latest_time_ratio`` and included it in ratio notebook.
-- (`#78 <https://github.com/znicholls/silicone/pull/78>`_) Changed how quantile rolling windows works by adding an extra interpolate step for smoothness
-- (`#77 <https://github.com/znicholls/silicone/pull/77>`_) Added calculation of variance of rank correlation to stats
-- (`#76 <https://github.com/znicholls/silicone/pull/76>`_) Removed command-line interface
-- (`#75 <https://github.com/znicholls/silicone/pull/75>`_) Updated README
-- (`#72 <https://github.com/znicholls/silicone/pull/72>`_) Altered infill_composite_value to allow multiplication by a factor before summing. Removed unnecessary notebooks.
-- (`#69 <https://github.com/znicholls/silicone/pull/69>`_) Fixed bug so that ``DatabaseCruncherRMSClosest`` no longer selects scenarios which don't have follower data
-- (`#68 <https://github.com/znicholls/silicone/pull/68>`_) More investigatory tools and scripts for calculating and outputting emissions correlations.
-- (`#67 <https://github.com/znicholls/silicone/pull/67>`_) Introduce investigatory tools for plotting relations between emissions.
-- (`#66 <https://github.com/znicholls/silicone/pull/66>`_) Remove ``Input`` folder in favour of using ``openscm-units``
-- (`#65 <https://github.com/znicholls/silicone/pull/65>`_) Add ``format-notebooks`` target to the ``Makefile``
-- (`#64 <https://github.com/znicholls/silicone/pull/64>`_) Add basic linters to CI
-- (`#61 <https://github.com/znicholls/silicone/pull/61>`_) Switch to using GitHub actions for CI
-- (`#60 <https://github.com/znicholls/silicone/pull/60>`_) Update installation docs to reference pip and conda
-- (`#62 <https://github.com/znicholls/silicone/pull/62>`_) Minor changes to remove warning messages and remove some todos.
-- (`#52 <https://github.com/znicholls/silicone/pull/52>`_) Made the Lead Gas infiller use the average latest data rather than being restricted to a single value. Updated infill_composite_values to work with the latest data.
-- (`#51 <https://github.com/znicholls/silicone/pull/51>`_) Split the notebooks into chapters with minor changes to the text. Moved a script function into utilities to download data.
-- (`#49 <https://github.com/znicholls/silicone/pull/49>`_) Rewrote the documentation and notebooks to update, split up information and clarify.
-- (`#48 <https://github.com/znicholls/silicone/pull/48>`_) Introduced multiple_infiller function to calculate the composite values from the constituents.
-- (`#47 <https://github.com/znicholls/silicone/pull/47>`_) Made an option for quantile_rolling_windows to infill using the ratio of lead to follow data.
-- (`#46 <https://github.com/znicholls/silicone/pull/46>`_) Made the time-dependent ratio infiller only use data where the leader has the same sign.
-- (`#45 <https://github.com/znicholls/silicone/pull/45>`_) Made infill_all_required_emissions_for_openscm, the second multiple-infiller function.
-- (`#44 <https://github.com/znicholls/silicone/pull/44>`_) Made decompose_collection_with_time_dep_ratio, the first multiple-infiller function.
-- (`#43 <https://github.com/znicholls/silicone/pull/43>`_) Implemented new util functions for downloading data, unit conversion and data checking.
-- (`#41 <https://github.com/znicholls/silicone/pull/41>`_) Added a cruncher to interpolate values between data from specific scenarios. Only test notebooks with lax option.
-- (`#32 <https://github.com/znicholls/silicone/pull/32>`_) Raise `ValueError` when asking to infill a case with no data
-- (`#27 <https://github.com/znicholls/silicone/pull/27>`_) Developed the constant ratio cruncher
-- (`#21 <https://github.com/znicholls/silicone/pull/21>`_) Developed the time-dependent ratio cruncher
-- (`#20 <https://github.com/znicholls/silicone/pull/20>`_) Clean up the quantiles cruncher and test rigorously
-- (`#19 <https://github.com/znicholls/silicone/pull/19>`_) Add releasing docs plus command-line entry point tests
-- (`#14 <https://github.com/znicholls/silicone/pull/14>`_) Add root-mean square closest pathway cruncher
-- (`#13 <https://github.com/znicholls/silicone/pull/13>`_) Get initial work (see `#11 <https://github.com/znicholls/silicone/pull/11>`_) into package structure, still requires tests (see `#16 <https://github.com/znicholls/silicone/pull/16>`_)
-- (`#12 <https://github.com/znicholls/silicone/pull/12>`_) Add BSD-3-Clause license
-- (`#9 <https://github.com/znicholls/silicone/pull/9>`_) Add lead gas cruncher
-- (`#6 <https://github.com/znicholls/silicone/pull/6>`_) Update development docs
-- (`#5 <https://github.com/znicholls/silicone/pull/5>`_) Put notebooks under CI
-- (`#4 <https://github.com/znicholls/silicone/pull/4>`_) Add basic documentation structure
-- (`#1 <https://github.com/znicholls/silicone/pull/1>`_) Added pull request and issues templates
+- (`#101 <https://github.com/GranthamImperial/silicone/pull/101>`_) Update release docs
+- (`#93 <https://github.com/GranthamImperial/silicone/pull/93>`_) Add regular test of install from PyPI
+- (`#102 <https://github.com/GranthamImperial/silicone/pull/102>`_) Minor bugfix for nan handling in Equal Quantile Walk.
+- (`#100 <https://github.com/GranthamImperial/silicone/pull/100>`_) Added funding info to readme and removed unnecessary files.
+- (`#97 <https://github.com/GranthamImperial/silicone/pull/97>`_) Added sections to documentation file so that newer crunchers and multiple infillers are included.
+- (`#95 <https://github.com/GranthamImperial/silicone/pull/95>`_) Added sections to notebooks covering all the recent changes.
+- (`#94 <https://github.com/GranthamImperial/silicone/pull/94>`_) Added :class:`EqualQuantileWalk`, a cruncher which finds the quantile of the lead variable in the infiller database and returns the same quantile of the follow variable.
+- (`#87 <https://github.com/GranthamImperial/silicone/pull/87>`_) Added :class:`TimeDepQuantileRollingWindows`, a cruncher which allows the user to crunch different quantiles in different years.
+- (`#86 <https://github.com/GranthamImperial/silicone/pull/86>`_) Slightly changed the definition of quantile rolling windows to make it symmetric (not rounding down).
+- (`#83 <https://github.com/GranthamImperial/silicone/pull/83>`_) Added tests for appending results of crunching to the input.
+- (`#82 <https://github.com/GranthamImperial/silicone/pull/82>`_) Updated to a later version of pyam and solved todos associated with this. Also added a ``kwargs`` argument to ``infill_all_required``.
+- (`#80 <https://github.com/GranthamImperial/silicone/pull/80>`_) Changed the names of crunchers for brevity. Also changed ``lead_gas`` to ``latest_time_ratio`` and included it in ratio notebook.
+- (`#78 <https://github.com/GranthamImperial/silicone/pull/78>`_) Changed how quantile rolling windows works by adding an extra interpolate step for smoothness
+- (`#77 <https://github.com/GranthamImperial/silicone/pull/77>`_) Added calculation of variance of rank correlation to stats
+- (`#76 <https://github.com/GranthamImperial/silicone/pull/76>`_) Removed command-line interface
+- (`#75 <https://github.com/GranthamImperial/silicone/pull/75>`_) Updated README
+- (`#72 <https://github.com/GranthamImperial/silicone/pull/72>`_) Altered infill_composite_value to allow multiplication by a factor before summing. Removed unnecessary notebooks.
+- (`#69 <https://github.com/GranthamImperial/silicone/pull/69>`_) Fixed bug so that ``DatabaseCruncherRMSClosest`` no longer selects scenarios which don't have follower data
+- (`#68 <https://github.com/GranthamImperial/silicone/pull/68>`_) More investigatory tools and scripts for calculating and outputting emissions correlations.
+- (`#67 <https://github.com/GranthamImperial/silicone/pull/67>`_) Introduce investigatory tools for plotting relations between emissions.
+- (`#66 <https://github.com/GranthamImperial/silicone/pull/66>`_) Remove ``Input`` folder in favour of using ``openscm-units``
+- (`#65 <https://github.com/GranthamImperial/silicone/pull/65>`_) Add ``format-notebooks`` target to the ``Makefile``
+- (`#64 <https://github.com/GranthamImperial/silicone/pull/64>`_) Add basic linters to CI
+- (`#61 <https://github.com/GranthamImperial/silicone/pull/61>`_) Switch to using GitHub actions for CI
+- (`#60 <https://github.com/GranthamImperial/silicone/pull/60>`_) Update installation docs to reference pip and conda
+- (`#62 <https://github.com/GranthamImperial/silicone/pull/62>`_) Minor changes to remove warning messages and remove some todos.
+- (`#52 <https://github.com/GranthamImperial/silicone/pull/52>`_) Made the Lead Gas infiller use the average latest data rather than being restricted to a single value. Updated infill_composite_values to work with the latest data.
+- (`#51 <https://github.com/GranthamImperial/silicone/pull/51>`_) Split the notebooks into chapters with minor changes to the text. Moved a script function into utilities to download data.
+- (`#49 <https://github.com/GranthamImperial/silicone/pull/49>`_) Rewrote the documentation and notebooks to update, split up information and clarify.
+- (`#48 <https://github.com/GranthamImperial/silicone/pull/48>`_) Introduced multiple_infiller function to calculate the composite values from the constituents.
+- (`#47 <https://github.com/GranthamImperial/silicone/pull/47>`_) Made an option for quantile_rolling_windows to infill using the ratio of lead to follow data.
+- (`#46 <https://github.com/GranthamImperial/silicone/pull/46>`_) Made the time-dependent ratio infiller only use data where the leader has the same sign.
+- (`#45 <https://github.com/GranthamImperial/silicone/pull/45>`_) Made infill_all_required_emissions_for_openscm, the second multiple-infiller function.
+- (`#44 <https://github.com/GranthamImperial/silicone/pull/44>`_) Made decompose_collection_with_time_dep_ratio, the first multiple-infiller function.
+- (`#43 <https://github.com/GranthamImperial/silicone/pull/43>`_) Implemented new util functions for downloading data, unit conversion and data checking.
+- (`#41 <https://github.com/GranthamImperial/silicone/pull/41>`_) Added a cruncher to interpolate values between data from specific scenarios. Only test notebooks with lax option.
+- (`#32 <https://github.com/GranthamImperial/silicone/pull/32>`_) Raise `ValueError` when asking to infill a case with no data
+- (`#27 <https://github.com/GranthamImperial/silicone/pull/27>`_) Developed the constant ratio cruncher
+- (`#21 <https://github.com/GranthamImperial/silicone/pull/21>`_) Developed the time-dependent ratio cruncher
+- (`#20 <https://github.com/GranthamImperial/silicone/pull/20>`_) Clean up the quantiles cruncher and test rigorously
+- (`#19 <https://github.com/GranthamImperial/silicone/pull/19>`_) Add releasing docs plus command-line entry point tests
+- (`#14 <https://github.com/GranthamImperial/silicone/pull/14>`_) Add root-mean square closest pathway cruncher
+- (`#13 <https://github.com/GranthamImperial/silicone/pull/13>`_) Get initial work (see `#11 <https://github.com/GranthamImperial/silicone/pull/11>`_) into package structure, still requires tests (see `#16 <https://github.com/GranthamImperial/silicone/pull/16>`_)
+- (`#12 <https://github.com/GranthamImperial/silicone/pull/12>`_) Add BSD-3-Clause license
+- (`#9 <https://github.com/GranthamImperial/silicone/pull/9>`_) Add lead gas cruncher
+- (`#6 <https://github.com/GranthamImperial/silicone/pull/6>`_) Update development docs
+- (`#5 <https://github.com/GranthamImperial/silicone/pull/5>`_) Put notebooks under CI
+- (`#4 <https://github.com/GranthamImperial/silicone/pull/4>`_) Add basic documentation structure
+- (`#1 <https://github.com/GranthamImperial/silicone/pull/1>`_) Added pull request and issues templates

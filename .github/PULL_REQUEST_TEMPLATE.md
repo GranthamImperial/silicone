@@ -12,6 +12,6 @@ Please confirm that this pull request has done the following:
 Please add a single line in the changelog notes similar to one of the following:
 
 ```
-- (`#XX <https://github.com/znicholls/silicone/pull/XX>`_) Added feature which does something
-- (`#XX <https://github.com/znicholls/silicone/pull/XX>`_) Fixed bug identified in (`#YY <https://github.com/znicholls/silicone/issues/YY>`_)
+- (`#XX <https://github.com/GranthamImperial/silicone/pull/XX>`_) Added feature which does something
+- (`#XX <https://github.com/GranthamImperial/silicone/pull/XX>`_) Fixed bug identified in (`#YY <https://github.com/GranthamImperial/silicone/issues/YY>`_)
 ```

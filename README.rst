@@ -40,7 +40,7 @@ License
 .. sec-begin-license
 
 Silicone is free software under a BSD 3-Clause License, see
-`LICENSE <https://github.com/znicholls/silicone/blob/master/LICENSE>`_.
+`LICENSE <https://github.com/GranthamImperial/silicone/blob/master/LICENSE>`_.
 
 .. sec-end-license
 
@@ -96,22 +96,22 @@ Please see the `Development section of the docs <https://silicone.readthedocs.io
 .. |Docs| image:: https://readthedocs.org/projects/silicone/badge/?version=latest
     :target: https://silicone.readthedocs.io/en/latest/
 .. |License| image:: https://img.shields.io/github/license/znicholls/silicone.svg
-    :target: https://github.com/znicholls/silicone/blob/master/LICENSE
-.. |Build Status| image:: https://github.com/znicholls/silicone/workflows/Silicone%20CI-CD/badge.svg
-    :target: https://github.com/znicholls/silicone/actions?query=workflow%3A%22Silicone+CI-CD%22
+    :target: https://github.com/GranthamImperial/silicone/blob/master/LICENSE
+.. |Build Status| image:: https://github.com/GranthamImperial/silicone/workflows/Silicone%20CI-CD/badge.svg
+    :target: https://github.com/GranthamImperial/silicone/actions?query=workflow%3A%22Silicone+CI-CD%22
 .. |Codecov| image:: https://img.shields.io/codecov/c/github/znicholls/silicone.svg
     :target: https://codecov.io/gh/znicholls/silicone/branch/master/graph/badge.svg
 .. |Latest Version| image:: https://img.shields.io/github/tag/znicholls/silicone.svg
-    :target: https://github.com/znicholls/silicone/releases
-.. |PyPI Install| image:: https://github.com/znicholls/silicone/workflows/Test%20PyPI%20install/badge.svg
-    :target: https://github.com/znicholls/silicone/actions?query=workflow%3A%22Test+PyPI+install%22
+    :target: https://github.com/GranthamImperial/silicone/releases
+.. |PyPI Install| image:: https://github.com/GranthamImperial/silicone/workflows/Test%20PyPI%20install/badge.svg
+    :target: https://github.com/GranthamImperial/silicone/actions?query=workflow%3A%22Test+PyPI+install%22
 .. |PyPI Version| image:: https://img.shields.io/pypi/v/silicone.svg
     :target: https://pypi.org/project/silicone/
 .. |Last Commit| image:: https://img.shields.io/github/last-commit/znicholls/silicone.svg
-    :target: https://github.com/znicholls/silicone/commits/master
+    :target: https://github.com/GranthamImperial/silicone/commits/master
 .. |Commits Since Last Release| image:: https://img.shields.io/github/commits-since/znicholls/silicone/latest.svg
-    :target: https://github.com/znicholls/silicone/commits/master
+    :target: https://github.com/GranthamImperial/silicone/commits/master
 .. |Contributors| image:: https://img.shields.io/github/contributors/znicholls/silicone.svg
-    :target: https://github.com/znicholls/silicone/graphs/contributors
+    :target: https://github.com/GranthamImperial/silicone/graphs/contributors
 
 .. sec-end-links
