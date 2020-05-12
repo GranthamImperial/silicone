@@ -25,7 +25,7 @@ def rolling_window_find_quantiles(
 
     .. math::
 
-        w = \\frac{1}{1 + \\left (\\frac{x - x_0}{ \\text{box_length} \\times \\text{decay_length_factor} } \\right)^2}
+        w = \\frac{1}{1 + \\left (\\frac{x - x_0}{ \\text{box\\_length} \\times \\text{decay\\_length\\_factor} } \\right)^2}
 
     Parameters
     ----------
@@ -44,7 +44,7 @@ def rolling_window_find_quantiles(
     decay_length_factor : float
         gives the distance over which the weighting of the values falls to 1/4,
         relative to half the distance between window centres. Defaults to 1. Formula is
-        :math:`w = \\left ( 1 + \\left( \\frac{\\text{distance}}{\\text{box_length} \\times \\text{decay_length_factor}} \\right)^2 \\right)^{-1}`.
+        :math:`w = \\left ( 1 + \\left( \\frac{\\text{distance}}{\\text{box\\_length} \\times \\text{decay\\_length\\_factor}} \\right)^2 \\right)^{-1}`.
 
     Returns
     -------
