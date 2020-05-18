@@ -464,6 +464,16 @@ def _adjust_time_style_to_match(in_df, target_df):
     return in_df
 
 
+def _remove_equivs(string_to_fix):
+    """
+    Removes the substring "-equiv" from strings. For use in unit conversion
+    :param string_to_fix: str
+        The string to strip of "-equiv".
+    :return: str
+    """
+    string_to_fix.replace("-equiv", "")
+
+
 def _construct_consistent_values(aggregate_name, components, db_to_generate):
     """
     Calculates the sum of the components and creates an IamDataFrame with this
