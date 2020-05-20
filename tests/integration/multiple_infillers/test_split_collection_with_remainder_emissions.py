@@ -42,8 +42,8 @@ class TestSplitCollectionWithRemainderEmissions:
                 "model_b",
                 "scen_b",
                 "World",
-                "Emissions|HFC|C2F6",
-                "kt C2F6/yr",
+                "Emissions|HFC",
+                "kt C5F12-equiv/yr",
                 1.25,
                 2,
                 3,
@@ -52,8 +52,8 @@ class TestSplitCollectionWithRemainderEmissions:
                 "model_b",
                 "scen_c",
                 "World",
-                "Emissions|HFC|C2F6",
-                "kt C2F6/yr",
+                "Emissions|HFC",
+                "kt C5F12-equiv/yr",
                 1.2,
                 2.3,
                 2.8,
@@ -83,7 +83,7 @@ class TestSplitCollectionWithRemainderEmissions:
         ],
     )
 
-    def test_infill_components_error_no_composite_data(self, test_db):
+    def test_infill_components_error_no_aggregate_data(self, test_db):
         tcruncher = self.tclass(test_db)
         error_msg = re.escape(
             "The database to infill does not have the aggregate variable"
@@ -91,8 +91,27 @@ class TestSplitCollectionWithRemainderEmissions:
         with pytest.raises(AssertionError, match=error_msg):
             tcruncher.infill_components("c", ["a"], "b", test_db)
 
-    def test_db_error_no_info_remainder(self, test_db):
-        # test that crunching fails if there's no data about the lead gas in the
+    def test_db_error_no_info_aggregate(self, test_db):
+        # test that crunching fails if there's no data about the remainder in the
+        # database
+        components = ["Emissions|HFC|C2F6"]
+        aggregate = "Emissions|HFC"
+        remainder = "Emissions|HFC|C5F12"
+        infiller = self.tclass(test_db.filter(variable=aggregate, keep=False))
+
+        error_msg = re.escape(
+            "No aggregate data in database."
+        )
+        with pytest.raises(AssertionError, match=error_msg):
+            infiller.infill_components(
+                aggregate,
+                components,
+                remainder,
+                test_db.filter(variable=aggregate),
+            )
+
+    def test_db_error_existing_info(self, test_db):
+        # test that crunching fails if there's already data about the remainder in the
         # database
         components = ["Emissions|HFC|C2F6"]
         aggregate = "Emissions|HFC"
@@ -100,7 +119,7 @@ class TestSplitCollectionWithRemainderEmissions:
         infiller = self.tclass(test_db.filter(variable=components, keep=False))
 
         error_msg = re.escape(
-            "No remainder data in database."
+            "The database to infill already has some component variables"
         )
         with pytest.raises(AssertionError, match=error_msg):
             infiller.infill_components(
@@ -126,16 +145,22 @@ class TestSplitCollectionWithRemainderEmissions:
 
     def test_relationship_usage_not_enough_time(self, test_db, test_downscale_df):
         # Ensure that the process fails if not all times have data
-        test_db.data["unit"] = "kt C2F6-equiv/yr"
+        test_db.data["unit"] = "kt C5F12-equiv/yr"
+        components = ["Emissions|HFC|C2F6"]
+        aggregate = "Emissions|HFC"
+        remainder = "Emissions|HFC|C5F12"
         tcruncher = self.tclass(test_db)
         test_downscale_df = _adjust_time_style_to_match(test_downscale_df, test_db)
         error_msg = re.escape(
-            "Not all required timepoints are in the data for the lead"
-            " gas (Emissions|HFC|C2F6)"
+            "Not all required timepoints are present in the database we crunched, we "
+            "crunched \n\t`{}`\nbut you passed in \n\t{}".format(
+                [2010, 2015],
+                [2010, 2015, 2050]
+            )
         )
         with pytest.raises(ValueError, match=error_msg):
-            filler = tcruncher.infill_components(
-                "Emissions|HFC|C2F6", ["Emissions|HFC|C5F12"], test_downscale_df
+            tcruncher.infill_components(
+                aggregate, components, remainder, test_downscale_df
             )
 
     def test_relationship_usage_works(self, test_db, test_downscale_df):
@@ -176,13 +201,14 @@ class TestSplitCollectionWithRemainderEmissions:
         else:
             test_downscale_df.filter(time=test_db.data[test_db.time_col], inplace=True)
         # Make the variables work for our case
-        components = ["Emissions|HFC|C5F12", "Emissions|HFC|C2F6"]
+        components = ["Emissions|HFC|C2F6"]
         aggregate = "Emissions|HFC"
+        remainder = "Emissions|HFC|C5F12"
         test_downscale_df.data["variable"] = aggregate
         tcruncher = self.tclass(test_db)
         with pytest.raises(ValueError):
             filled = tcruncher.infill_components(
-                aggregate, components, test_downscale_df
+                aggregate, components, remainder, test_downscale_df
             )
         test_downscale_df = convert_units_to_MtCO2_equiv(test_downscale_df)
         filled = tcruncher.infill_components(aggregate, components, test_downscale_df)
@@ -211,6 +237,8 @@ class TestSplitCollectionWithRemainderEmissions:
         # There are optional extra columns on the DataFrame objects. This test ensures
         # that an error is thrown if we add together different sorts of DataFrame.
         aggregate = "Emissions|KyotoTotal"
+        components = ["Emissions|CH4", "Emissions|N2O"]
+        remainder = "Emissions|CO2"
         test_db.data["variable"] = aggregate
         # larger_df has an extra column, "meta"
         larger_df = _adjust_time_style_to_match(larger_df, test_db)
@@ -219,7 +247,7 @@ class TestSplitCollectionWithRemainderEmissions:
             larger_df.filter(year=test_db.data[test_db.time_col].values, inplace=True)
         else:
             larger_df.filter(time=test_db.data[test_db.time_col], inplace=True)
-        components = ["Emissions|CH4", "Emissions|CO2"]
+
         err_msg = re.escape(
             "The database and to_infill_db fed into this have inconsistent "
             "columns, which will prevent adding the data together properly."
@@ -231,6 +259,8 @@ class TestSplitCollectionWithRemainderEmissions:
         # If we make the data inconsistent, we still get a consistent (if arbitrary)
         # output.
         aggregate = "Emissions|KyotoTotal"
+        components = ["Emissions|CH4", "Emissions|N2O"]
+        remainder = "Emissions|CO2"
         # This makes the data contain duplicates:
         test_db.data["variable"] = aggregate
         test_db.data["unit"] = "Mt CO2/yr"
@@ -243,7 +273,6 @@ class TestSplitCollectionWithRemainderEmissions:
             larger_df.filter(year=test_db.data[test_db.time_col].values, inplace=True)
         else:
             larger_df.filter(time=test_db.data[test_db.time_col], inplace=True)
-        components = ["Emissions|CH4", "Emissions|CO2"]
         returned = tcruncher.infill_components(aggregate, components, test_db)
         assert len(returned.data) == len(test_db.data)
         # Make the data consistent:
