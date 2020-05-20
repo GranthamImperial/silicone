@@ -6,6 +6,7 @@ infills the remainder as another specified emissions type (which may be negative
 import logging
 
 from silicone.database_crunchers import QuantileRollingWindows
+from silicone.multiple_infillers import infill_composite_values
 from silicone.utils import convert_units_to_MtCO2_equiv, _remove_equivs
 
 logger = logging.getLogger(__name__)
@@ -33,7 +34,7 @@ class SplitCollectionWithRemainderEmissions:
     ):
         """
             Converts the units of the component emissions to be the same as the
-            aggregate emissions.
+            aggregate emissions. Returns the converted database and the unit.
 
             Parameters
             ----------
@@ -53,31 +54,37 @@ class SplitCollectionWithRemainderEmissions:
             ------
             :obj:`pyam.IamDataFrame`
                 Data with consistent units.
+
+            str
+                The unit of the aggregate data.
             """
         all_var = [aggregate] + components + [remainder]
         relevant_df = df.filter(variable=all_var)
         all_units = relevant_df.variables(True)
-        if not all(var in all_units["variable"] for var in all_var):
+        if not all(var in all_units["variable"].values for var in all_var):
             "Some variables missing from database when performing unit " \
             "conversion: {}".format(
                 [var not in all_units["variable"] for var in all_var]
             )
-        assert aggregate in all_units["variable"], "No aggregate data in database."
-        assert remainder in all_units["variable"], "No remainder data in database."
+        assert aggregate in all_units["variable"].values, \
+            "No aggregate data in database."
+        assert remainder in all_units["variable"].values, \
+            "No remainder data in database."
         desired_unit = all_units["unit"][all_units["variable"] == aggregate]
         assert len(desired_unit) == 1, "Multiple units for the aggregate variable"
-        desired_unit_eqiv = _remove_equivs(desired_unit[0])
+        desired_unit = desired_unit[0]
+        desired_unit_eqiv = _remove_equivs(desired_unit)
         unit_equivs = all_units["unit"].map(_remove_equivs).drop_duplicates()
         if len(unit_equivs) == 1:
-            return relevant_df
+            return relevant_df, desired_unit
         if desired_unit_eqiv == "Mt CO2/yr":
-            return convert_units_to_MtCO2_equiv(relevant_df, use_ar4_data)
+            return convert_units_to_MtCO2_equiv(relevant_df, use_ar4_data), desired_unit
         else:
             raise ValueError("The variables in this dataframe have units that cannot "
                              "easily be converted to make them consistent.")
 
     def infill_components(
-        self, aggregate, components, remainder, to_infill_df, use_ar4_data=False
+        self, aggregate, components, remainder, to_infill_df, use_ar4_data=False, **kwargs
     ):
         """
         Derive the relationship between the composite variables and their sum, then use
@@ -109,6 +116,10 @@ class SplitCollectionWithRemainderEmissions:
             If true, we convert all values to Mt CO2 equivalent using the IPCC AR4
             GWP100 data, otherwise (by default) we use the GWP100 data from AR5.
 
+        **kwargs :
+            An optional dictionary of instructions handed to the quantile rolling
+            windows cruncher.
+
         Returns
         -------
         :obj:`pyam.IamDataFrame`
@@ -123,7 +134,6 @@ class SplitCollectionWithRemainderEmissions:
         assert (
             aggregate in to_infill_df.variables().values
         ), "The database to infill does not have the aggregate variable"
-        to_infill_ag_units = to_infill_df.variables(True)["unit"].values
         assert all(
             y not in [remainder] + components for y in to_infill_df.variables().values
         ), "The database to infill already has some component variables"
@@ -133,22 +143,28 @@ class SplitCollectionWithRemainderEmissions:
             "The database and to_infill_db fed into this have inconsistent columns, "
             "which will prevent adding the data together properly."
         )
+        to_infill_df = to_infill_df.filter(variable=aggregate)
+        to_infill_ag_units = to_infill_df.variables(True)["unit"].values[0]
         db_to_generate, aggregate_unit = self._make_units_consistent(
             self._db, aggregate, components, remainder, use_ar4_data
         )
+        assert aggregate_unit == to_infill_ag_units, \
+            "The units of the aggregate variable are different between infiller and " \
+            "infillee dataframes"
         cruncher = QuantileRollingWindows(db_to_generate)
-        if aggregate_unit != db_to_generate.variables(True):
-            raise ValueError(
-                "The units of the aggregate variable are inconsistent between the "
-                "input and constructed data. We input {} and constructed {}.".format(
-                    self._set_of_units_without_equiv(to_infill_df),
-                    self._set_of_units_without_equiv(consistent_composite),
-                )
-            )
         for leader in components:
-            to_add = cruncher.derive_relationship(leader, [aggregate])(to_infill_df)
+            to_add = cruncher.derive_relationship(leader, [aggregate], **kwargs)(
+                to_infill_df
+            )
             try:
                 df_to_append.append(to_add, inplace=True)
             except NameError:
                 df_to_append = to_add
+        calculate_remainder_df = df_to_append.append(to_infill_df)
+        remainder_dict = {aggregate: 1}
+        for item in components:
+            remainder_dict[item] = -1
+        df_to_append.append(
+            infill_composite_values(calculate_remainder_df, {remainder: remainder_dict})
+        )
         return df_to_append
