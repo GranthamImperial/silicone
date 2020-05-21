@@ -148,7 +148,7 @@ class SplitCollectionWithRemainderEmissions:
         db_to_generate, aggregate_unit = self._make_units_consistent(
             self._db, aggregate, components, remainder, use_ar4_data
         )
-        assert aggregate_unit == to_infill_ag_units, \
+        assert _remove_equivs(aggregate_unit) == _remove_equivs(to_infill_ag_units), \
             "The units of the aggregate variable are different between infiller and " \
             "infillee dataframes"
         cruncher = QuantileRollingWindows(db_to_generate)
@@ -165,6 +165,9 @@ class SplitCollectionWithRemainderEmissions:
         for item in components:
             remainder_dict[item] = -1
         df_to_append.append(
-            infill_composite_values(calculate_remainder_df, {remainder: remainder_dict})
+            infill_composite_values(
+                calculate_remainder_df, {remainder: remainder_dict}
+            ),
+            inplace=True
         )
         return df_to_append
