@@ -143,34 +143,15 @@ class TestSplitCollectionWithRemainderEmissions:
         with pytest.raises(AssertionError, match=error_msg):
             tcruncher.infill_components(aggregate, components, remainder, test_db)
 
-    def test_relationship_usage_not_enough_time(self, test_db, test_downscale_df):
-        # Ensure that the process fails if not all times have data
-        test_db.data["unit"] = "kt C5F12-equiv/yr"
-        components = ["Emissions|HFC|C2F6"]
-        aggregate = "Emissions|HFC"
-        remainder = "Emissions|HFC|C5F12"
-        tcruncher = self.tclass(test_db)
-        test_downscale_df = _adjust_time_style_to_match(test_downscale_df, test_db)
-        error_msg = re.escape(
-            "Not all required timepoints are present in the database we crunched, we "
-            "crunched \n\t`{}`\nbut you passed in \n\t{}".format(
-                [2010, 2015],
-                [2010, 2015, 2050]
-            )
-        )
-        with pytest.raises(ValueError, match=error_msg):
-            tcruncher.infill_components(
-                aggregate, components, remainder, test_downscale_df
-            )
-
     def test_relationship_usage_works(self, test_db, test_downscale_df):
         # Test that we get the correct results when everything is in order.
         # First fix the units problem
         test_db.data["unit"] = "kt C2F6-equiv/yr"
+        test_downscale_df["unit"] = "kt C2F6-equiv/yr"
         components = ["Emissions|HFC|C2F6"]
         aggregate = "Emissions|HFC"
         remainder = "Emissions|HFC|C5F12"
-        tcruncher = self.tclass(test_db)
+        infiller = self.tclass(test_db)
         # Fix times to agree
         test_downscale_df = _adjust_time_style_to_match(test_downscale_df, test_db)
         if test_db.time_col == "year":
@@ -180,18 +161,22 @@ class TestSplitCollectionWithRemainderEmissions:
         else:
             test_downscale_df.filter(time=test_db.data[test_db.time_col], inplace=True)
         # Perform the calculation
-        filled = tcruncher.infill_components(
+        filled = infiller.infill_components(
             aggregate, components, remainder, test_downscale_df
         )
         # The values returned should include only 1 entry per input entry, since there
         # is a single input component
-        assert len(filled.data) == 4
-        assert all(y == components[0] for y in filled.variables())
-        assert np.allclose(filled.data["value"], test_downscale_df.data["value"])
+        assert len(filled.data) == 8
+        assert all([y in components + [remainder] for y in filled.variables()])
+        assert np.allclose(
+            filled.filter(variable=remainder)["value"].values +
+                filled.filter(variable=components)["value"].values,
+            test_downscale_df.filter(variable=aggregate)["value"].values
+        )
 
     def test_relationship_usage_works_multiple(self, test_db, test_downscale_df):
-        # Test that the decomposer function works for slightly more complicated data
-        # (two components).
+        # Test that the split emissions function works for slightly more complicated
+        # data (two components).
         # Get matching times
         test_downscale_df = _adjust_time_style_to_match(test_downscale_df, test_db)
         if test_db.time_col == "year":
@@ -201,37 +186,42 @@ class TestSplitCollectionWithRemainderEmissions:
         else:
             test_downscale_df.filter(time=test_db.data[test_db.time_col], inplace=True)
         # Make the variables work for our case
-        components = ["Emissions|HFC|C2F6"]
+        neg_component = "Emissions|HFC|CF4"
+        pos_component = "Emissions|HFC|C2F6"
+        add_to_test_db = test_db.filter(variable=pos_component)
+        add_to_test_db["value"] = -add_to_test_db["value"]
+        add_to_test_db["variable"] = neg_component
+        test_db.append(add_to_test_db, inplace=True)
+        components = ["Emissions|HFC|C2F6", neg_component]
         aggregate = "Emissions|HFC"
         remainder = "Emissions|HFC|C5F12"
         test_downscale_df.data["variable"] = aggregate
-        tcruncher = self.tclass(test_db)
-        with pytest.raises(ValueError):
-            filled = tcruncher.infill_components(
-                aggregate, components, remainder, test_downscale_df
-            )
+        test_db = convert_units_to_MtCO2_equiv(test_db)
         test_downscale_df = convert_units_to_MtCO2_equiv(test_downscale_df)
-        filled = tcruncher.infill_components(aggregate, components, test_downscale_df)
-        # The value returned should be a dataframe with 2 entries per original entry (4)
-        assert len(filled.data) == 8
+        infiller = self.tclass(test_db)
+        filled = infiller.infill_components(
+            aggregate, components, remainder, test_downscale_df
+        )
+        # The value returned should be a dataframe with 3 entries per original entry (4)
+        assert len(filled.data) == 12
         assert all(y in filled.variables().values for y in components)
+        assert all(y in components + [remainder] for y in filled.variables().values)
         # We also expect the amount of the variables to be conserved
         if test_db.time_col == "year":
             assert np.allclose(
                 test_downscale_df.data.groupby("year").sum()["value"].values,
-                convert_units_to_MtCO2_equiv(filled)
-                .data.groupby("year")
-                .sum()["value"]
-                .values,
+                filled.data.groupby("year").sum()["value"].values,
             )
         else:
             assert np.allclose(
                 test_downscale_df.data.groupby("time").sum()["value"].values,
-                convert_units_to_MtCO2_equiv(filled)
-                .data.groupby("time")
-                .sum()["value"]
-                .values,
+                filled.data.groupby("time").sum()["value"].values,
             )
+        assert np.allclose(
+            filled.filter(variable=neg_component)["value"].values,
+            -filled.filter(variable=pos_component)["value"].values
+        )
+        assert all(filled.filter(variable=neg_component)["value"].values < 0)
 
     def test_relationship_rejects_inconsistent_columns(self, larger_df, test_db):
         # There are optional extra columns on the DataFrame objects. This test ensures
@@ -273,7 +263,9 @@ class TestSplitCollectionWithRemainderEmissions:
             larger_df.filter(year=test_db.data[test_db.time_col].values, inplace=True)
         else:
             larger_df.filter(time=test_db.data[test_db.time_col], inplace=True)
-        returned = tcruncher.infill_components(aggregate, components, test_db)
+        returned = tcruncher.infill_components(
+            aggregate, components, remainder, test_db
+        )
         assert len(returned.data) == len(test_db.data)
         # Make the data consistent:
         test_db.data = test_db.data.iloc[0:2]
