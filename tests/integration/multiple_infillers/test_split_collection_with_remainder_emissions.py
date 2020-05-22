@@ -64,10 +64,11 @@ class TestSplitCollectionWithRemainderEmissions:
     larger_df = pd.DataFrame(
         [
             ["model_C", "scen_C", "World", "Emissions|BC", "Mt BC/yr", "", 1.0, 1, 1],
-            ["model_C", "scen_C", "World", "Emissions|CH4", "Mt CH4/yr", "", 1.0, 1, 1],
+            ["model_C", "scen_C", "World", "Emissions|KyotoTotal", "Mt CO2-equiv/yr", "", 2.0, 2, 2],
             ["model_D", "scen_C", "World", "Emissions|CO2", "Mt CO2/yr", "", 2, 2, 2],
-            ["model_D", "scen_C", "World", "Emissions|CH4", "Mt CH4/yr", "", 2, 2, 2],
+            ["model_D", "scen_C", "World", "Emissions|KyotoTotal", "Mt CO2-equiv/yr", "", 2, 2, 2],
             ["model_D", "scen_F", "World", "Emissions|CO2", "Mt CO2/yr", "", 4, 4, 4],
+            ["model_D", "scen_F", "World", "Emissions|KyotoTotal", "Mt CO2-equiv/yr", "", 6, 6, 6],
             ["model_D", "scen_F", "World", "Emissions|CH4", "Mt CH4/yr", "", 2, 2, 2],
         ],
         columns=[
@@ -232,7 +233,7 @@ class TestSplitCollectionWithRemainderEmissions:
         test_db.data["variable"] = aggregate
         # larger_df has an extra column, "meta"
         larger_df = _adjust_time_style_to_match(larger_df, test_db)
-        tcruncher = self.tclass(larger_df)
+        infiller = self.tclass(larger_df)
         if test_db.time_col == "year":
             larger_df.filter(year=test_db.data[test_db.time_col].values, inplace=True)
         else:
@@ -243,7 +244,7 @@ class TestSplitCollectionWithRemainderEmissions:
             "columns, which will prevent adding the data together properly."
         )
         with pytest.raises(AssertionError, match=err_msg):
-            tcruncher.infill_components(aggregate, components, test_db)
+            infiller.infill_components(aggregate, components, remainder, test_db)
 
     def test_relationship_ignores_incomplete_data(self, larger_df, test_db):
         # If we make the data inconsistent, we still get a consistent (if arbitrary)
@@ -253,7 +254,7 @@ class TestSplitCollectionWithRemainderEmissions:
         remainder = "Emissions|CO2"
         # This makes the data contain duplicates:
         test_db.data["variable"] = aggregate
-        test_db.data["unit"] = "Mt CO2/yr"
+        test_db.data["unit"] = "Mt CO2-equiv/yr"
         # We remove the extra column from the larger_df as it's not found in test_df
         larger_df.data.drop("meta", axis=1, inplace=True)
         larger_df = pyam.IamDataFrame(larger_df.data)
@@ -269,5 +270,7 @@ class TestSplitCollectionWithRemainderEmissions:
         assert len(returned.data) == len(test_db.data)
         # Make the data consistent:
         test_db.data = test_db.data.iloc[0:2]
-        returned = tcruncher.infill_components(aggregate, components, test_db)
+        returned = tcruncher.infill_components(
+            aggregate, components, remainder, test_db
+        )
         assert len(returned.data) == 2 * len(test_db.data)
