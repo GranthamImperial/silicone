@@ -281,5 +281,14 @@ class TestSplitCollectionWithRemainderEmissions:
         # Ensure that we get the same number if the unit conversion is done outside the
         # function
 
-        infiller = self.tclass(convert_units_to_MtCO2_equiv(larger_df))
-        
+        infiller = self.tclass(convert_units_to_MtCO2_equiv(
+            larger_df.filter(variable=[aggregate, remainder] + components)
+        ))
+        conv_returned = infiller.infill_components(
+            aggregate, components, remainder, test_db
+        )
+        assert all(conv_returned["unit"].unique() == "Mt CO2-equiv/yr")
+        assert conv_returned.filter(variable=remainder).equals(
+            returned.filter(variable=remainder)
+        )
+

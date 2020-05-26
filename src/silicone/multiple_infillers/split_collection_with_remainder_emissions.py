@@ -29,8 +29,8 @@ class SplitCollectionWithRemainderEmissions:
         """
         self._db = db.copy()
 
-    def _make_units_consistent(
-            self, df, aggregate, components, remainder, use_ar4_data
+    def _check_and_return_desired_unit(
+            self, relevant_df, aggregate, components, remainder
     ):
         """
             Converts the units of the component emissions to be the same as the
@@ -38,7 +38,7 @@ class SplitCollectionWithRemainderEmissions:
 
             Parameters
             ----------
-            df : :obj:`pyam.IamDataFrame`
+            relevant_df : :obj:`pyam.IamDataFrame`
                 Data with units that need correcting.
 
             aggregate : str
@@ -49,10 +49,6 @@ class SplitCollectionWithRemainderEmissions:
 
             remainder : str
                 The component which will be constructed as a remainder.
-
-            use_ar4_data : Bool
-                Only used if unit conversion is attempted. If true, the unit conversion
-                takes place with AR4 values.
 
             Return
             ------
@@ -68,8 +64,7 @@ class SplitCollectionWithRemainderEmissions:
             The variables in this dataframe have units that cannot easily be converted
             to make them consistent.
             """
-        all_var = [aggregate] + components + [remainder]
-        relevant_df = df.filter(variable=all_var)
+        all_var = [aggregate, remainder] + components
         all_units = relevant_df.variables(True)
         if not all(var in all_units["variable"].values for var in all_var):
             "Some variables missing from database when performing unit " \
@@ -86,13 +81,12 @@ class SplitCollectionWithRemainderEmissions:
         desired_unit = desired_unit.iloc[0]
         desired_unit_eqiv = _remove_equivs(desired_unit)
         unit_equivs = all_units["unit"].map(_remove_equivs).drop_duplicates()
-        if len(unit_equivs) == 1:
-            return relevant_df, desired_unit
-        if desired_unit_eqiv == "Mt CO2/yr":
-            return convert_units_to_MtCO2_equiv(relevant_df, use_ar4_data), desired_unit
-        else:
-            raise ValueError("The variables in this dataframe have units that cannot "
-                             "easily be converted to make them consistent.")
+        if len(unit_equivs) != 1 and desired_unit_eqiv != "Mt CO2/yr":
+            raise ValueError(
+                "The variables in this dataframe have units that cannot "
+                "easily be converted to make them consistent."
+            )
+        return relevant_df, desired_unit
 
     def infill_components(
         self, aggregate, components, remainder, to_infill_df,
@@ -154,15 +148,17 @@ class SplitCollectionWithRemainderEmissions:
         )
         to_infill_df = to_infill_df.filter(variable=aggregate)
         to_infill_ag_units = to_infill_df.variables(True)["unit"].values[0]
-        db_to_generate, aggregate_unit = self._make_units_consistent(
-            self._db, aggregate, components, remainder, use_ar4_data
+        all_var = [aggregate, remainder] + components
+        relevant_df = self._db.filter(variable=all_var)
+        db_to_generate, aggregate_unit = self._check_and_return_desired_unit(
+            relevant_df, aggregate, components, remainder
         )
         assert _remove_equivs(aggregate_unit) == _remove_equivs(to_infill_ag_units), \
             "The units of the aggregate variable are different between infiller and " \
             "infillee dataframes"
         cruncher = cruncher_class(db_to_generate)
         unavailable_comp = [
-            var for var in components if var not in self._db.variables().values
+            var for var in components if var not in relevant_df.variables().values
         ]
         if unavailable_comp:
             logger.warning("No data found for {}".format(unavailable_comp))
@@ -177,10 +173,14 @@ class SplitCollectionWithRemainderEmissions:
             except NameError:
                 df_to_append = to_add
             remainder_dict[leader] = -1
-        calculate_remainder_df, _ = self._make_units_consistent(
-            df_to_append.append(to_infill_df),
-            aggregate, components, None, use_ar4_data
-        )
+        # We need a single database with both aggregate and components, which we may
+        # want to convert units to CO2/yr before we calculate the remainder.
+        calculate_remainder_df = df_to_append.append(to_infill_df)
+        if _remove_equivs(aggregate_unit) == "Mt CO2/yr":
+            calculate_remainder_df = convert_units_to_MtCO2_equiv(
+                calculate_remainder_df,
+                use_ar4_data
+            )
 
         df_to_append.append(
             infill_composite_values(
