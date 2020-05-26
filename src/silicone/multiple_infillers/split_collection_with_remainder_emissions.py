@@ -48,7 +48,11 @@ class SplitCollectionWithRemainderEmissions:
                 List of the names of the variables to be summed.
 
             remainder : str
-                The component which will be constructed as a remainder
+                The component which will be constructed as a remainder.
+
+            use_ar4_data : Bool
+                Only used if unit conversion is attempted. If true, the unit conversion
+                takes place with AR4 values.
 
             Return
             ------
@@ -57,6 +61,12 @@ class SplitCollectionWithRemainderEmissions:
 
             str
                 The unit of the aggregate data.
+
+            Raises
+            ------
+            ValueError:
+            The variables in this dataframe have units that cannot easily be converted
+            to make them consistent.
             """
         all_var = [aggregate] + components + [remainder]
         relevant_df = df.filter(variable=all_var)
@@ -68,11 +78,12 @@ class SplitCollectionWithRemainderEmissions:
             )
         assert aggregate in all_units["variable"].values, \
             "No aggregate data in database."
-        assert remainder in all_units["variable"].values, \
-            "No remainder data in database."
+        if remainder:
+            assert remainder in all_units["variable"].values, \
+                "No remainder data in database."
         desired_unit = all_units["unit"][all_units["variable"] == aggregate]
         assert len(desired_unit) == 1, "Multiple units for the aggregate variable"
-        desired_unit = desired_unit[0]
+        desired_unit = desired_unit.iloc[0]
         desired_unit_eqiv = _remove_equivs(desired_unit)
         unit_equivs = all_units["unit"].map(_remove_equivs).drop_duplicates()
         if len(unit_equivs) == 1:
@@ -84,7 +95,10 @@ class SplitCollectionWithRemainderEmissions:
                              "easily be converted to make them consistent.")
 
     def infill_components(
-        self, aggregate, components, remainder, to_infill_df, use_ar4_data=False, **kwargs
+        self, aggregate, components, remainder, to_infill_df,
+        cruncher_class = QuantileRollingWindows,
+        use_ar4_data=False,
+        **kwargs
     ):
         """
         Derive the relationship between the composite variables and their sum, then use
@@ -113,7 +127,8 @@ class SplitCollectionWithRemainderEmissions:
             the ``components`` to be infilled.
 
         use_ar4_data : bool
-            If true, we convert all values to Mt CO2 equivalent using the IPCC AR4
+            Only used if the variables have different units. If true, we convert all
+            values to Mt CO2 equivalent using the IPCC AR4
             GWP100 data, otherwise (by default) we use the GWP100 data from AR5.
 
         **kwargs :
@@ -124,12 +139,6 @@ class SplitCollectionWithRemainderEmissions:
         -------
         :obj:`pyam.IamDataFrame`
             The infilled data resulting from the calculation.
-
-        Raises
-        ------
-        ValueError
-            There is no data for ``variable_leaders`` or ``variable_follower`` in the
-            database.
         """
         assert (
             aggregate in to_infill_df.variables().values
@@ -151,7 +160,14 @@ class SplitCollectionWithRemainderEmissions:
         assert _remove_equivs(aggregate_unit) == _remove_equivs(to_infill_ag_units), \
             "The units of the aggregate variable are different between infiller and " \
             "infillee dataframes"
-        cruncher = QuantileRollingWindows(db_to_generate)
+        cruncher = cruncher_class(db_to_generate)
+        unavailable_comp = [
+            var for var in components if var not in self._db.variables().values
+        ]
+        if unavailable_comp:
+            logger.warning("No data found for {}".format(unavailable_comp))
+        remainder_dict = {aggregate: 1}
+        components = [comp for comp in components if comp not in unavailable_comp]
         for leader in components:
             to_add = cruncher.derive_relationship(leader, [aggregate], **kwargs)(
                 to_infill_df
@@ -160,10 +176,12 @@ class SplitCollectionWithRemainderEmissions:
                 df_to_append.append(to_add, inplace=True)
             except NameError:
                 df_to_append = to_add
-        calculate_remainder_df = df_to_append.append(to_infill_df)
-        remainder_dict = {aggregate: 1}
-        for item in components:
-            remainder_dict[item] = -1
+            remainder_dict[leader] = -1
+        calculate_remainder_df, _ = self._make_units_consistent(
+            df_to_append.append(to_infill_df),
+            aggregate, components, None, use_ar4_data
+        )
+
         df_to_append.append(
             infill_composite_values(
                 calculate_remainder_df, {remainder: remainder_dict}
