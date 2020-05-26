@@ -471,7 +471,7 @@ def _remove_equivs(string_to_fix):
         The string to strip of "-equiv".
     :return: str
     """
-    string_to_fix.replace("-equiv", "")
+    return string_to_fix.replace("-equiv", "")
 
 
 def _construct_consistent_values(aggregate_name, components, db_to_generate):

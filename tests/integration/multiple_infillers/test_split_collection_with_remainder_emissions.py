@@ -1,3 +1,4 @@
+import logging
 import re
 
 import numpy as np
@@ -246,31 +247,39 @@ class TestSplitCollectionWithRemainderEmissions:
         with pytest.raises(AssertionError, match=err_msg):
             infiller.infill_components(aggregate, components, remainder, test_db)
 
-    def test_relationship_ignores_incomplete_data(self, larger_df, test_db):
-        # If we make the data inconsistent, we still get a consistent (if arbitrary)
-        # output.
+    def test_relationship_works_with_unit_conversion(self, larger_df, test_db, caplog):
+        # If we ask for N2O emissions when we don't have any in the input, we should
+        # get a warning but also an output.
         aggregate = "Emissions|KyotoTotal"
         components = ["Emissions|CH4", "Emissions|N2O"]
         remainder = "Emissions|CO2"
-        # This makes the data contain duplicates:
-        test_db.data["variable"] = aggregate
+        # Make the test data variables appropriate
+        test_db.data["variable"][0, 1] = aggregate
         test_db.data["unit"] = "Mt CO2-equiv/yr"
         # We remove the extra column from the larger_df as it's not found in test_df
         larger_df.data.drop("meta", axis=1, inplace=True)
         larger_df = pyam.IamDataFrame(larger_df.data)
         larger_df = _adjust_time_style_to_match(larger_df, test_db)
-        tcruncher = self.tclass(larger_df)
+        infiller = self.tclass(larger_df)
         if test_db.time_col == "year":
             larger_df.filter(year=test_db.data[test_db.time_col].values, inplace=True)
         else:
             larger_df.filter(time=test_db.data[test_db.time_col], inplace=True)
-        returned = tcruncher.infill_components(
-            aggregate, components, remainder, test_db
-        )
-        assert len(returned.data) == len(test_db.data)
+        with caplog.at_level(logging.INFO, logger="silicone.multiple_infillers"):
+            returned = infiller.infill_components(
+                aggregate, components, remainder, test_db
+            )
+        assert len(caplog.record_tuples) == 2  # TODO: make unit conversion not buggy
+        assert len(returned.data) == len(test_db.filter(variable=aggregate).data) * 2
         # Make the data consistent:
         test_db.data = test_db.data.iloc[0:2]
-        returned = tcruncher.infill_components(
+        returned = infiller.infill_components(
             aggregate, components, remainder, test_db
         )
-        assert len(returned.data) == 2 * len(test_db.data)
+        assert len(returned.data) == 2 * len(test_db.filter(variable=aggregate).data)
+
+        # Ensure that we get the same number if the unit conversion is done outside the
+        # function
+
+        infiller = self.tclass(convert_units_to_MtCO2_equiv(larger_df))
+        
