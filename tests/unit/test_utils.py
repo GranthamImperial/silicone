@@ -497,7 +497,7 @@ def test_get_files_and_use_them():
         ).variables()
         assert all([y not in blank_variables.values for y in min_expected_var])
         os.remove(SR15_SCENARIOS)
-    except ConnectionError as e:
+    except (ConnectionError, RuntimeError) as e:
         pytest.skip("Could not connect to the IIASA database: {}".format(e))
 
 
