@@ -7,7 +7,7 @@ import pyam
 import pytest
 
 from silicone.multiple_infillers.split_collection_with_remainder_emissions import (
-    SplitCollectionWithRemainderEmissions
+    SplitCollectionWithRemainderEmissions,
 )
 from silicone.utils import _adjust_time_style_to_match, convert_units_to_MtCO2_equiv
 
@@ -65,11 +65,41 @@ class TestSplitCollectionWithRemainderEmissions:
     larger_df = pd.DataFrame(
         [
             ["model_C", "scen_C", "World", "Emissions|BC", "Mt BC/yr", "", 1.0, 1, 1],
-            ["model_C", "scen_C", "World", "Emissions|KyotoTotal", "Mt CO2-equiv/yr", "", 2.0, 2, 2],
+            [
+                "model_C",
+                "scen_C",
+                "World",
+                "Emissions|KyotoTotal",
+                "Mt CO2-equiv/yr",
+                "",
+                2.0,
+                2,
+                2,
+            ],
             ["model_D", "scen_C", "World", "Emissions|CO2", "Mt CO2/yr", "", 2, 2, 2],
-            ["model_D", "scen_C", "World", "Emissions|KyotoTotal", "Mt CO2-equiv/yr", "", 2, 2, 2],
+            [
+                "model_D",
+                "scen_C",
+                "World",
+                "Emissions|KyotoTotal",
+                "Mt CO2-equiv/yr",
+                "",
+                2,
+                2,
+                2,
+            ],
             ["model_D", "scen_F", "World", "Emissions|CO2", "Mt CO2/yr", "", 4, 4, 4],
-            ["model_D", "scen_F", "World", "Emissions|KyotoTotal", "Mt CO2-equiv/yr", "", 6, 6, 6],
+            [
+                "model_D",
+                "scen_F",
+                "World",
+                "Emissions|KyotoTotal",
+                "Mt CO2-equiv/yr",
+                "",
+                6,
+                6,
+                6,
+            ],
             ["model_D", "scen_F", "World", "Emissions|CH4", "Mt CH4/yr", "", 2, 2, 2],
         ],
         columns=[
@@ -101,15 +131,10 @@ class TestSplitCollectionWithRemainderEmissions:
         remainder = "Emissions|HFC|C5F12"
         infiller = self.tclass(test_db.filter(variable=aggregate, keep=False))
 
-        error_msg = re.escape(
-            "No aggregate data in database."
-        )
+        error_msg = re.escape("No aggregate data in database.")
         with pytest.raises(AssertionError, match=error_msg):
             infiller.infill_components(
-                aggregate,
-                components,
-                remainder,
-                test_db.filter(variable=aggregate),
+                aggregate, components, remainder, test_db.filter(variable=aggregate),
             )
 
     def test_db_error_existing_info(self, test_db):
@@ -171,9 +196,9 @@ class TestSplitCollectionWithRemainderEmissions:
         assert len(filled.data) == 8
         assert all([y in components + [remainder] for y in filled.variables()])
         assert np.allclose(
-            filled.filter(variable=remainder)["value"].values +
-                filled.filter(variable=components)["value"].values,
-            test_downscale_df.filter(variable=aggregate)["value"].values
+            filled.filter(variable=remainder)["value"].values
+            + filled.filter(variable=components)["value"].values,
+            test_downscale_df.filter(variable=aggregate)["value"].values,
         )
 
     def test_relationship_usage_works_multiple(self, test_db, test_downscale_df):
@@ -221,7 +246,7 @@ class TestSplitCollectionWithRemainderEmissions:
             )
         assert np.allclose(
             filled.filter(variable=neg_component)["value"].values,
-            -filled.filter(variable=pos_component)["value"].values
+            -filled.filter(variable=pos_component)["value"].values,
         )
         assert all(filled.filter(variable=neg_component)["value"].values < 0)
 
@@ -273,17 +298,17 @@ class TestSplitCollectionWithRemainderEmissions:
         assert len(returned.data) == len(test_db.filter(variable=aggregate).data) * 2
         # Make the data consistent:
         test_db.data = test_db.data.iloc[0:2]
-        returned = infiller.infill_components(
-            aggregate, components, remainder, test_db
-        )
+        returned = infiller.infill_components(aggregate, components, remainder, test_db)
         assert len(returned.data) == 2 * len(test_db.filter(variable=aggregate).data)
 
         # Ensure that we get the same number if the unit conversion is done outside the
         # function
 
-        infiller = self.tclass(convert_units_to_MtCO2_equiv(
-            larger_df.filter(variable=[aggregate, remainder] + components)
-        ))
+        infiller = self.tclass(
+            convert_units_to_MtCO2_equiv(
+                larger_df.filter(variable=[aggregate, remainder] + components)
+            )
+        )
         conv_returned = infiller.infill_components(
             aggregate, components, remainder, test_db
         )
@@ -291,4 +316,3 @@ class TestSplitCollectionWithRemainderEmissions:
         assert conv_returned.filter(variable=remainder).equals(
             returned.filter(variable=remainder)
         )
-

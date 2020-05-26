@@ -12,5 +12,5 @@ from .infill_all_required_emissions_for_openscm import (  # noqa: F401
 )
 from .infill_composite_values import infill_composite_values  # noqa: F401
 from .split_collection_with_remainder_emissions import (  # noqa: F401
-    SplitCollectionWithRemainderEmissions
+    SplitCollectionWithRemainderEmissions,
 )
