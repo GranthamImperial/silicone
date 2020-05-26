@@ -392,7 +392,10 @@ def convert_units_to_MtCO2_equiv(df, use_ar4_data=False):
 
     for unit in to_convert_units:
         to_convert_df.convert_unit(
-            {unit: [convert_to_str, conversion_factors[unit]]}, inplace=True
+            current=unit,
+            to=convert_to_str,
+            factor=conversion_factors[unit],
+            inplace=True,
         )
 
     return to_convert_df
