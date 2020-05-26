@@ -7,7 +7,7 @@ import logging
 
 from silicone.database_crunchers import QuantileRollingWindows
 from silicone.multiple_infillers import infill_composite_values
-from silicone.utils import convert_units_to_MtCO2_equiv, _remove_equivs
+from silicone.utils import _remove_equivs, convert_units_to_MtCO2_equiv
 
 logger = logging.getLogger(__name__)
 
