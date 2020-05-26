@@ -11,6 +11,7 @@ from silicone.utils import convert_units_to_MtCO2_equiv, _remove_equivs
 
 logger = logging.getLogger(__name__)
 
+
 class SplitCollectionWithRemainderEmissions:
     """
     Splits the known aggregate emissions into several components with the 'quantile
@@ -30,7 +31,7 @@ class SplitCollectionWithRemainderEmissions:
         self._db = db.copy()
 
     def _check_and_return_desired_unit(
-            self, relevant_df, aggregate, components, remainder
+        self, relevant_df, aggregate, components, remainder
     ):
         """
             Converts the units of the component emissions to be the same as the
@@ -67,15 +68,16 @@ class SplitCollectionWithRemainderEmissions:
         all_var = [aggregate, remainder] + components
         all_units = relevant_df.variables(True)
         if not all(var in all_units["variable"].values for var in all_var):
-            "Some variables missing from database when performing unit " \
-            "conversion: {}".format(
+            "Some variables missing from database when performing unit " "conversion: {}".format(
                 [var not in all_units["variable"] for var in all_var]
             )
-        assert aggregate in all_units["variable"].values, \
-            "No aggregate data in database."
+        assert (
+            aggregate in all_units["variable"].values
+        ), "No aggregate data in database."
         if remainder:
-            assert remainder in all_units["variable"].values, \
-                "No remainder data in database."
+            assert (
+                remainder in all_units["variable"].values
+            ), "No remainder data in database."
         desired_unit = all_units["unit"][all_units["variable"] == aggregate]
         assert len(desired_unit) == 1, "Multiple units for the aggregate variable"
         desired_unit = desired_unit.iloc[0]
@@ -89,8 +91,12 @@ class SplitCollectionWithRemainderEmissions:
         return relevant_df, desired_unit
 
     def infill_components(
-        self, aggregate, components, remainder, to_infill_df,
-        cruncher_class = QuantileRollingWindows,
+        self,
+        aggregate,
+        components,
+        remainder,
+        to_infill_df,
+        cruncher_class=QuantileRollingWindows,
         use_ar4_data=False,
         **kwargs
     ):
@@ -153,9 +159,10 @@ class SplitCollectionWithRemainderEmissions:
         db_to_generate, aggregate_unit = self._check_and_return_desired_unit(
             relevant_df, aggregate, components, remainder
         )
-        assert _remove_equivs(aggregate_unit) == _remove_equivs(to_infill_ag_units), \
-            "The units of the aggregate variable are different between infiller and " \
+        assert _remove_equivs(aggregate_unit) == _remove_equivs(to_infill_ag_units), (
+            "The units of the aggregate variable are different between infiller and "
             "infillee dataframes"
+        )
         cruncher = cruncher_class(db_to_generate)
         unavailable_comp = [
             var for var in components if var not in relevant_df.variables().values
@@ -178,14 +185,13 @@ class SplitCollectionWithRemainderEmissions:
         calculate_remainder_df = df_to_append.append(to_infill_df)
         if _remove_equivs(aggregate_unit) == "Mt CO2/yr":
             calculate_remainder_df = convert_units_to_MtCO2_equiv(
-                calculate_remainder_df,
-                use_ar4_data
+                calculate_remainder_df, use_ar4_data
             )
 
         df_to_append.append(
             infill_composite_values(
                 calculate_remainder_df, {remainder: remainder_dict}
             ),
-            inplace=True
+            inplace=True,
         )
         return df_to_append
