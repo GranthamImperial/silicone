@@ -15,8 +15,7 @@ logger = logging.getLogger(__name__)
 class SplitCollectionWithRemainderEmissions:
     """
     Splits the known aggregate emissions into several components with the 'quantile
-    rolling windows' cruncher, then sets the remainder equal to the
-    'remainder_emissions'.
+    rolling windows' cruncher, then sets allocates any the remainder to 'remainder'.
     """
 
     def __init__(self, db):
@@ -108,23 +107,24 @@ class SplitCollectionWithRemainderEmissions:
         ----------
         aggregate : str
             The variable for which we want to calculate timeseries (e.g.
-            ``"Emissions|CO2"``). Unlike in most crunchers, we do not expect the
-            database to already contain this data.
+            ``"Emissions|CO2"``).
 
         components : list[str]
-            The variables to be infilled by quantile rolling window method. (e.g.
-            ``["Emissions|CO2|AFOLU", "Emissions|CO2|Energy"]``).The sum of
-            these will be equal to the timeseries of the aggregate minus the remainder
-             term.
+            The variables to be infilled directly by the cruncher. (e.g.
+            ``["Emissions|CO2|AFOLU", "Emissions|CO2|Energy"]``).
 
         remainder : str
             The variable which will absorb any difference between the aggregate and
-            component emissions. This may be positive or negative. Typically this will
-            be ``"Emissions|CO2"``
+            component emissions. This may be positive or negative. E.g.
+            ``"Emissions|CO2|Industry"``
 
         to_infill_df : :obj:`pyam.IamDataFrame`
             The dataframe that already contains the ``aggregate`` variable, but needs
             the ``components`` to be infilled.
+
+        cruncher_class : :class:
+            The cruncher used to perform the infilling. By default this will be
+            QuantileRollingWindows.
 
         use_ar4_data : bool
             Only used if the variables have different units. If true, we convert all
@@ -132,8 +132,7 @@ class SplitCollectionWithRemainderEmissions:
             GWP100 data, otherwise (by default) we use the GWP100 data from AR5.
 
         **kwargs :
-            An optional dictionary of instructions handed to the quantile rolling
-            windows cruncher.
+            An optional dictionary of instructions handed to the cruncher.
 
         Returns
         -------
