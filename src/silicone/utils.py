@@ -424,7 +424,8 @@ def download_or_load_sr15(filename, valid_model_ids="*"):
 
 def get_sr15_scenarios(output_file, valid_model_ids):
     """
-    Collects world-level data from the IIASA database for the named models and saves them to a given location.
+    Collects world-level data from the IIASA database for the named models and saves
+    them to a given location.
 
     Parameters
     ----------
@@ -440,7 +441,7 @@ def get_sr15_scenarios(output_file, valid_model_ids):
         print("Fetching data for {}".format(model))
         for variable in variables_to_fetch:
             print("Fetching {}".format(variable))
-            var_df = conn.query(model=model, variable=variable, region="World")
+            var_df = conn.query(model=model, variable=variable, region="World", timeslice=None)
             try:
                 df.append(var_df, inplace=True)
             except NameError:
