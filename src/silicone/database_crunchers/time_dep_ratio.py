@@ -223,6 +223,10 @@ class TimeDepRatio(_DatabaseCruncher):
         self._check_follower_and_leader_in_db(variable_follower, variable_leaders)
 
         iamdf_follower = self._filtered_db.filter(variable=variable_follower)
+        if iamdf_follower.empty:
+            raise ValueError(
+                "No data is complete enough to use in the time-dependent ratio cruncher"
+            )
         data_follower = iamdf_follower.timeseries()
 
         return iamdf_follower, data_follower

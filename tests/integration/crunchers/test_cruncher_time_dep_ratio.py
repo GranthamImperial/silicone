@@ -387,22 +387,35 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         ):
             res = filler(test_downscale_df)
 
-    def test_multiple_units_breaks_infiller_follower(self, test_db, test_downscale_df):
+    @pytest.mark.parametrize("consistent_cases", [True, False])
+    def test_multiple_units_breaks_infiller_follower(self, test_db, test_downscale_df, consistent_cases):
         test_db["unit"].iloc[2] = "bad units"
+        if consistent_cases:
+            error_str = "No data is complete enough to use in the time-dependent " \
+                        "ratio cruncher"
+        else:
+            error_str = "There are multiple/no units in follower data"
+
         with pytest.raises(
-            ValueError, match="There are multiple/no units in follower data"
+            ValueError, match=error_str
         ):
             tcruncher = self.tclass(test_db)
             filler = tcruncher.derive_relationship(
-                "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
+                "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"], only_consistent_cases=consistent_cases
             )
 
-    def test_multiple_units_breaks_infiller_leader(self, test_db, test_downscale_df):
+    @pytest.mark.parametrize("consistent_cases", [True, False])
+    def test_multiple_units_breaks_infiller_leader(self, test_db, test_downscale_df, consistent_cases):
         test_db["unit"].iloc[0] = "bad units"
+        if consistent_cases:
+            error_str = "No data is complete enough to use in the time-dependent " \
+                        "ratio cruncher"
+        else:
+            error_str = "There are multiple/no units for the leader data."
         with pytest.raises(
-            ValueError, match="There are multiple/no units for the leader data."
+            ValueError, match=error_str
         ):
             tcruncher = self.tclass(test_db)
             filler = tcruncher.derive_relationship(
-                "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
+                "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"], only_consistent_cases=consistent_cases
             )
