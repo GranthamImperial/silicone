@@ -70,9 +70,12 @@ class TimeDepRatio(_DatabaseCruncher):
             sign of the follower data.
 
         only_consistent_cases : bool
-            Do we want to only use cases where both lead and follow have data at all
-            times? This will reduce the risk of inconsistencies in the results, but
-            will reduce the amount of data available.
+            Do we want to only use model/scenario combinations where both lead and
+            follow have data at all times? This will reduce the risk of inconsistencies
+            or unevenness in the results, but will slightly decrease performance speed
+            if you know the data is consistent. Senario/model pairs where
+            data is only returned at certain times will be removed, as will any
+            scenarios not returning both lead and follow data.
 
         Returns
         -------
