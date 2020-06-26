@@ -112,13 +112,25 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         with pytest.raises(ValueError, match=error_msg):
             res = filler(test_downscale_df)
 
-    def test_relationship_usage_multiple_bad_data(self, unequal_df, test_downscale_df):
+    @pytest.mark.parametrize("use_consistent", [True, False])
+    def test_relationship_usage_multiple_bad_data(self, unequal_df, test_downscale_df, use_consistent):
         tcruncher = self.tclass(unequal_df)
         error_msg = "The follower and leader data have different sizes"
-        with pytest.raises(ValueError, match=error_msg):
+        if use_consistent:
+            # In this case we remove the mismatched data so there is no problem
             filler = tcruncher.derive_relationship(
-                "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
+                "Emissions|HFC|C5F12",
+                ["Emissions|HFC|C2F6"],
+                only_consistent_cases=use_consistent,
             )
+        else:
+            # In this case we expect the mismatched data to be problematic
+            with pytest.raises(ValueError, match=error_msg):
+                filler = tcruncher.derive_relationship(
+                    "Emissions|HFC|C5F12",
+                    ["Emissions|HFC|C2F6"],
+                    only_consistent_cases=use_consistent,
+                )
 
     @pytest.mark.parametrize(
         "match_sign,add_col",
@@ -223,9 +235,13 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             # so we have have a multiplier of infinity.
             assert all(res.data["value"] == -np.inf)
 
-    @pytest.mark.parametrize("match_sign", [True, False])
+    @pytest.mark.parametrize(
+        "match_sign,consistent_cases", [
+            (True, True), (True, False), (False, True), (False, False)
+        ]
+    )
     def test_relationship_usage_nans(
-        self, unequal_df, test_downscale_df, match_sign, caplog
+        self, unequal_df, test_downscale_df, match_sign, caplog, consistent_cases
     ):
         leader = ["Emissions|HFC|C2F6"]
         equal_df = unequal_df.filter(model="model_a")
@@ -235,11 +251,19 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             test_downscale_df, equal_df
         ).filter(year=[2010, 2015])
         filler = tcruncher.derive_relationship(
-            "Emissions|HFC|C5F12", leader, match_sign
+            "Emissions|HFC|C5F12",
+            leader,
+            match_sign,
+            only_consistent_cases=consistent_cases,
         )
-        if match_sign:
+        if match_sign or consistent_cases:
             res = filler(test_downscale_df)
             assert 2010 in res.data["year"].values
+            # The nan'd data is ignored now, so the ratio at that 2010 is 1:9
+            assert np.allclose(
+                res.filter(year=2010)["value"],
+                test_downscale_df.filter(year=2010)["value"] * 9
+            )
         else:
             err_msg = re.escape(
                 "Attempt to infill {} data using the time_dep_ratio cruncher "
@@ -249,7 +273,64 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             )
             # We have a single nan in the code, resulting in a warning being thrown.
             with pytest.raises(ValueError, match=err_msg):
-                res = filler(test_downscale_df)
+                filler(test_downscale_df)
+
+    @pytest.mark.parametrize(
+        "match_sign,consistent_cases", [
+            (True, True), (True, False), (False, True), (False, False)
+        ]
+    )
+    def test_relationship_usage_consistent_cases_interacts_with_sign_match(
+        self, unequal_df, test_downscale_df, match_sign, caplog, consistent_cases
+    ):
+        # We set the only complete timeseries to have a negative lead value in 2010.
+        # If we match sign, we therefore throw an error infilling the positive value.
+        # If we include inconsistent data, we throw a different error as the data
+        # lengths are inconsistent.
+        # Otherwise, the ratio is -1 : 1.
+        leader = ["Emissions|HFC|C2F6"]
+        equal_df = unequal_df.filter(scenario="scen_a")
+        equal_df.data["value"].iloc[0] = -1
+        tcruncher = self.tclass(equal_df)
+        test_downscale_df = self._adjust_time_style_to_match(
+            test_downscale_df, equal_df
+        ).filter(year=[2010, 2015])
+        if not consistent_cases:
+            err_msg = re.escape(
+                "The follower and leader data have different sizes"
+            )
+            with pytest.raises(ValueError, match=err_msg):
+                tcruncher.derive_relationship(
+                    "Emissions|HFC|C5F12",
+                    leader,
+                    match_sign,
+                    only_consistent_cases=consistent_cases,
+                )
+            equal_df.filter(model="model_a", inplace=True)
+            tcruncher = self.tclass(equal_df)
+
+        filler = tcruncher.derive_relationship(
+            "Emissions|HFC|C5F12",
+            leader,
+            match_sign,
+            only_consistent_cases=consistent_cases,
+        )
+        if match_sign:
+            err_msg = re.escape(
+                "Attempt to infill {} data using the time_dep_ratio cruncher "
+                "where the infillee data has a sign not seen in the infiller "
+                "database for year "
+                "{}.".format(leader, 2010)
+            )
+            # We have a single nan in the code, resulting in a warning being thrown.
+            with pytest.raises(ValueError, match=err_msg):
+                filler(test_downscale_df)
+        else:
+            res = filler(test_downscale_df)
+            assert np.allclose(
+                res.filter(year=2010)["value"],
+                test_downscale_df.filter(year=2010)["value"] * -1
+            )
 
     @pytest.mark.parametrize(
         "match_sign, input_sign", [(True, +1), (True, -1), (False, +1), (False, -1)]
