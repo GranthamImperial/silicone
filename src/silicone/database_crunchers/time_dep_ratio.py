@@ -43,7 +43,9 @@ class TimeDepRatio(_DatabaseCruncher):
 
     """
 
-    def derive_relationship(self, variable_follower, variable_leaders, same_sign=True):
+    def derive_relationship(
+            self, variable_follower, variable_leaders, same_sign=True, only_consistent_cases=True
+    ):
         """
         Derive the relationship between two variables from the database.
 
@@ -63,6 +65,11 @@ class TimeDepRatio(_DatabaseCruncher):
             not having data of the correct sign, but have more confidence in the
             sign of the follower data.
 
+        only_consistent_cases : bool
+            Do we want to only use cases where both lead and follow have data at all
+            times? This will reduce the risk of inconsistencies in the results, but
+            will reduce the amount of data available.
+
         Returns
         -------
         :obj:`func`
@@ -81,6 +88,18 @@ class TimeDepRatio(_DatabaseCruncher):
             There is no data for ``variable_leaders`` or ``variable_follower`` in the
             database.
         """
+        if only_consistent_cases:
+            consistent_cases = self._db.filter(
+                variable=variable_leaders + [variable_follower]
+            ).timeseries().dropna()
+            consistent_cases = consistent_cases.loc[
+                consistent_cases.index.to_frame().duplicated(
+                    ["model", "scenario", "region"], keep=False
+                )
+            ]
+            self._filtered_db = IamDataFrame(consistent_cases)
+        else:
+            self._filtered_db = self._db
         iamdf_follower, data_follower = self._get_iamdf_followers(
             variable_follower, variable_leaders
         )
@@ -91,7 +110,7 @@ class TimeDepRatio(_DatabaseCruncher):
         else:
             raise ValueError("There are multiple/no units in follower data")
         data_follower_time_col = iamdf_follower.time_col
-        iamdf_leader = self._db.filter(variable=variable_leaders[0])
+        iamdf_leader = self._filtered_db.filter(variable=variable_leaders[0])
         data_leader = iamdf_leader.timeseries()
         if iamdf_leader["unit"].nunique() != 1:
             raise ValueError("There are multiple/no units for the leader data.")
@@ -203,7 +222,7 @@ class TimeDepRatio(_DatabaseCruncher):
 
         self._check_follower_and_leader_in_db(variable_follower, variable_leaders)
 
-        iamdf_follower = self._db.filter(variable=variable_follower)
+        iamdf_follower = self._filtered_db.filter(variable=variable_follower)
         data_follower = iamdf_follower.timeseries()
 
         return iamdf_follower, data_follower
