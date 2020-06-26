@@ -53,12 +53,7 @@ class DecomposeCollectionTimeDepRatio:
         relevant_db = db_to_generate.filter(variable=components)
         units = relevant_db.data["unit"].drop_duplicates().sort_values()
         unit_equivs = units.map(lambda x: x.replace("-equiv", "")).drop_duplicates()
-        if len(unit_equivs) == 0:
-            raise ValueError(
-                "Attempting to construct a consistent {} but none of the components "
-                "present".format(aggregate_name)
-            )
-        elif len(unit_equivs) > 1:
+        if len(unit_equivs) != 1:  #
             raise ValueError(
                 "Too many units found to make a consistent {}".format(aggregate_name)
             )
@@ -89,7 +84,7 @@ class DecomposeCollectionTimeDepRatio:
         return set(df.data["unit"].map(lambda x: x.replace("-equiv", "")))
 
     def infill_components(
-        self, aggregate, components, to_infill_df, use_ar4_data=False
+        self, aggregate, components, to_infill_df, use_ar4_data=False, only_consistent_cases=True
     ):
         """
         Derive the relationship between the composite variables and their sum, then use
@@ -114,6 +109,12 @@ class DecomposeCollectionTimeDepRatio:
             If true, we convert all values to Mt CO2 equivalent using the IPCC AR4
             GWP100 data, otherwise (by default) we use the GWP100 data from AR5.
 
+        only_consistent_cases : bool
+            Do we want to only use model/scenario combinations where all aggregate and
+            components have data at all times? This will reduce the risk of
+            inconsistencies or unevenness in the results, but may reduce the amount of
+            data.
+
         Returns
         -------
         :obj:`pyam.IamDataFrame`
@@ -137,29 +138,42 @@ class DecomposeCollectionTimeDepRatio:
             "The database and to_infill_db fed into this have inconsistent columns, "
             "which will prevent adding the data together properly."
         )
-        self._db.filter(variable=components, inplace=True)
+        self._filtered_db = self._db.filter(variable=components)
+        if self._filtered_db.empty:
+            raise ValueError(
+                "Attempting to construct a consistent {} but none of the components "
+                "present".format(aggregate)
+            )
+        if only_consistent_cases:
+            # Remove cases with nans at some time.
+            consistent_cases = (
+                self._filtered_db.timeseries()
+                .dropna()
+            )
+            self._filtered_db = pyam.IamDataFrame(consistent_cases)
+
         # We only want to reference cases where all the required components are found
-        combinations = self._db.data[["model", "scenario", "region"]].drop_duplicates()
+        combinations = self._filtered_db.data[["model", "scenario", "region"]].drop_duplicates()
         for ind in range(len(combinations)):
             model, scenario, region = combinations.iloc[ind]
-            found_vars = self._db.filter(
+            found_vars = self._filtered_db.filter(
                 model=model, scenario=scenario, region=region
             ).variables()
             if any(comp not in found_vars.values for comp in components):
-                self._db.filter(
+                self._filtered_db.filter(
                     model=model, scenario=scenario, keep=False, inplace=True
                 )
-        if len(self._set_of_units_without_equiv(self._db)) > 1:
+        if len(self._set_of_units_without_equiv(self._filtered_db)) > 1:
             db_to_generate = convert_units_to_MtCO2_equiv(
-                self._db, use_ar4_data=use_ar4_data
+                self._filtered_db, use_ar4_data=use_ar4_data
             )
         else:
-            db_to_generate = self._db
+            db_to_generate = self._filtered_db
         consistent_composite = self._construct_consistent_values(
             aggregate, components, db_to_generate
         )
-        self._db.append(consistent_composite, inplace=True)
-        cruncher = TimeDepRatio(self._db)
+        self._filtered_db.append(consistent_composite, inplace=True)
+        cruncher = TimeDepRatio(self._filtered_db)
         if self._set_of_units_without_equiv(
             to_infill_df
         ) != self._set_of_units_without_equiv(consistent_composite):
@@ -171,7 +185,9 @@ class DecomposeCollectionTimeDepRatio:
                 )
             )
         for leader in components:
-            to_add = cruncher.derive_relationship(leader, [aggregate])(to_infill_df)
+            to_add = cruncher.derive_relationship(
+                leader, [aggregate], only_consistent_cases=False
+            )(to_infill_df)
             try:
                 df_to_append.append(to_add, inplace=True)
             except NameError:
