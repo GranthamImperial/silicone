@@ -44,7 +44,11 @@ class TimeDepRatio(_DatabaseCruncher):
     """
 
     def derive_relationship(
-            self, variable_follower, variable_leaders, same_sign=True, only_consistent_cases=True
+        self,
+        variable_follower,
+        variable_leaders,
+        same_sign=True,
+        only_consistent_cases=True,
     ):
         """
         Derive the relationship between two variables from the database.
@@ -89,9 +93,11 @@ class TimeDepRatio(_DatabaseCruncher):
             database.
         """
         if only_consistent_cases:
-            consistent_cases = self._db.filter(
-                variable=variable_leaders + [variable_follower]
-            ).timeseries().dropna()
+            consistent_cases = (
+                self._db.filter(variable=variable_leaders + [variable_follower])
+                .timeseries()
+                .dropna()
+            )
             consistent_cases = consistent_cases.loc[
                 consistent_cases.index.to_frame().duplicated(
                     ["model", "scenario", "region"], keep=False

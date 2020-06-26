@@ -113,7 +113,9 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             res = filler(test_downscale_df)
 
     @pytest.mark.parametrize("use_consistent", [True, False])
-    def test_relationship_usage_multiple_bad_data(self, unequal_df, test_downscale_df, use_consistent):
+    def test_relationship_usage_multiple_bad_data(
+        self, unequal_df, test_downscale_df, use_consistent
+    ):
         tcruncher = self.tclass(unequal_df)
         error_msg = "The follower and leader data have different sizes"
         if use_consistent:
@@ -236,9 +238,8 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             assert all(res.data["value"] == -np.inf)
 
     @pytest.mark.parametrize(
-        "match_sign,consistent_cases", [
-            (True, True), (True, False), (False, True), (False, False)
-        ]
+        "match_sign,consistent_cases",
+        [(True, True), (True, False), (False, True), (False, False)],
     )
     def test_relationship_usage_nans(
         self, unequal_df, test_downscale_df, match_sign, caplog, consistent_cases
@@ -262,7 +263,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             # The nan'd data is ignored now, so the ratio at that 2010 is 1:9
             assert np.allclose(
                 res.filter(year=2010)["value"],
-                test_downscale_df.filter(year=2010)["value"] * 9
+                test_downscale_df.filter(year=2010)["value"] * 9,
             )
         else:
             err_msg = re.escape(
@@ -276,9 +277,8 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
                 filler(test_downscale_df)
 
     @pytest.mark.parametrize(
-        "match_sign,consistent_cases", [
-            (True, True), (True, False), (False, True), (False, False)
-        ]
+        "match_sign,consistent_cases",
+        [(True, True), (True, False), (False, True), (False, False)],
     )
     def test_relationship_usage_consistent_cases_interacts_with_sign_match(
         self, unequal_df, test_downscale_df, match_sign, caplog, consistent_cases
@@ -296,9 +296,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             test_downscale_df, equal_df
         ).filter(year=[2010, 2015])
         if not consistent_cases:
-            err_msg = re.escape(
-                "The follower and leader data have different sizes"
-            )
+            err_msg = re.escape("The follower and leader data have different sizes")
             with pytest.raises(ValueError, match=err_msg):
                 tcruncher.derive_relationship(
                     "Emissions|HFC|C5F12",
@@ -329,7 +327,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             res = filler(test_downscale_df)
             assert np.allclose(
                 res.filter(year=2010)["value"],
-                test_downscale_df.filter(year=2010)["value"] * -1
+                test_downscale_df.filter(year=2010)["value"] * -1,
             )
 
     @pytest.mark.parametrize(
@@ -388,34 +386,42 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             res = filler(test_downscale_df)
 
     @pytest.mark.parametrize("consistent_cases", [True, False])
-    def test_multiple_units_breaks_infiller_follower(self, test_db, test_downscale_df, consistent_cases):
+    def test_multiple_units_breaks_infiller_follower(
+        self, test_db, test_downscale_df, consistent_cases
+    ):
         test_db["unit"].iloc[2] = "bad units"
         if consistent_cases:
-            error_str = "No data is complete enough to use in the time-dependent " \
-                        "ratio cruncher"
+            error_str = (
+                "No data is complete enough to use in the time-dependent "
+                "ratio cruncher"
+            )
         else:
             error_str = "There are multiple/no units in follower data"
 
-        with pytest.raises(
-            ValueError, match=error_str
-        ):
+        with pytest.raises(ValueError, match=error_str):
             tcruncher = self.tclass(test_db)
             filler = tcruncher.derive_relationship(
-                "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"], only_consistent_cases=consistent_cases
+                "Emissions|HFC|C5F12",
+                ["Emissions|HFC|C2F6"],
+                only_consistent_cases=consistent_cases,
             )
 
     @pytest.mark.parametrize("consistent_cases", [True, False])
-    def test_multiple_units_breaks_infiller_leader(self, test_db, test_downscale_df, consistent_cases):
+    def test_multiple_units_breaks_infiller_leader(
+        self, test_db, test_downscale_df, consistent_cases
+    ):
         test_db["unit"].iloc[0] = "bad units"
         if consistent_cases:
-            error_str = "No data is complete enough to use in the time-dependent " \
-                        "ratio cruncher"
+            error_str = (
+                "No data is complete enough to use in the time-dependent "
+                "ratio cruncher"
+            )
         else:
             error_str = "There are multiple/no units for the leader data."
-        with pytest.raises(
-            ValueError, match=error_str
-        ):
+        with pytest.raises(ValueError, match=error_str):
             tcruncher = self.tclass(test_db)
             filler = tcruncher.derive_relationship(
-                "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"], only_consistent_cases=consistent_cases
+                "Emissions|HFC|C5F12",
+                ["Emissions|HFC|C2F6"],
+                only_consistent_cases=consistent_cases,
             )
