@@ -53,7 +53,12 @@ class DecomposeCollectionTimeDepRatio:
         relevant_db = db_to_generate.filter(variable=components)
         units = relevant_db.data["unit"].drop_duplicates().sort_values()
         unit_equivs = units.map(lambda x: x.replace("-equiv", "")).drop_duplicates()
-        if len(unit_equivs) != 1:  #
+        if len(unit_equivs) == 0:
+            raise ValueError(
+                "Attempting to construct a consistent {} but none of the components "
+                "present".format(aggregate_name)
+            )
+        elif len(unit_equivs) > 1:
             raise ValueError(
                 "Too many units found to make a consistent {}".format(aggregate_name)
             )
@@ -143,7 +148,7 @@ class DecomposeCollectionTimeDepRatio:
             "The database and to_infill_db fed into this have inconsistent columns, "
             "which will prevent adding the data together properly."
         )
-        self._filtered_db = self._db.filter(variable=components)
+        self._filtered_db = self._db.filter(variable=components, )
         if self._filtered_db.empty:
             raise ValueError(
                 "Attempting to construct a consistent {} but none of the components "
@@ -151,7 +156,9 @@ class DecomposeCollectionTimeDepRatio:
             )
         if only_consistent_cases:
             # Remove cases with nans at some time.
-            consistent_cases = self._filtered_db.timeseries().dropna()
+            consistent_cases = self._filtered_db.filter(
+                **{to_infill_df.time_col: to_infill_df[to_infill_df.time_col].unique()}
+            ).timeseries().dropna()
             self._filtered_db = pyam.IamDataFrame(consistent_cases)
 
         # We only want to reference cases where all the required components are found
