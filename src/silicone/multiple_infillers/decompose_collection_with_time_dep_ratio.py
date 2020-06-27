@@ -84,7 +84,12 @@ class DecomposeCollectionTimeDepRatio:
         return set(df.data["unit"].map(lambda x: x.replace("-equiv", "")))
 
     def infill_components(
-        self, aggregate, components, to_infill_df, use_ar4_data=False, only_consistent_cases=True
+        self,
+        aggregate,
+        components,
+        to_infill_df,
+        use_ar4_data=False,
+        only_consistent_cases=True,
     ):
         """
         Derive the relationship between the composite variables and their sum, then use
@@ -146,14 +151,13 @@ class DecomposeCollectionTimeDepRatio:
             )
         if only_consistent_cases:
             # Remove cases with nans at some time.
-            consistent_cases = (
-                self._filtered_db.timeseries()
-                .dropna()
-            )
+            consistent_cases = self._filtered_db.timeseries().dropna()
             self._filtered_db = pyam.IamDataFrame(consistent_cases)
 
         # We only want to reference cases where all the required components are found
-        combinations = self._filtered_db.data[["model", "scenario", "region"]].drop_duplicates()
+        combinations = self._filtered_db.data[
+            ["model", "scenario", "region"]
+        ].drop_duplicates()
         for ind in range(len(combinations)):
             model, scenario, region = combinations.iloc[ind]
             found_vars = self._filtered_db.filter(

@@ -6,7 +6,8 @@ import pyam
 import pytest
 
 from silicone.multiple_infillers import (
-    DecomposeCollectionTimeDepRatio, infill_composite_values
+    DecomposeCollectionTimeDepRatio,
+    infill_composite_values,
 )
 from silicone.utils import _adjust_time_style_to_match, convert_units_to_MtCO2_equiv
 
@@ -186,10 +187,7 @@ class TestGasDecomposeTimeDepRatio:
             **{unequal_df.time_col: unequal_df[unequal_df.time_col].iloc[0]},
         )
         equal_df.filter(
-            variable=components[0],
-            scenario="scen_a",
-            keep=False,
-            inplace=True,
+            variable=components[0], scenario="scen_a", keep=False, inplace=True,
         )
         uneq_results = self.tclass(unequal_df).infill_components(
             aggregate, components, to_infill
@@ -209,7 +207,6 @@ class TestGasDecomposeTimeDepRatio:
         # Nothing changes for consistent data, eveything does for inconsistent data
         assert eq_results_cons.equals(eq_results)
         assert not eq_results_cons.equals(uneq_results)
-
 
     def test_relationship_usage_works_multiple(self, test_db, test_downscale_df):
         # Test that the decomposer function works for slightly more complicated data
