@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import pytest
 
 from silicone.multiple_infillers.infill_composite_values import infill_composite_values
 from silicone.utils import convert_units_to_MtCO2_equiv
