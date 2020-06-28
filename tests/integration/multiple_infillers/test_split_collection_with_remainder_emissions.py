@@ -294,7 +294,7 @@ class TestSplitCollectionWithRemainderEmissions:
             returned = infiller.infill_components(
                 aggregate, components, remainder, test_db
             )
-        assert len(caplog.record_tuples) == 1
+        assert len(caplog.record_tuples) == 2
         assert len(returned.data) == len(test_db.filter(variable=aggregate).data) * 2
         # Make the data consistent:
         test_db.data = test_db.data.iloc[0:2]
@@ -314,7 +314,7 @@ class TestSplitCollectionWithRemainderEmissions:
             conv_returned = infiller.infill_components(
                 aggregate, components, remainder, test_db
             )
-        assert len(caplog.record_tuples) - old_caplog == 1
+        assert len(caplog.record_tuples) - old_caplog == 2
         assert all(conv_returned["unit"].unique() == "Mt CO2-equiv/yr")
         assert conv_returned.filter(variable=remainder).equals(
             returned.filter(variable=remainder)

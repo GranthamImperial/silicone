@@ -473,9 +473,13 @@ def _adjust_time_style_to_match(in_df, target_df):
 def _remove_equivs(string_to_fix):
     """
     Removes the substring "-equiv" from strings. For use in unit conversion
-    :param string_to_fix: str
+    Parameter
+    ---------
+    string_to_fix: str
         The string to strip of "-equiv".
-    :return: str
+    Returns
+    -------
+    str
     """
     return string_to_fix.replace("-equiv", "")
 
