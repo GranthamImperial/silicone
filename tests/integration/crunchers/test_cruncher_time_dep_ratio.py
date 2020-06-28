@@ -260,7 +260,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         if match_sign or consistent_cases:
             res = filler(test_downscale_df)
             assert 2010 in res.data["year"].values
-            # The nan'd data is ignored now, so the ratio at that 2010 is 1:9
+            # The nan'd data is ignored in these cases, so the ratio in 2010 is 1:9
             assert np.allclose(
                 res.filter(year=2010)["value"],
                 test_downscale_df.filter(year=2010)["value"] * 9,
@@ -272,7 +272,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
                 "database for year "
                 "{}.".format(leader, 2010)
             )
-            # We have a single nan in the code, resulting in a warning being thrown.
+            # We have a single nan in the code, resulting in an error being thrown.
             with pytest.raises(ValueError, match=err_msg):
                 filler(test_downscale_df)
 
