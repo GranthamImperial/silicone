@@ -33,42 +33,45 @@ class SplitCollectionWithRemainderEmissions:
         self, relevant_df, aggregate, components, remainder
     ):
         """
-            Converts the units of the component emissions to be the same as the
-            aggregate emissions. Returns the converted database and the unit.
+        Converts the units of the component emissions to be the same as the
+        aggregate emissions. Returns the converted database and the unit.
 
-            Parameters
-            ----------
-            relevant_df : :obj:`pyam.IamDataFrame`
-                Data with units that need correcting.
+        Parameters
+        ----------
+        relevant_df : :obj:`pyam.IamDataFrame`
+            Data with units that need correcting.
 
-            aggregate : str
-                The name of the aggregate variable.
+        aggregate : str
+            The name of the aggregate variable.
 
-            components : [str]
-                List of the names of the variables to be summed.
+        components : [str]
+            List of the names of the variables to be summed.
 
-            remainder : str
-                The component which will be constructed as a remainder.
+        remainder : str
+            The component which will be constructed as a remainder.
 
-            Return
-            ------
-            :obj:`pyam.IamDataFrame`
-                Data with consistent units.
+        Return
+        ------
+        :obj:`pyam.IamDataFrame`
+            Data with consistent units.
 
-            str
-                The unit of the aggregate data.
+        str
+            The unit of the aggregate data.
 
-            Raises
-            ------
-            ValueError:
+        Raises
+        ------
+        ValueError
             The variables in this dataframe have units that cannot easily be converted
             to make them consistent.
-            """
+        """
         all_var = [aggregate, remainder] + components
         all_units = relevant_df.variables(True)
         if not all(var in all_units["variable"].values for var in all_var):
-            "Some variables missing from database when performing unit " "conversion: {}".format(
-                [var not in all_units["variable"] for var in all_var]
+            logger.warning(
+                "Some variables missing from database when performing "
+                "unit conversion: {}".format(
+                    [var for var in all_var if var not in all_units["variable"]]
+                )
             )
         assert (
             aggregate in all_units["variable"].values
@@ -132,7 +135,7 @@ class SplitCollectionWithRemainderEmissions:
             GWP100 data, otherwise (by default) we use the GWP100 data from AR5.
 
         **kwargs :
-            An optional dictionary of instructions handed to the cruncher.
+            Handed to the cruncher.
 
         Returns
         -------
@@ -152,6 +155,9 @@ class SplitCollectionWithRemainderEmissions:
             "which will prevent adding the data together properly."
         )
         to_infill_df = to_infill_df.filter(variable=aggregate)
+        assert (
+            len(to_infill_df["unit"].unique()) == 1
+        ), "Multiple units in the aggregate data"
         to_infill_ag_units = to_infill_df.variables(True)["unit"].values[0]
         all_var = [aggregate, remainder] + components
         relevant_df = self._db.filter(variable=all_var)
