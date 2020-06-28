@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class SplitCollectionWithRemainderEmissions:
     """
     Splits the known aggregate emissions into several components with the 'quantile
-    rolling windows' cruncher, then sets allocates any the remainder to 'remainder'.
+    rolling windows' cruncher, then allocates any remainder to ``remainder``.
     """
 
     def __init__(self, db):
