@@ -441,7 +441,9 @@ def get_sr15_scenarios(output_file, valid_model_ids):
         print("Fetching data for {}".format(model))
         for variable in variables_to_fetch:
             print("Fetching {}".format(variable))
-            var_df = conn.query(model=model, variable=variable, region="World", timeslice=None)
+            var_df = conn.query(
+                model=model, variable=variable, region="World", timeslice=None
+            )
             try:
                 df.append(var_df, inplace=True)
             except NameError:
