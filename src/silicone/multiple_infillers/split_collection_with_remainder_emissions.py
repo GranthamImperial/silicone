@@ -1,6 +1,7 @@
 """
-Uses the 'quantile rolling windows' database cruncher to infill most constituents and
-infills the remainder as another specified emissions type (which may be negative).
+Uses the same cruncher (by default the 'quantile rolling windows') to split an aggregate
+emission into all but one of its constituents and infills the remainder as another
+specified emissions type (which may be negative).
 """
 
 import logging
@@ -14,8 +15,9 @@ logger = logging.getLogger(__name__)
 
 class SplitCollectionWithRemainderEmissions:
     """
-    Splits the known aggregate emissions into several components with the 'quantile
-    rolling windows' cruncher, then allocates any remainder to ``remainder``.
+    Splits the known aggregate emissions into several components with a specified
+    cruncher (by default the 'quantile rolling windows' cruncher), then allocates any
+    remainder to ``remainder``.
     """
 
     def __init__(self, db):
