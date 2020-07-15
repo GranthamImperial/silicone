@@ -168,6 +168,7 @@ class TestDatabaseCruncherTimeDepRatio:
         test_downscale_df = test_downscale_df.filter(year=[2010, 2015])
         test_downscale_df["unit"].iloc[0] = "bad units"
         with pytest.raises(
-            AssertionError, match="There are multiple units for the lead variable."
+            AssertionError,
+            match="There are multiple or no units for the lead variable."
         ):
             res = filler(test_downscale_df)
