@@ -99,7 +99,7 @@ class ConstantRatio(_DatabaseCruncher):
             output_ts = in_iamdf.filter(variable=variable_leaders)
             assert (
                 output_ts["unit"].nunique() == 1
-            ), "There are multiple units for the lead variable."
+            ), "There are multiple or no units for the lead variable."
             output_ts["value"] = output_ts["value"] * ratio
             output_ts["variable"] = variable_follower
             output_ts["unit"] = units
