@@ -8,7 +8,6 @@ import tqdm
 
 from silicone.database_crunchers import ConstantRatio, QuantileRollingWindows
 
-
 """
 Infills all required data for MAGICC and FAIR emulators with minimal configuration 
 """
