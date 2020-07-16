@@ -4,7 +4,8 @@ Changelog
 master
 ------
 
-- (`#110 <https://github.com/GranthamImperial/silicone/pull/108>`_) Gave an option to time_dep_ratio and decompose_collection to ignore model/scenario combinations missing values at some required times.
+- (`#111 <https://github.com/GranthamImperial/silicone/pull/111>`_) Minor improvements to error messages and documentation. Reordered imports for new version of isort. 
+- (`#110 <https://github.com/GranthamImperial/silicone/pull/110>`_) Gave an option to time_dep_ratio and decompose_collection to ignore model/scenario combinations missing values at some required times.
 - (`#108 <https://github.com/GranthamImperial/silicone/pull/108>`_) Added a multiple infiller to split up an aggregate with a remainder. Disabled test for downloading database.
 - (`#103 <https://github.com/GranthamImperial/silicone/pull/103>`_) Update github address to GranthamImperial.
 - (`#101 <https://github.com/GranthamImperial/silicone/pull/101>`_) Update release docs

@@ -17,9 +17,9 @@ def infill_composite_values(df, composite_dic=None):
         Input data from which to construct consistent values. This is assumed to be
         fully infilled. This will not be checked.
 
-    composite_dic : dict {str: list[str] or dict{str: float}}
+    composite_dic : dict{str: list[str]} or dict{str: dict{str: float}}
         Key: The variable names of the composite. Value: The variable names of the
-        constituents, which may include wildcards ('*'). Optionally, these may be
+        constituents, which may include wildcards ('*'). Optionally, these values may be
         dictionaries of the names to factors, which we multiply the numbers by before
         summing them. Defaults to a list of PFC, HFC, F-Gases, CO2 and Kyoto gases.
 
