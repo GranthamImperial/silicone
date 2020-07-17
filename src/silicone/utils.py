@@ -266,7 +266,7 @@ def _get_unit_of_variable(df, variable, multiple_units="raise"):
 
 
 def return_cases_which_consistently_split(
-    df, aggregate, components, how_close=None, metric_name=False
+    df, aggregate, components, how_close=None, metric_name="AR5GWP100"
 ):
     """
     Returns model-scenario tuples which correctly split up the to_split into the various
