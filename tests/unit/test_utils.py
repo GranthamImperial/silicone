@@ -403,7 +403,7 @@ def test_convert_units_to_mtco2_equiv_fails_with_bad_units(check_aggregate_df):
 
 
 @pytest.mark.parametrize(
-    "ARoption,expected", [(False, [28, 6.63]), (True, [25, 7.390])]
+    "ARoption,expected", [("AR5GWP100", [28, 6.63]), ("AR4GWP100", [25, 7.390])]
 )
 def test_convert_units_to_MtCO2_equiv_works(check_aggregate_df, ARoption, expected):
     # ARoption turns the use of AR4 on, rather than AR5 (the default)

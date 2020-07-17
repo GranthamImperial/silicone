@@ -93,7 +93,7 @@ class DecomposeCollectionTimeDepRatio:
         aggregate,
         components,
         to_infill_df,
-        use_ar4_data=False,
+        metric_name="AR5GWP100",
         only_consistent_cases=True,
     ):
         """
@@ -115,9 +115,9 @@ class DecomposeCollectionTimeDepRatio:
             The dataframe that already contains the ``aggregate`` variable, but needs
             the ``components`` to be infilled.
 
-        use_ar4_data : bool
-            If true, we convert all values to Mt CO2 equivalent using the IPCC AR4
-            GWP100 data, otherwise (by default) we use the GWP100 data from AR5.
+        metric_name : str
+            The name of the conversion metric to use. This will usually be
+            AR<4/5/6>GWP100.
 
         only_consistent_cases : bool
             Do we want to only use model/scenario combinations where all aggregate and
@@ -184,7 +184,7 @@ class DecomposeCollectionTimeDepRatio:
                 )
         if len(self._set_of_units_without_equiv(self._filtered_db)) > 1:
             db_to_generate = convert_units_to_MtCO2_equiv(
-                self._filtered_db, use_ar4_data=use_ar4_data
+                self._filtered_db, metric_name=metric_name
             )
         else:
             db_to_generate = self._filtered_db

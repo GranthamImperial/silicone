@@ -101,7 +101,7 @@ class SplitCollectionWithRemainderEmissions:
         remainder,
         to_infill_df,
         cruncher_class=QuantileRollingWindows,
-        use_ar4_data=False,
+        metric_name="AR5GWP100",
         **kwargs
     ):
         """
@@ -131,10 +131,9 @@ class SplitCollectionWithRemainderEmissions:
             The cruncher used to perform the infilling. By default this will be
             QuantileRollingWindows.
 
-        use_ar4_data : bool
-            Only used if the variables have different units. If true, we convert all
-            values to Mt CO2 equivalent using the IPCC AR4
-            GWP100 data, otherwise (by default) we use the GWP100 data from AR5.
+        metric_name : str
+            The name of the conversion metric to use. This will usually be
+            AR<4/5/6>GWP100.
 
         **kwargs :
             Handed to the cruncher.
@@ -192,7 +191,7 @@ class SplitCollectionWithRemainderEmissions:
         calculate_remainder_df = df_to_append.append(to_infill_df)
         if _remove_equivs(aggregate_unit) == "Mt CO2/yr":
             calculate_remainder_df = convert_units_to_MtCO2_equiv(
-                calculate_remainder_df, use_ar4_data
+                calculate_remainder_df, metric_name
             )
 
         df_to_append.append(
