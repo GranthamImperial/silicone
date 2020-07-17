@@ -121,7 +121,7 @@ class TestInfillCompositeValues:
                     "Emissions|CO2": 1,
                     "Emissions|CO2|AFOLU": -1,
                     "Emissions|CO2|Industry": -0.5,
-                }
+                },
             },
         )
         assert np.allclose(
@@ -130,7 +130,7 @@ class TestInfillCompositeValues:
         )
         assert np.allclose(
             half_industry_df.filter(variable="Emissions|CO2|Energy")["value"].values,
-            [0] * 9
+            [0] * 9,
         )
 
     def test_infill_composite_values_subtraction(self, larger_df, caplog):
