@@ -266,7 +266,7 @@ def _get_unit_of_variable(df, variable, multiple_units="raise"):
 
 
 def return_cases_which_consistently_split(
-    df, aggregate, components, how_close=None, use_ar4_data=False
+    df, aggregate, components, how_close=None, metric_name=False
 ):
     """
     Returns model-scenario tuples which correctly split up the to_split into the various
@@ -290,9 +290,8 @@ def return_cases_which_consistently_split(
         tolerance of 1% ('rtol': 1e-2). The syntax for this can be found in the numpy
         documentation.
 
-    use_ar4_data : bool
-        Determines whether the unit conversion takes place using GWP100 values from
-        the UNFCCC AR5 (if false, default) or AR4 (if true).
+    metric_name : str
+        The name of the conversion metric to use. This will usually be AR<4/5/6>GWP100.
 
     Returns
     -------
@@ -303,7 +302,7 @@ def return_cases_which_consistently_split(
         how_close = {"equal_nan": True, "rtol": 1e-02}
     valid_model_scenario = []
     df = convert_units_to_MtCO2_equiv(
-        df.filter(variable=[aggregate] + components), use_ar4_data
+        df.filter(variable=[aggregate] + components), metric_name
     )
     combinations = df.data[["model", "scenario", "region"]].drop_duplicates()
     for ind in range(len(combinations)):
@@ -331,7 +330,7 @@ def return_cases_which_consistently_split(
     return valid_model_scenario
 
 
-def convert_units_to_MtCO2_equiv(df, use_ar4_data=False):
+def convert_units_to_MtCO2_equiv(df, metric_name="AR5GWP100"):
     """
     Converts the units of gases reported in kt into Mt CO2 equivalent per year
 
@@ -342,8 +341,8 @@ def convert_units_to_MtCO2_equiv(df, use_ar4_data=False):
     df : :obj:`pyam.IamDataFrame`
         The input dataframe whose units need to be converted.
 
-    use_ar4_data : bool
-        If true, use the AR4 GWP100 conversion figures, else use the AR5.
+    metric_name : str
+        The name of the conversion metric to use. This will usually be AR<4/5/6>GWP100.
 
     Return
     ------
@@ -355,8 +354,6 @@ def convert_units_to_MtCO2_equiv(df, use_ar4_data=False):
     convert_to_str_clean = "Mt CO2/yr"
     if df["unit"].isin([convert_to_str, convert_to_str_clean]).all():
         return df
-
-    context = "AR4GWP100" if use_ar4_data else "AR5GWP100"
 
     to_convert_df = df.copy()
     to_convert_var = to_convert_df.filter(
@@ -370,7 +367,7 @@ def convert_units_to_MtCO2_equiv(df, use_ar4_data=False):
 
     conversion_factors = {}
     not_found = []
-    with _ur.context(context):
+    with _ur.context(metric_name):
         for unit in to_convert_units:
             if unit in conversion_factors:
                 continue
