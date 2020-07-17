@@ -83,8 +83,9 @@ def infill_composite_values(df, composite_dic=None):
             composite_df = _construct_consistent_values(
                 composite, composite_variables, df
             )
+        df.append(composite_df, inplace=True)
         try:
-            to_return.append(composite_df)
+            to_return.append(composite_df, inplace=True)
         except NameError:
             to_return = composite_df
 

@@ -107,7 +107,8 @@ class TestInfillCompositeValues:
         )
 
     def test_infill_with_factors(self, larger_df):
-        # Ensure that the multiplier works correctly
+        # Ensure that the multiplier works correctly. Also ensure that calculated values
+        # can be used in subsequent calculations.
         larger_df_copy = larger_df.copy()
         half_industry_df = infill_composite_values(
             larger_df_copy,
@@ -115,12 +116,21 @@ class TestInfillCompositeValues:
                 "Emissions|CO2": {
                     "Emissions|CO2|AFOLU": 1,
                     "Emissions|CO2|Industry": 0.5,
+                },
+                "Emissions|CO2|Energy": {
+                    "Emissions|CO2": 1,
+                    "Emissions|CO2|AFOLU": -1,
+                    "Emissions|CO2|Industry": -0.5,
                 }
             },
         )
         assert np.allclose(
             half_industry_df.filter(variable="Emissions|CO2")["value"].values,
             [2, 2, 2, 1, 1, 1, 2, 2, 2],
+        )
+        assert np.allclose(
+            half_industry_df.filter(variable="Emissions|CO2|Energy")["value"].values,
+            [0] * 9
         )
 
     def test_infill_composite_values_subtraction(self, larger_df, caplog):
