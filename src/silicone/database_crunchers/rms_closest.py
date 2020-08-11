@@ -3,9 +3,10 @@ Module for the database cruncher which uses the 'closest RMS' technique.
 """
 import warnings
 
+import pandas as pd
 import pyam
 
-from ..utils import _get_unit_of_variable
+from ..utils import _remove_equivs
 from .base import _DatabaseCruncher
 
 
@@ -40,7 +41,8 @@ class RMSClosest(_DatabaseCruncher):
 
         variable_leaders : list[str]
             The variable we want to use in order to infer timeseries of
-            ``variable_follower`` (e.g. ``["Emissions|CO2"]``).
+            ``variable_follower`` (e.g. ``["Emissions|CO2"]``). This may contain
+            multiple elements.
 
         Returns
         -------
@@ -65,11 +67,16 @@ class RMSClosest(_DatabaseCruncher):
         data_follower_time_col = iamdf_follower.time_col
         iamdf_lead = self._db.filter(variable=variable_leaders)
         iamdf_lead, iamdf_follower = _filter_for_overlap(
-            iamdf_lead, iamdf_follower, ["scenario", "model", data_follower_time_col]
+            iamdf_lead,
+            iamdf_follower,
+            ["scenario", "model", data_follower_time_col],
+            variable_leaders,
         )
 
-        leader_unit = _get_unit_of_variable(iamdf_lead, variable_leaders)
-        leader_unit = leader_unit[0]
+        leader_var_unit = {
+            var[1]["variable"]: var[1]["unit"]
+            for var in iamdf_lead.variables(True).iterrows()
+        }
 
         def filler(in_iamdf):
             """
@@ -94,15 +101,23 @@ class RMSClosest(_DatabaseCruncher):
             """
             lead_var = in_iamdf.filter(variable=variable_leaders)
 
-            var_units = lead_var["unit"].unique()
-            if len(var_units) != 1:
-                raise ValueError("More than one unit detected for input timeseries")
-
-            var_units = var_units[0]
-            if var_units != leader_unit:
+            var_units = lead_var.variables(True)
+            if any(
+                [
+                    key not in var_units["variable"].tolist()
+                    for key in leader_var_unit.keys()
+                ]
+            ):
+                raise ValueError(
+                    "Not all required variables are present in the infillee database"
+                )
+            if any(
+                unit["unit"] != leader_var_unit[unit["variable"]]
+                for _, unit in var_units.iterrows()
+            ):
                 raise ValueError(
                     "Units of lead variable is meant to be {}, found {}".format(
-                        leader_unit, var_units
+                        leader_var_unit, var_units
                     )
                 )
 
@@ -130,43 +145,52 @@ class RMSClosest(_DatabaseCruncher):
                     )
                 return to_return
 
-            lead_var_timeseries = get_values_at_key_timepoints(
+            lead_var_filt = get_values_at_key_timepoints(
                 lead_var, key_timepoints_filter_lead
-            ).timeseries()
+            )
+            lead_var_timeseries = lead_var_filt.timeseries()
             iamdf_lead_timeseries = get_values_at_key_timepoints(
                 iamdf_lead, key_timepoints_filter_iamdf
             ).timeseries()
 
             output_ts_list = []
-            for label, row in lead_var_timeseries.iterrows():
-                closest_ts = _select_closest(iamdf_lead_timeseries, row)
+            for _, (model, scenario) in (
+                lead_var_filt.data[["model", "scenario"]].drop_duplicates().iterrows()
+            ):
+                lead_var_mod_scen = lead_var_timeseries[
+                    (lead_var_timeseries.index.get_level_values("model") == model)
+                    & (
+                        lead_var_timeseries.index.get_level_values("scenario")
+                        == scenario
+                    )
+                ]
+                if len(lead_var_mod_scen) != len(variable_leaders):
+                    raise ValueError(
+                        "Insufficient variables are found to infill model {}, scenario {}".format(
+                            model, scenario
+                        )
+                    )
+                closest_model, closest_scenario = _select_closest(
+                    iamdf_lead_timeseries, lead_var_mod_scen
+                )
 
                 # Filter to find the matching follow data for the same model, scenario
                 # and region
                 tmp = iamdf_follower.filter(
-                    model=closest_ts["model"], scenario=closest_ts["scenario"]
+                    model=closest_model, scenario=closest_scenario
                 ).data
 
                 # Update the model and scenario to match the elements of the input.
-                tmp["model"] = label[lead_var_timeseries.index.names.index("model")]
-                tmp["scenario"] = label[
-                    lead_var_timeseries.index.names.index("scenario")
-                ]
+                tmp["model"] = model
+                tmp["scenario"] = scenario
                 output_ts_list.append(tmp)
-                if in_iamdf.extra_cols:
-                    for col in in_iamdf.extra_cols:
-                        tmp[col] = label[lead_var_timeseries.index.names.index(col)]
+                for col in in_iamdf.extra_cols:
+                    tmp[col] = lead_var_mod_scen.index.get_level_values(col).tolist()[0]
             return pyam.concat(output_ts_list)
 
         return filler
 
     def _check_iamdf_lead(self, variable_leaders):
-        if len(variable_leaders) > 1:
-            raise ValueError(
-                "For `RMSClosest`, ``variable_leaders`` should only "
-                "contain one variable"
-            )
-
         if not all([v in self._db.variables().tolist() for v in variable_leaders]):
             error_msg = "No data for `variable_leaders` ({}) in database".format(
                 variable_leaders
@@ -209,26 +233,37 @@ def _select_closest(to_search_df, target_series):
     dict
         Metadata of the closest row.
     """
-    if len(target_series.shape) != 1:
-        raise ValueError("Target array is multidimensional")
+    # TODO: fix documentation
 
-    if target_series.shape[0] != to_search_df.shape[1]:
+    if target_series.shape[1] != to_search_df.shape[1]:
         raise ValueError(
             "Target array does not match the size of the searchable arrays"
         )
 
     closeness = []
     for label, row in to_search_df.iterrows():
-        rms = (((target_series - row) ** 2).mean()) ** 0.5
+        # The third item in the label is the variable name.
+        rms = (
+            (
+                (
+                    target_series[
+                        target_series.index.get_level_values("variable") == label[3]
+                    ].squeeze()
+                    - row
+                )
+                ** 2
+            ).mean()
+        ) ** 0.5
         closeness.append((label, rms))
 
     # Find the minimum closeness and return the index of it
     labels, rmss = list(zip(*closeness))
-    to_return = rmss.index(min(rmss))
-    return dict(zip(to_search_df.index.names, labels[to_return]))
+    rmss = pd.Series(index=labels, data=rmss).groupby(level=[0, 1]).sum()
+    to_return = rmss.loc[rmss == min(rmss)].index.to_list()
+    return to_return[0]
 
 
-def _filter_for_overlap(df1, df2, cols):
+def _filter_for_overlap(df1, df2, cols, leaders):
     """
     Returns rows in the two input dataframes which have the same columns
     Parameters
@@ -247,7 +282,13 @@ def _filter_for_overlap(df1, df2, cols):
     """
     lead_data = df1.data.set_index(cols)
     follow_data = df2.data.set_index(cols)
-    shared_indices = [ind for ind in lead_data.index if ind in follow_data.index]
+    shared_indices = [
+        ind
+        for ind in follow_data.index
+        if lead_data.index.tolist().count(ind) == len(leaders)
+    ]
+    # We need to remove duplicates
+    shared_indices = list(dict.fromkeys(shared_indices))
     if shared_indices:
         lead_data = lead_data.loc[shared_indices]
         follow_data = follow_data.loc[shared_indices]

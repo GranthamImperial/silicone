@@ -2,11 +2,9 @@ import re
 
 import numpy as np
 import pandas as pd
-import pyam
 import pytest
 from base import _DataBaseCruncherTester
 from pyam import IamDataFrame, concat
-
 from silicone.database_crunchers import RMSClosest
 from silicone.database_crunchers.rms_closest import _select_closest
 
@@ -28,6 +26,26 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
             ["model_b", "scen_b", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1, 2, 3],
             [
                 "model_b",
+                "scen_b",
+                "World",
+                "Emissions|HFC|CF4",
+                "kt C2F6/yr",
+                10,
+                20,
+                30,
+            ],
+            [
+                "model_b",
+                "scen_d",
+                "World",
+                "Emissions|HFC|CF4",
+                "kt C2F6/yr",
+                10,
+                20,
+                30,
+            ],
+            [
+                "model_b",
                 "scen_c",
                 "World",
                 "Emissions|HFC|C2F6",
@@ -35,6 +53,16 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
                 1.1,
                 2.2,
                 2.8,
+            ],
+            [
+                "model_b",
+                "scen_c",
+                "World",
+                "Emissions|HFC|CF4",
+                "kt C2F6/yr",
+                110,
+                220,
+                280,
             ],
         ],
         columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2050],
@@ -100,6 +128,26 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
                 1.2,
                 2.3,
                 2.8,
+            ],
+            [
+                "model_c",
+                "scen_b",
+                "World",
+                "Emissions|HFC|CF4",
+                "kt C2F6/yr",
+                20.02,
+                20,
+                30,
+            ],
+            [
+                "model_c",
+                "scen_c",
+                "World",
+                "Emissions|HFC|CF4",
+                "kt C2F6/yr",
+                11,
+                22,
+                28,
             ],
         ],
         columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2050],
@@ -225,11 +273,15 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
 
     def test_multiple_units_error(self, multiple_units_df, bad_units_df):
         tcruncher = self.tclass(bad_units_df)
-
-        filler = tcruncher.derive_relationship(
-            "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
+        lead = ["Emissions|HFC|C2F6"]
+        filler = tcruncher.derive_relationship("Emissions|HFC|C5F12", lead)
+        leader_var_unit = {
+            var[1]["variable"]: var[1]["unit"]
+            for var in bad_units_df.variables(True).iterrows()
+        }
+        error_msg = "Units of lead variable is meant to be {}, found {}".format(
+            leader_var_unit, multiple_units_df.filter(variable=lead).variables(True)
         )
-        error_msg = "More than one unit detected for input timeseries"
         with pytest.raises(ValueError, match=error_msg):
             filler(multiple_units_df)
 
@@ -240,7 +292,8 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
             "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
         )
         error_msg = "Units of lead variable is meant to be {}, found {}".format(
-            bad_units_df.data.unit[0], test_downscale_df.data.unit[0]
+            {bad_units_df.data.variable[0]: bad_units_df.data.unit[0]},
+            test_downscale_df.data.unit[0],
         )
         with pytest.raises(ValueError, match=error_msg):
             filler(test_downscale_df)
@@ -289,6 +342,32 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
             [1.1, 2.2, 2.8],
         )
 
+    def test_relationship_multi_lead_usage_bad_data(self, larger_df, test_downscale_df):
+        tcruncher = self.tclass(larger_df)
+        leads = ["Emissions|HFC|C2F6", "Emissions|HFC|CF4"]
+        filler = tcruncher.derive_relationship("Emissions|HFC|C5F12", leads)
+        bad_model = "model_b"
+        bad_scenario = "scen_d"
+        error_msg = "Insufficient variables are found to infill model {}, scenario {}".format(
+                            bad_model, bad_scenario
+                        )
+        with pytest.raises(ValueError, message=error_msg):
+            filler(test_downscale_df)
+        # If we remove the model/scenario case with insufficient data we get results.
+        res = filler(test_downscale_df.filter(scenario=bad_scenario, keep=False))
+        np.testing.assert_allclose(
+            res.filter(model="model_b", scenario="scen_b")
+            .timeseries()
+            .values.squeeze(),
+            [1.1, 2.2, 2.8],
+        )
+        np.testing.assert_allclose(
+            res.filter(model="model_b", scenario="scen_c")
+            .timeseries()
+            .values.squeeze(),
+            [1, 2, 3],
+        )
+
     def test_derive_relationship(self, test_db):
         tcruncher = self.tclass(test_db)
         res = tcruncher.derive_relationship(
@@ -298,11 +377,12 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
 
     def test_derive_relationship_error_multiple_lead_vars(self, test_db):
         tcruncher = self.tclass(test_db)
+        leaders = ["a", "b"]
         error_msg = re.escape(
-            "For `RMSClosest`, ``variable_leaders`` should only " "contain one variable"
+            "No data for `variable_leaders` (['a', 'b']) in database".format(leaders)
         )
         with pytest.raises(ValueError, match=error_msg):
-            tcruncher.derive_relationship("Emissions|HFC|C5F12", ["a", "b"])
+            tcruncher.derive_relationship("Emissions|HFC|C5F12", leaders)
 
     def test_derive_relationship_error_no_info_leader(self, test_db):
         # test that crunching fails if there's no data about the lead gas in the
@@ -417,12 +497,6 @@ def test_select_closest():
     closest_meta = _select_closest(possible_answers, target)
     assert closest_meta["colour"] == "red"
     assert closest_meta["height"] == 1.6
-
-
-def test_select_closest_multi_dimensional_target_error():
-    df = pd.DataFrame([1, 1])
-    with pytest.raises(ValueError, match="Target array is multidimensional"):
-        _select_closest(df, df)
 
 
 def test_select_closest_wrong_shape_error():
