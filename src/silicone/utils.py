@@ -224,7 +224,7 @@ def _make_wide_db(use_db):
     """
     idx = ["model", "scenario", use_db.time_col]
     assert (
-        use_db.data.groupby(idx + ["variable"]).count()._get_values.max() <= 1
+        use_db.data.groupby(idx + ["variable"]).count().max().max() <= 1
     ), "The table contains multiple entries with the same model and scenario"
     use_db = use_db.pivot_table(index=idx, columns="variable", aggfunc="sum")
     # make sure we don't have empty strings floating around (pyam bug?)
