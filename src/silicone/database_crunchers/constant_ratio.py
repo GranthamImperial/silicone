@@ -98,11 +98,11 @@ class ConstantRatio(_DatabaseCruncher):
             """
             output_ts = in_iamdf.filter(variable=variable_leaders)
             if any(output_ts["value"] < 0):
-                logger.warning(
-                    "Note that the lead variable {} goes negative.".format(
-                        variable_leaders
-                    )
+                warn_str = "Note that the lead variable {} goes negative.".format(
+                    variable_leaders
                 )
+                logger.warning(warn_str)
+                print(warn_str)
             assert (
                 output_ts["unit"].nunique() == 1
             ), "There are multiple or no units for the lead variable."

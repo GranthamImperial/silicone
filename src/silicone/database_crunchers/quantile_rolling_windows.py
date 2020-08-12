@@ -302,11 +302,11 @@ class QuantileRollingWindows(_DatabaseCruncher):
             infilled_ts = in_iamdf.filter(variable=variable_leaders).timeseries()
 
             if use_ratio and (infilled_ts.values < 0).any():
-                logger.warning(
-                    "Note that the lead variable {} goes negative.".format(
-                        variable_leaders
-                    )
+                warn_str = "Note that the lead variable {} goes negative.".format(
+                    variable_leaders
                 )
+                logger.warning(warn_str)
+                print(warn_str)
 
             for col in infilled_ts:
                 if use_ratio:

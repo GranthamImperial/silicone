@@ -184,12 +184,14 @@ class TimeDepRatio(_DatabaseCruncher):
                     )
                 )
             if any(lead_var["value"] < 0):
-                logger.warning(
+                warn_str = (
                     "Note that the lead variable {} goes negative. The time dependent "
                     "ratio cruncher can produce unexpected results in this case.".format(
                         variable_leaders
                     )
                 )
+                logger.warning(warn_str)
+                print(warn_str)
             times_needed = set(in_iamdf.data[in_iamdf.time_col])
             if any(
                 [
