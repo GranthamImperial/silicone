@@ -1,3 +1,4 @@
+import logging
 import re
 
 import numpy as np
@@ -139,7 +140,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         [(True, None), (True, "extra"), (False, None), (False, "extra")],
     )
     def test_relationship_usage_multiple_data(
-        self, unequal_df, test_downscale_df, match_sign, add_col
+        self, unequal_df, test_downscale_df, match_sign, add_col, caplog
     ):
         equal_df = unequal_df.filter(model="model_a")
         tcruncher = self.tclass(equal_df)
@@ -154,8 +155,10 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             test_downscale_df[add_col] = add_col_val
             test_downscale_df = IamDataFrame(test_downscale_df.data)
             assert test_downscale_df.extra_cols[0] == add_col
-        res = filler(test_downscale_df)
-
+        with caplog.at_level(logging.INFO, logger="silicone.multiple_infillers"):
+            res = filler(test_downscale_df)
+        # We did not have any negative values so do not expect errors to be logged
+        assert len(caplog.record_tuples) == 0
         lead_iamdf = test_downscale_df.filter(variable=lead)
 
         exp = lead_iamdf.timeseries()
@@ -209,7 +212,15 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         filler = tcruncher.derive_relationship(
             variable_follower=follow, variable_leaders=lead, same_sign=match_sign
         )
-        res = filler(test_downscale_df)
+
+        with caplog.at_level(logging.INFO, logger="silicone.multiple_infillers"):
+            res = filler(test_downscale_df)
+        # we expect there to be an error message for a negative result
+        assert len(caplog.record_tuples) == 1
+        assert caplog.record_tuples[-1][2] == (
+            "Note that the lead variable {} goes negative. The time dependent "
+            "ratio cruncher can produce unexpected results in this case.".format(lead)
+        )
         # if we have match sign on, this is identical to the above except for -ve.
         if match_sign:
             lead_iamdf = test_downscale_df.filter(variable="Emissions|HFC|C2F6")
