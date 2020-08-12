@@ -8,7 +8,6 @@ import scipy.interpolate
 from base import _DataBaseCruncherTester
 from pyam import IamDataFrame
 
-import silicone.stats
 from silicone.database_crunchers import (
     LinearInterpolation,
     ScenarioAndModelSpecificInterpolate,
