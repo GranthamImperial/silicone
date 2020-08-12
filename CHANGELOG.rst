@@ -4,6 +4,7 @@ Changelog
 master
 ------
 
+- (`#113 <https://github.com/GranthamImperial/silicone/pull/113>`_) Added a warning for using time-dependent ratio with negative values. Fixed some unit conversion todos (not user-facing).
 - (`#112 <https://github.com/GranthamImperial/silicone/pull/112>`_) Enabled more general unit conversion, bug fix and improvement for infill_composite_values.
 - (`#111 <https://github.com/GranthamImperial/silicone/pull/111>`_) Minor improvements to error messages and documentation.
 - (`#110 <https://github.com/GranthamImperial/silicone/pull/110>`_) Gave an option to time_dep_ratio and decompose_collection to ignore model/scenario combinations missing values at some required times.
