@@ -1,3 +1,4 @@
+import logging
 import re
 
 import numpy as np
@@ -186,6 +187,22 @@ class TestDatabaseCruncherLatestTimeRatio(_DataBaseCruncherTester):
         assert append_df.filter(variable=follow).equals(res)
         if add_col:
             assert all(append_df[add_col] == add_col_val)
+
+    def test_negative_val_warning(self, test_db, test_downscale_df, caplog):
+        tcruncher = self.tclass(test_db)
+        lead = ["Emissions|HFC|C2F6"]
+        follow = "Emissions|HFC|C5F12"
+        filler = tcruncher.derive_relationship(follow, lead)
+        test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db)
+        with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
+            filler(test_downscale_df)
+        assert len(caplog.record_tuples) == 0
+        test_downscale_df.data["value"].iloc[0] = -1
+        with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
+            filler(test_downscale_df)
+        assert len(caplog.record_tuples) == 1
+        warn_str = "Note that the lead variable {} goes negative.".format(lead)
+        assert caplog.record_tuples[0][2] == warn_str
 
     @pytest.mark.parametrize("interpolate", [True, False])
     def test_relationship_usage_interpolation(

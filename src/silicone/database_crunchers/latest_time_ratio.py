@@ -1,12 +1,15 @@
 """
 Module for the database cruncher which uses the 'latest time ratio' technique.
 """
+import logging
 import warnings
 
 import numpy as np
 from pyam import IamDataFrame
 
 from .base import _DatabaseCruncher
+
+logger = logging.getLogger(__name__)
 
 
 class LatestTimeRatio(_DatabaseCruncher):
@@ -119,6 +122,12 @@ class LatestTimeRatio(_DatabaseCruncher):
                     "`in_iamdf` time column must be the same as the time column used "
                     "to generate this filler function (`{}`)".format(
                         data_follower_time_col
+                    )
+                )
+            if any(lead_var["value"] < 0):
+                logger.warning(
+                    "Note that the lead variable {} goes negative.".format(
+                        variable_leaders
                     )
                 )
 

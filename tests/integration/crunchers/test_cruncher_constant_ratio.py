@@ -131,6 +131,21 @@ class TestDatabaseCruncherTimeDepRatio:
         if add_col:
             assert all(append_df.filter(variable=lead)[add_col] == add_col_val)
 
+    def test_negative_val_warning(self, test_db, test_downscale_df, caplog):
+        tcruncher = self.tclass(test_db)
+        lead = ["Emissions|HFC|C2F6"]
+        follow = "Emissions|HFC|C5F12"
+        filler = tcruncher.derive_relationship(follow, lead, ratio=1, units="unit")
+        with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
+            filler(test_downscale_df)
+        assert len(caplog.record_tuples) == 0
+        test_downscale_df.data["value"].iloc[0] = -1
+        with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
+            filler(test_downscale_df)
+        assert len(caplog.record_tuples) == 1
+        warn_str = "Note that the lead variable {} goes negative.".format(lead)
+        assert caplog.record_tuples[0][2] == warn_str
+
     def test_relationship_usage_set_0(self, test_downscale_df):
         tcruncher = self.tclass()
 

@@ -155,7 +155,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             test_downscale_df[add_col] = add_col_val
             test_downscale_df = IamDataFrame(test_downscale_df.data)
             assert test_downscale_df.extra_cols[0] == add_col
-        with caplog.at_level(logging.INFO, logger="silicone.multiple_infillers"):
+        with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
             res = filler(test_downscale_df)
         # We did not have any negative values so do not expect errors to be logged
         assert len(caplog.record_tuples) == 0
@@ -213,7 +213,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             variable_follower=follow, variable_leaders=lead, same_sign=match_sign
         )
 
-        with caplog.at_level(logging.INFO, logger="silicone.multiple_infillers"):
+        with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
             res = filler(test_downscale_df)
         # we expect there to be an error message for a negative result
         assert len(caplog.record_tuples) == 1
