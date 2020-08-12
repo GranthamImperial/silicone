@@ -1,7 +1,7 @@
 """
 Module for the database cruncher which uses the 'time-dependent ratio' technique.
 """
-
+import logging
 import warnings
 
 import numpy as np
@@ -9,6 +9,8 @@ import pandas as pd
 from pyam import IamDataFrame
 
 from .base import _DatabaseCruncher
+
+logger = logging.getLogger(__name__)
 
 
 class TimeDepRatio(_DatabaseCruncher):
@@ -178,6 +180,13 @@ class TimeDepRatio(_DatabaseCruncher):
                     "`in_iamdf` time column must be the same as the time column used "
                     "to generate this filler function (`{}`)".format(
                         data_follower_time_col
+                    )
+                )
+            if any(lead_var["value"] < 0):
+                logger.warning(
+                    "Note that the lead variable {} goes negative. The time dependent "
+                    "ratio cruncher can produce unexpected results in this case.".format(
+                        variable_leaders
                     )
                 )
             times_needed = set(in_iamdf.data[in_iamdf.time_col])
