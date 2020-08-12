@@ -125,11 +125,11 @@ class LatestTimeRatio(_DatabaseCruncher):
                     )
                 )
             if any(lead_var["value"] < 0):
-                logger.warning(
-                    "Note that the lead variable {} goes negative.".format(
-                        variable_leaders
-                    )
+                warn_str = "Note that the lead variable {} goes negative.".format(
+                    variable_leaders
                 )
+                logger.warning(warn_str)
+                print(warn_str)
 
             def get_values_in_key_timepoint(idf):
                 # filter warning about empty data frame as we handle it ourselves
