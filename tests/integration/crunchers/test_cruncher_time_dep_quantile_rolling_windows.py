@@ -93,10 +93,10 @@ class TestDatabaseTimeDepCruncherRollingWindows:
             "the dictionary."
         )
         if test_db.time_col == "year":
-            filtered_db = test_db.filter(year=int(t_0), keep=False)
+            filtered_db = test_db.filter(year=t_0, keep=False)
         else:
             filtered_db = test_db.filter(
-                time=tcruncher._convert_dt64_todt(t_0), keep=False
+                time=t_0, keep=False
             )
         with pytest.raises(ValueError, match=error_msg):
             res(filtered_db)
@@ -140,9 +140,9 @@ class TestDatabaseTimeDepCruncherRollingWindows:
         returned = res(to_infill)
         for time, quantile in quant.items():
             if timecol == "year":
-                filtered_ans = returned.filter(year=int(time))["value"]
+                filtered_ans = returned.filter(year=time)["value"]
             else:
-                filtered_ans = returned.filter(time=tcruncher._convert_dt64_todt(time))[
+                filtered_ans = returned.filter(time=time)[
                     "value"
                 ]
             assert np.allclose(filtered_ans, 11 * (quantile - 1 / 22))

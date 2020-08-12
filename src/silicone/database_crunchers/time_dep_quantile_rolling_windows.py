@@ -73,13 +73,11 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
 
         filler_fns = {}
         for time, quantile in time_quantile_dict.items():
-            # TODO: this section can be rewritten to avoid conversions when the pyam
-            # bug is fixed
             if self._db.time_col == "year":
-                cruncher = QuantileRollingWindows(self._db.filter(year=int(time)))
+                cruncher = QuantileRollingWindows(self._db.filter(year=time))
             else:
                 cruncher = QuantileRollingWindows(
-                    self._db.filter(time=self._convert_dt64_todt(time))
+                    self._db.filter(time=time)
                 )
             filler_fns[time] = cruncher.derive_relationship(
                 variable_follower, variable_leaders, quantile, **kwargs
@@ -117,11 +115,10 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
 
             for time in time_quantile_dict.keys():
                 if in_iamdf.time_col == "year":
-                    # TODO: remove int specification from here when pyam bug is fixed
-                    tmp = filler_fns[time](in_iamdf.filter(year=int(time)))
+                    tmp = filler_fns[time](in_iamdf.filter(year=time))
                 else:
                     tmp = filler_fns[time](
-                        in_iamdf.filter(time=self._convert_dt64_todt(time))
+                        in_iamdf.filter(time=time)
                     )
 
                 try:
@@ -131,6 +128,3 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
             return to_return
 
         return filler
-
-    def _convert_dt64_todt(self, time):
-        return time.astype("M8[m]").astype(datetime)

@@ -160,11 +160,8 @@ def infill_all_required_variables(
         database = database.filter(year=output_timesteps)
         to_fill = to_fill.filter(year=output_timesteps)
     else:
-        # TODO: this filter switchup is needed because of a problem with filter.
-        #  If the pyam bug clears we can remove it.
-        output_timesteps_datetime = pd.to_datetime(output_timesteps)
-        database = database.filter(time=output_timesteps_datetime)
-        to_fill = to_fill.filter(time=output_timesteps_datetime)
+        database = database.filter(time=output_timesteps)
+        to_fill = to_fill.filter(time=output_timesteps)
     # Infill unavailable data
     assert not database.data.isnull().any().any()
     assert not to_fill.data.isnull().any().any()
