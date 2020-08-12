@@ -38,7 +38,8 @@ class TimeDepRatio(_DatabaseCruncher):
     :math:`R(t)` is the scaling factor, calculated as the ratio of the means of the
     the follower and the leader in the infiller database, denoted with
     lower case e. By default, we include only cases where `sign(e_l(t))` is the same in
-    both databases).
+    both databases). The cruncher will raise a warning if the lead data is ever
+    negative, which can create complications for the use of this cruncher.
 
     .. math::
         R(t) = \\frac{mean( e_f(t) )}{mean( e_l(t) )})
