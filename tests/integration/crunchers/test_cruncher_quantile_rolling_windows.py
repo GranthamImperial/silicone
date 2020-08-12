@@ -363,6 +363,27 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
             < 1e15
         )
 
+    def test_negative_val_warning(self, test_db, test_downscale_df, caplog):
+        tcruncher = self.tclass(test_db)
+        lead = [_eco2]
+        follow = _ech4
+        filler = tcruncher.derive_relationship(follow, lead, use_ratio=True)
+        test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db)
+        with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
+            filler(test_downscale_df)
+        assert len(caplog.record_tuples) == 0
+        test_downscale_df.data["value"].iloc[0] = -1
+        with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
+            filler(test_downscale_df)
+        assert len(caplog.record_tuples) == 1
+        warn_str = "Note that the lead variable {} goes negative.".format(lead)
+        assert caplog.record_tuples[0][2] == warn_str
+        filler = tcruncher.derive_relationship(follow, lead, use_ratio=False)
+        with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
+            filler(test_downscale_df)
+        # We do not expect to see any new errors, hence the number is still 1.
+        assert len(caplog.record_tuples) == 1
+
     def test_derive_relationship_error_no_info_leader(self, test_db):
         # test that crunching fails if there's no data about the lead gas in the
         # database
