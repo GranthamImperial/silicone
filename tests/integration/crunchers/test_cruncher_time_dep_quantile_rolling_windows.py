@@ -95,9 +95,7 @@ class TestDatabaseTimeDepCruncherRollingWindows:
         if test_db.time_col == "year":
             filtered_db = test_db.filter(year=t_0, keep=False)
         else:
-            filtered_db = test_db.filter(
-                time=t_0, keep=False
-            )
+            filtered_db = test_db.filter(time=t_0, keep=False)
         with pytest.raises(ValueError, match=error_msg):
             res(filtered_db)
 
@@ -142,9 +140,7 @@ class TestDatabaseTimeDepCruncherRollingWindows:
             if timecol == "year":
                 filtered_ans = returned.filter(year=time)["value"]
             else:
-                filtered_ans = returned.filter(time=time)[
-                    "value"
-                ]
+                filtered_ans = returned.filter(time=time)["value"]
             assert np.allclose(filtered_ans, 11 * (quantile - 1 / 22))
 
     def test_derive_relationship_same_gas(self, test_db):

@@ -76,9 +76,7 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
             if self._db.time_col == "year":
                 cruncher = QuantileRollingWindows(self._db.filter(year=time))
             else:
-                cruncher = QuantileRollingWindows(
-                    self._db.filter(time=time)
-                )
+                cruncher = QuantileRollingWindows(self._db.filter(time=time))
             filler_fns[time] = cruncher.derive_relationship(
                 variable_follower, variable_leaders, quantile, **kwargs
             )
@@ -117,9 +115,7 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
                 if in_iamdf.time_col == "year":
                     tmp = filler_fns[time](in_iamdf.filter(year=time))
                 else:
-                    tmp = filler_fns[time](
-                        in_iamdf.filter(time=time)
-                    )
+                    tmp = filler_fns[time](in_iamdf.filter(time=time))
 
                 try:
                     to_return.append(tmp, inplace=True)
