@@ -343,7 +343,7 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
             [1.1, 2.2, 2.8],
         )
 
-    def test_relationship_multi_lead_usage_bad_data(self, larger_df, test_downscale_df):
+    def test_relationship_multi_lead_usage(self, larger_df, test_downscale_df):
         tcruncher = self.tclass(larger_df)
         leads = ["Emissions|HFC|C2F6", "Emissions|HFC|CF4"]
         filler = tcruncher.derive_relationship("Emissions|HFC|C5F12", leads)
@@ -367,6 +367,57 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
             .timeseries()
             .values.squeeze(),
             [1, 2, 3],
+        )
+
+    def test_relationship_weighted_multi_lead_usage(self, larger_df, test_downscale_df):
+        # If we apply the weightings differently we can change the outcome
+        tcruncher = self.tclass(larger_df)
+        leads = ["Emissions|HFC|C2F6", "Emissions|HFC|CF4"]
+        follow = "Emissions|HFC|C5F12"
+        # If CF4 weight is w, C2F6 weight 1, the RMS error between target and lead data
+        # for target mod_b scen_b is about
+        # RMS = 0.001 + 10 w for mod_c, scen_b
+        # RMS = 0.3 + 3 w for mod_c, scen c.
+        # So if w < 0.3 / 7, we prefer the data from c. Above that, we get the same
+        # result as in the unweighted case:
+        weights = {"Emissions|HFC|C2F6": 1, "Emissions|HFC|CF4": 0.045}
+        filler = tcruncher.derive_relationship(follow, leads, weights)
+        bad_scenario = "scen_d"  # this scenario has insufficient data
+        res = filler(test_downscale_df.filter(scenario=bad_scenario, keep=False))
+        np.testing.assert_allclose(
+            res.filter(model="model_b", scenario="scen_b")
+            .timeseries()
+            .values.squeeze(),
+            [1.1, 2.2, 2.8],
+        )
+        # mod_b, scen_c by contrast has a formula more like
+        # RMS = 0.3 + 332.6 w or mod_c, scen_b
+        # RMS = 335.4 w for mod_c, scen c.
+        # so will show the opposite result at this weighting compared to the unweighted
+        # case
+        np.testing.assert_allclose(
+            res.filter(model="model_b", scenario="scen_c")
+            .timeseries()
+            .values.squeeze(),
+            [1.1, 2.2, 2.8],
+        )
+        # But with a slightly lower weight, we also swap to the other case for the
+        # results of mod_b, scen_b:
+        weights = {"Emissions|HFC|C2F6": 1, "Emissions|HFC|CF4": 0.04}
+        filler = tcruncher.derive_relationship(follow, leads, weights)
+        res = filler(test_downscale_df.filter(scenario=bad_scenario, keep=False))
+        np.testing.assert_allclose(
+            res.filter(model="model_b", scenario="scen_b")
+            .timeseries()
+            .values.squeeze(),
+            [1, 2, 3],
+        )
+        # No change in mod_b, scen_c
+        np.testing.assert_allclose(
+            res.filter(model="model_b", scenario="scen_c")
+            .timeseries()
+            .values.squeeze(),
+            [1.1, 2.2, 2.8],
         )
 
     def test_derive_relationship(self, test_db):
