@@ -485,23 +485,39 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
 # other select closest tests to write before making public:
 #   - what happens if indexes don't align
 def test_select_closest():
-    target = pd.Series([1, 2, 3])
+    bad_target = pd.DataFrame(
+        [[1, 2, 3]],
+        index=pd.MultiIndex.from_arrays(
+            [("chartreuse",), (6,), (5,), (1.5,)],
+            names=("colour", "region", "homogeneity", "variable"),
+        ),
+    )
+    target = pd.DataFrame(
+        [[1, 2, 3]],
+        index=pd.MultiIndex.from_arrays(
+            [("chartreuse",), (6,), (5,), (1,)],
+            names=("colour", "region", "homogeneity", "variable"),
+        ),
+    )
     possible_answers = pd.DataFrame(
         [[1, 1, 1], [1, 2, 3.5], [1, 2, 3.5], [1, 2, 4]],
         index=pd.MultiIndex.from_arrays(
-            [("blue", "red", "green", "yellow"), (1.5, 1.6, 2, 0.4)],
-            names=("colour", "height"),
+            [("blue", "red", "green", "yellow"), (1.5, 1.6, 2, 0.4), (1, 1, 1, 1), (1, 1, 1, 1)],
+            names=("colour", "region", "homogeneity", "variable"),
         ),
     )
-
+    error_msg = "No variable overlap between target and infiller databases."
+    with pytest.raises(ValueError, message=error_msg):
+        _select_closest(possible_answers, bad_target)
     closest_meta = _select_closest(possible_answers, target)
-    assert closest_meta["colour"] == "red"
-    assert closest_meta["height"] == 1.6
+
+    assert closest_meta[0] == "red"
+    assert closest_meta[1] == 1.6
 
 
 def test_select_closest_wrong_shape_error():
     to_search = pd.DataFrame([[1, 1, 1], [1, 2, 3.5], [1, 2, 3.5], [1, 2, 4]])
-    target = pd.Series([1, 1])
+    target = pd.DataFrame([[1, 1], [1, 2], [1, 2], [1, 2]])
 
     with pytest.raises(
         ValueError,

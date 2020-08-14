@@ -6,7 +6,6 @@ import warnings
 import pandas as pd
 import pyam
 
-from ..utils import _remove_equivs
 from .base import _DatabaseCruncher
 
 
@@ -239,11 +238,18 @@ def _select_closest(to_search_df, target_series):
         raise ValueError(
             "Target array does not match the size of the searchable arrays"
         )
-
-    closeness = []
+    if any(x not in target_series.index.get_level_values("variable") for x in to_search_df.index.get_level_values("variable")):
+        raise ValueError(
+            "No variable overlap between target and infiller databases."
+        )
+    if any(col not in target_series.columns for col in to_search_df.columns):
+        raise ValueError(
+            "Time values mismatch between target and infiller databases."
+        )
+    rms = pd.Series(index=to_search_df.index)
     for label, row in to_search_df.iterrows():
         # The third item in the label is the variable name.
-        rms = (
+        rms.loc[label] = (
             (
                 (
                     target_series[
@@ -254,12 +260,8 @@ def _select_closest(to_search_df, target_series):
                 ** 2
             ).mean()
         ) ** 0.5
-        closeness.append((label, rms))
-
-    # Find the minimum closeness and return the index of it
-    labels, rmss = list(zip(*closeness))
-    rmss = pd.Series(index=labels, data=rmss).groupby(level=[0, 1]).sum()
-    to_return = rmss.loc[rmss == min(rmss)].index.to_list()
+    rmssums = rms.groupby(level=[0, 1], sort=False).sum()
+    to_return = rmssums.loc[rmssums == min(rmssums)].index.to_list()
     return to_return[0]
 
 
