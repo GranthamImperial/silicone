@@ -212,48 +212,46 @@ class RMSClosest(_DatabaseCruncher):
         return iamdf_section
 
 
-def _select_closest(to_search_df, target_series):
+def _select_closest(to_search_df, target_df):
     """
-    Find row in ``to_search_df`` that is closest to the target array.
+    Find model/scenario combo in ``to_search_df`` that is closest to that of the target.
 
-    Here, 'closest' is in the root-mean squared sense. In the event that multiple rows
-    are equally close, returns first row.
+    Here, 'closest' is in the root-mean squared sense. In the event that multiple model/
+    scenarios are equally close, returns first row.
 
     Parameters
     ----------
     to_search_df : :obj:`pd.DataFrame`
-        The rows of this dataframe are the candidate closest vectors
+        The model/scenario combos to search for the closest case. A timeseries.
 
-    target_series : :obj:`pd.Series`
-        The vector to which we want to be close
+    target_df : :obj:`pd.DataFrame`
+        The data to which we want to be close. A timeseries.
 
     Returns
     -------
     dict
-        Metadata of the closest row.
+        Index of the closest timeseries.
     """
-    # TODO: fix documentation
 
-    if target_series.shape[1] != to_search_df.shape[1]:
+    if target_df.shape[1] != to_search_df.shape[1]:
         raise ValueError(
             "Target array does not match the size of the searchable arrays"
         )
-    if any(x not in target_series.index.get_level_values("variable") for x in to_search_df.index.get_level_values("variable")):
-        raise ValueError(
-            "No variable overlap between target and infiller databases."
-        )
-    if any(col not in target_series.columns for col in to_search_df.columns):
-        raise ValueError(
-            "Time values mismatch between target and infiller databases."
-        )
+    if any(
+        x not in target_df.index.get_level_values("variable")
+        for x in to_search_df.index.get_level_values("variable")
+    ):
+        raise ValueError("No variable overlap between target and infiller databases.")
+    if any(col not in target_df.columns for col in to_search_df.columns):
+        raise ValueError("Time values mismatch between target and infiller databases.")
     rms = pd.Series(index=to_search_df.index)
     for label, row in to_search_df.iterrows():
         # The third item in the label is the variable name.
         rms.loc[label] = (
             (
                 (
-                    target_series[
-                        target_series.index.get_level_values("variable") == label[3]
+                    target_df[
+                        target_df.index.get_level_values("variable") == label[3]
                     ].squeeze()
                     - row
                 )
