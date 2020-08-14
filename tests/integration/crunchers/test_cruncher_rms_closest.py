@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 from base import _DataBaseCruncherTester
 from pyam import IamDataFrame, concat
+
 from silicone.database_crunchers import RMSClosest
 from silicone.database_crunchers.rms_closest import _select_closest
 
