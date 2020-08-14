@@ -483,8 +483,6 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
             filler(test_downscale_df)
 
 
-# other select closest tests to write before making public:
-#   - what happens if indexes don't align
 def test_select_closest():
     bad_target = pd.DataFrame(
         [[1, 2, 3]],
@@ -501,7 +499,7 @@ def test_select_closest():
         ),
     )
     possible_answers = pd.DataFrame(
-        [[1, 1, 1], [1, 2, 3.5], [1, 2, 3.5], [1, 2, 4]],
+        [[1, 1, 3.1], [1, 2, 3.5], [1, 2, 3.5], [1, 2, 4]],
         index=pd.MultiIndex.from_arrays(
             [
                 ("blue", "red", "green", "yellow"),
@@ -513,9 +511,10 @@ def test_select_closest():
         ),
     )
     error_msg = "No variable overlap between target and infiller databases."
+    weighting = {1: 1}
     with pytest.raises(ValueError, message=error_msg):
-        _select_closest(possible_answers, bad_target)
-    closest_meta = _select_closest(possible_answers, target)
+        _select_closest(possible_answers, bad_target, weighting)
+    closest_meta = _select_closest(possible_answers, target, weighting)
 
     assert closest_meta[0] == "red"
     assert closest_meta[1] == 1.6
@@ -531,7 +530,7 @@ def test_select_closest_wrong_shape_error():
         ValueError,
         match="Target array does not match the size of the searchable arrays",
     ):
-        _select_closest(to_search, target)
+        _select_closest(to_search, target, {1: 1})
 
 
 def test_select_closest_index_mismatch():
@@ -551,8 +550,9 @@ def test_select_closest_index_mismatch():
             names=("colour", "region", "homogeneity", "variable"),
         ),
     )
+    weights = {1: 1}
 
     with pytest.raises(
         ValueError, match="Time values mismatch between target and infiller databases.",
     ):
-        _select_closest(to_search, target)
+        _select_closest(to_search, target, weights)

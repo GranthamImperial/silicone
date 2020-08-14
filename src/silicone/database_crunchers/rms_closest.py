@@ -13,24 +13,28 @@ class RMSClosest(_DatabaseCruncher):
     """
     Database cruncher which uses the 'closest RMS' technkque.
 
-    This cruncher derives the relationship between two variables by finding the
-    scenario which has the closest lead gas timeseries in the database.  The follower
-    gas timeseries is then simply copied from the closest scenario.
+    This cruncher derives the relationship between two or more variables by finding the
+    scenario which has the most similar timeseries for the lead gases in the database.
+    The follower gas timeseries is then simply copied from the closest scenario.
 
-    Here, 'closest' is defined as the smallest time-averaged root mean squared (L2)
-    difference.
+    Here, 'most similar' is defined as the smallest time-averaged root mean squared (L2)
+    difference. If multiple lead values are used, they may be weighted differently to
+    account for differences between the reported units. The most similar model/scenario
+    combination minimises
 
     .. math::
-        RMS = \\left ( \\frac{1}{n} \\sum_{t=0}^n (E_l(t) - e_l(t))^2 \\right )^{1/2}
+        RMS error = \sum_l w_l \\left ( \\frac{1}{n} \\sum_{t=0}^n (E_l(t) - e_l(t))^2 \\right )^{1/2}
 
-    where :math:`n` is the total number of timesteps in the lead gas' timeseries,
+    where :math:`l` is a lead gas, :math:`w_l` is a weighting for that lead gas,
+    :math:`n` is the total number of timesteps in all lead gas timeseries,
     :math:`E_l(t)` is the lead gas emissions timeseries and :math:`e_l(t)` is a lead
     gas emissions timeseries in the infiller database.
     """
 
-    def derive_relationship(self, variable_follower, variable_leaders):
+    def derive_relationship(self, variable_follower, variable_leaders, weighting=None):
         """
-        Derive the relationship between two variables from the database.
+        Derive the relationship between the lead and the follow variables from the
+        database.
 
         Parameters
         ----------
@@ -42,6 +46,13 @@ class RMSClosest(_DatabaseCruncher):
             The variable we want to use in order to infer timeseries of
             ``variable_follower`` (e.g. ``["Emissions|CO2"]``). This may contain
             multiple elements.
+
+        weighting : dict{str: float}
+            When used with multiple lead variables, this weighting factor controls the
+            relative importance of different variables for determining closeness. E.g.
+            if wanting to compare both CO2 and CH4 emissions reported in mass
+            units but weighted by a GWP100 metric, this would be
+            {"Emissions|CO2": 1, "Emissions|CH4": 28}.
 
         Returns
         -------
@@ -65,6 +76,10 @@ class RMSClosest(_DatabaseCruncher):
         iamdf_follower = self._get_iamdf_section(variable_follower)
         data_follower_time_col = iamdf_follower.time_col
         iamdf_lead = self._db.filter(variable=variable_leaders)
+        if not weighting:
+            weighting = {variab: 1 for variab in variable_leaders}
+        if any(var not in weighting.keys() for var in variable_leaders):
+            raise ValueError("Weighting does not include all lead variables.")
         iamdf_lead, iamdf_follower = _filter_for_overlap(
             iamdf_lead,
             iamdf_follower,
@@ -170,7 +185,7 @@ class RMSClosest(_DatabaseCruncher):
                         )
                     )
                 closest_model, closest_scenario = _select_closest(
-                    iamdf_lead_timeseries, lead_var_mod_scen
+                    iamdf_lead_timeseries, lead_var_mod_scen, weighting
                 )
 
                 # Filter to find the matching follow data for the same model, scenario
@@ -212,7 +227,7 @@ class RMSClosest(_DatabaseCruncher):
         return iamdf_section
 
 
-def _select_closest(to_search_df, target_df):
+def _select_closest(to_search_df, target_df, weighting):
     """
     Find model/scenario combo in ``to_search_df`` that is closest to that of the target.
 
@@ -226,6 +241,9 @@ def _select_closest(to_search_df, target_df):
 
     target_df : :obj:`pd.DataFrame`
         The data to which we want to be close. A timeseries.
+
+    weighting : map{str: float}
+        Maps the variable name onto the weighting for that variable.
 
     Returns
     -------
@@ -257,7 +275,7 @@ def _select_closest(to_search_df, target_df):
                 )
                 ** 2
             ).mean()
-        ) ** 0.5
+        ) ** 0.5 * weighting[label[3]]
     rmssums = rms.groupby(level=[0, 1], sort=False).sum()
     to_return = rmssums.loc[rmssums == min(rmssums)].index.to_list()
     return to_return[0]
