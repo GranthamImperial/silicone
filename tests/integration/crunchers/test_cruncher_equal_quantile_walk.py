@@ -112,7 +112,8 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         )
         with pytest.raises(ValueError, match=error_msg):
             tcruncher.derive_relationship(
-                "Emissions|CO2", ["Emissions|CH4", "Emissions|HFC|C5F12"],
+                "Emissions|CO2",
+                ["Emissions|CH4", "Emissions|HFC|C5F12"],
             )
 
     @pytest.mark.parametrize("add_col", [None, "extra_col"])
@@ -138,7 +139,10 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         )
         assert np.allclose(
             infilled.filter(**time_filter)["value"].values,
-            [sorted_follow_t0[0], sorted_follow_t0[1],],
+            [
+                sorted_follow_t0[0],
+                sorted_follow_t0[1],
+            ],
         )
         for time_ind in range(1, 3):
             time_filter = {infilled.time_col: [infilled[infilled.time_col][time_ind]]}
@@ -161,7 +165,10 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
     def test_numerical_relationship(self, test_db):
         # Calculate the values using the cruncher for a fairly detailed dataset
         large_db = IamDataFrame(self.large_db.copy())
-        large_db = self._adjust_time_style_to_match(large_db, test_db,)
+        large_db = self._adjust_time_style_to_match(
+            large_db,
+            test_db,
+        )
         large_db["value"] -= 0.1
         test_db.filter(year=2010, inplace=True)
         tcruncher = self.tclass(large_db)
@@ -225,7 +232,8 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         # uneven lead case above, although this time there are no nans involved in the
         # calculation.
         one_entry_db = test_db.filter(
-            scenario=test_db.scenarios()[0], model=test_db.models()[0],
+            scenario=test_db.scenarios()[0],
+            model=test_db.models()[0],
         )
         tcruncher = self.tclass(one_entry_db)
         follow = "Emissions|CH4"
@@ -387,7 +395,9 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
             "Not all required timepoints are present in the database we "
             "crunched, we crunched \n\t{} for the lead and \n\t{} for the follow"
             " \nbut you passed in \n\t{}".format(
-                times_we_have, times_we_have, test_db.timeseries().columns,
+                times_we_have,
+                times_we_have,
+                test_db.timeseries().columns,
             )
         )
         with pytest.raises(ValueError, match=error_msg):

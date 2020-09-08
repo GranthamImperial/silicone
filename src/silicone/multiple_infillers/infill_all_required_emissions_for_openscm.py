@@ -225,43 +225,43 @@ def _perform_crunch_and_check(
     **kwargs,
 ):
     """
-        Takes a list of scenarios to infill and infills them according to the options
-        presented.
+    Takes a list of scenarios to infill and infills them according to the options
+    presented.
 
-        Parameters
-        ----------
-        required_variables : list[str]
-            The variable names to infill
+    Parameters
+    ----------
+    required_variables : list[str]
+        The variable names to infill
 
-        leaders : list[str]
-            The leaders to guide the infilling
+    leaders : list[str]
+        The leaders to guide the infilling
 
-        to_fill : IamDataFrame
-            The data frame to infill
+    to_fill : IamDataFrame
+        The data frame to infill
 
-        df : IamDataFrame
-            The data frame to base the infilling on
+    df : IamDataFrame
+        The data frame to base the infilling on
 
-        type_of_cruncher : :obj: silicone cruncher
-            the silicone package cruncher class to use for the infilling
+    type_of_cruncher : :obj: silicone cruncher
+        the silicone package cruncher class to use for the infilling
 
-        output_timesteps : list[int or datetime]
-            When there should be data returned. Time-based interpolation will occur if
-            this is more frequent than the data allows, data will be filtered out if
-            there is additional time information.
+    output_timesteps : list[int or datetime]
+        When there should be data returned. Time-based interpolation will occur if
+        this is more frequent than the data allows, data will be filtered out if
+        there is additional time information.
 
-        to_fill_orig : IamDataFrame
-            The original, unfiltered and unaltered data input. We use this for
-            performing checks.
+    to_fill_orig : IamDataFrame
+        The original, unfiltered and unaltered data input. We use this for
+        performing checks.
 
-        kwargs : Dict
-            Any key word arguments to include in the cruncher calculation
+    kwargs : Dict
+        Any key word arguments to include in the cruncher calculation
 
-        Returns
-        -------
-        :obj:IamDataFrame
-            The infilled dataframe
-        """
+    Returns
+    -------
+    :obj:IamDataFrame
+        The infilled dataframe
+    """
     cruncher = type_of_cruncher(df)
     for req_var in tqdm.tqdm(required_variables, desc="Filling required variables"):
         interpolated = _infill_variable(cruncher, req_var, leaders, to_fill, **kwargs)
