@@ -132,7 +132,10 @@ class TestDatabaseTimeDepCruncherRollingWindows:
             formatted_dates[2]: 0.6,
         }
         res = tcruncher.derive_relationship(
-            follow, [_ech4], time_quantile_dict=quant, nwindows=2,
+            follow,
+            [_ech4],
+            time_quantile_dict=quant,
+            nwindows=2,
         )
         to_infill = regular_data.filter(variable=_ech4)
         returned = res(to_infill)
@@ -151,7 +154,9 @@ class TestDatabaseTimeDepCruncherRollingWindows:
         tcruncher = self.tclass(test_db_redux)
         quantile_dict = {times[0]: 0.4, times[1]: 0.9, times[2]: 0.01, times[3]: 0.99}
         res = tcruncher.derive_relationship(
-            "Emissions|CO2", ["Emissions|CO2"], quantile_dict,
+            "Emissions|CO2",
+            ["Emissions|CO2"],
+            quantile_dict,
         )
         crunched = res(test_db_redux)
         assert np.allclose(
@@ -173,7 +178,9 @@ class TestDatabaseTimeDepCruncherRollingWindows:
         tcruncher = self.tclass(regular_db)
         quantile_dict = {times[0]: 0.4, times[1]: 0.9, times[2]: 0.01}
         res = tcruncher.derive_relationship(
-            "Emissions|CO2", ["Emissions|CO2"], quantile_dict,
+            "Emissions|CO2",
+            ["Emissions|CO2"],
+            quantile_dict,
         )
         crunched = res(regular_db)
         assert len(crunched["value"]) == len(

@@ -429,7 +429,12 @@ def test_convert_units_to_MtCO2_equiv_works(check_aggregate_df, ARoption, expect
 
 
 @pytest.mark.parametrize(
-    "unit_start", ("kt CF4-equiv/yr", "kt CF4 equiv/yr", "kt CF4equiv/yr",)
+    "unit_start",
+    (
+        "kt CF4-equiv/yr",
+        "kt CF4 equiv/yr",
+        "kt CF4equiv/yr",
+    ),
 )
 def test_convert_units_to_MtCO2_equiv_equiv_start(check_aggregate_df, unit_start):
     limited_check_agg = check_aggregate_df.filter(
