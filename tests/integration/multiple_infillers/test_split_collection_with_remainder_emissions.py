@@ -134,10 +134,7 @@ class TestSplitCollectionWithRemainderEmissions:
         error_msg = re.escape("No aggregate data in database.")
         with pytest.raises(AssertionError, match=error_msg):
             infiller.infill_components(
-                aggregate,
-                components,
-                remainder,
-                test_db.filter(variable=aggregate),
+                aggregate, components, remainder, test_db.filter(variable=aggregate),
             )
 
     def test_db_error_existing_info(self, test_db):

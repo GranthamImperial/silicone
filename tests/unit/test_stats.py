@@ -71,15 +71,9 @@ def test_rolling_window_find_quantiles(xs, ys):
     ys = np.array([0, 0, 1, 1])
     quantiles = stats.rolling_window_find_quantiles(xs, ys, desired_quantiles, 11, 20)
     # And x = 0, a gradient of 4 starting from 1/2 at q > 0.5
-    assert np.allclose(
-        quantiles.iloc[0].tolist(),
-        [0, 0, 0.1 * 4],
-    )
+    assert np.allclose(quantiles.iloc[0].tolist(), [0, 0, 0.1 * 4],)
     # at x = 1 we have the exact opposite
-    assert np.allclose(
-        quantiles.iloc[-1, :].tolist(),
-        [(0.4 - 1 / 4) * 4, 1, 1],
-    )
+    assert np.allclose(quantiles.iloc[-1, :].tolist(), [(0.4 - 1 / 4) * 4, 1, 1],)
 
     desired_quantiles = [0, 0.5, 1]
     quantiles = stats.rolling_window_find_quantiles(
