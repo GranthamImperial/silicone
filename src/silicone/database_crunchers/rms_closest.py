@@ -267,11 +267,13 @@ def _select_closest(to_search_df, target_df, weighting):
         target_for_var[var] = target_df[
             target_df.index.get_level_values("variable") == var
         ].squeeze()
+    var_index = to_search_df.index.names.index("variable")
     for label, row in to_search_df.iterrows():
         # The third item in the label is the variable name.
+        varname = label[var_index]
         rms.loc[label] = (
-            ((target_for_var[label[3]] - row) ** 2).mean()
-        ) ** 0.5 * weighting[label[3]]
+            ((target_for_var[varname] - row) ** 2).mean()
+        ) ** 0.5 * weighting[varname]
     rmssums = rms.groupby(level=["model", "scenario"], sort=False).sum()
     return rmssums.idxmin()
 
