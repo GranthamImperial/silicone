@@ -349,10 +349,13 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         filler = tcruncher.derive_relationship("Emissions|HFC|C5F12", leads)
         bad_model = "model_b"
         bad_scenario = "scen_d"
-        error_msg = "Insufficient variables are found to infill model {}, scenario {}".format(
-            bad_model, bad_scenario
+        error_msg = (
+            "Insufficient variables are found to infill model {}, scenario {}."
+            " Only found {}."
+        ).format(
+            bad_model, bad_scenario, "Emissions|HFC|C5F12"
         )
-        with pytest.raises(ValueError, message=error_msg):
+        with pytest.raises(ValueError, match=error_msg):
             filler(test_downscale_df)
         # If we remove the model/scenario case with insufficient data we get results.
         res = filler(test_downscale_df.filter(scenario=bad_scenario, keep=False))
@@ -539,14 +542,14 @@ def test_select_closest():
         [[1, 2, 3]],
         index=pd.MultiIndex.from_arrays(
             [("chartreuse",), (6,), (5,), (1.5,)],
-            names=("colour", "region", "homogeneity", "variable"),
+            names=("model", "scenario", "homogeneity", "variable"),
         ),
     )
     target = pd.DataFrame(
         [[1, 2, 3]],
         index=pd.MultiIndex.from_arrays(
             [("chartreuse",), (6,), (5,), (1,)],
-            names=("colour", "region", "homogeneity", "variable"),
+            names=("model", "scenario", "homogeneity", "variable"),
         ),
     )
     possible_answers = pd.DataFrame(
@@ -558,12 +561,12 @@ def test_select_closest():
                 (1, 1, 1, 1),
                 (1, 1, 1, 1),
             ],
-            names=("colour", "region", "homogeneity", "variable"),
+            names=("model", "scenario", "homogeneity", "variable"),
         ),
     )
     error_msg = "No variable overlap between target and infiller databases."
     weighting = {1: 1}
-    with pytest.raises(ValueError, message=error_msg):
+    with pytest.raises(ValueError, match=error_msg):
         _select_closest(possible_answers, bad_target, weighting)
     closest_meta = _select_closest(possible_answers, target, weighting)
 

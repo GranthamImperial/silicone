@@ -51,7 +51,7 @@ class RMSClosest(_DatabaseCruncher):
             When used with multiple lead variables, this weighting factor controls the
             relative importance of different variables for determining closeness. E.g.
             if wanting to compare both CO2 and CH4 emissions reported in mass
-            units but weighted by a GWP100 metric, this would be
+            units but weighted by the AR5 GWP100 metric, this would be
             {"Emissions|CO2": 1, "Emissions|CH4": 28}.
 
         Returns
@@ -88,8 +88,8 @@ class RMSClosest(_DatabaseCruncher):
         )
 
         leader_var_unit = {
-            var[1]["variable"]: var[1]["unit"]
-            for var in iamdf_lead.variables(True).iterrows()
+            var["variable"]: var["unit"]
+            for _, var in iamdf_lead.variables(True).iterrows()
         }
 
         def filler(in_iamdf):
@@ -180,8 +180,9 @@ class RMSClosest(_DatabaseCruncher):
                 ]
                 if len(lead_var_mod_scen) != len(variable_leaders):
                     raise ValueError(
-                        "Insufficient variables are found to infill model {}, scenario {}".format(
-                            model, scenario
+                        "Insufficient variables are found to infill model {}, scenario "
+                        "{}. Only found {}.".format(
+                            model, scenario, lead_var_mod_scen
                         )
                     )
                 closest_model, closest_scenario = _select_closest(
@@ -263,27 +264,24 @@ def _select_closest(to_search_df, target_df, weighting):
     if any(col not in target_df.columns for col in to_search_df.columns):
         raise ValueError("Time values mismatch between target and infiller databases.")
     rms = pd.Series(index=to_search_df.index)
+    target_for_var = {}
+    for var in to_search_df.index.get_level_values("variable").unique():
+        target_for_var[var] = target_df[
+            target_df.index.get_level_values("variable") == var
+        ].squeeze()
     for label, row in to_search_df.iterrows():
         # The third item in the label is the variable name.
         rms.loc[label] = (
-            (
-                (
-                    target_df[
-                        target_df.index.get_level_values("variable") == label[3]
-                    ].squeeze()
-                    - row
-                )
-                ** 2
-            ).mean()
+            ((target_for_var[label[3]] - row) ** 2).mean()
         ) ** 0.5 * weighting[label[3]]
-    rmssums = rms.groupby(level=[0, 1], sort=False).sum()
-    to_return = rmssums.loc[rmssums == min(rmssums)].index.to_list()
-    return to_return[0]
+    rmssums = rms.groupby(level=["model", "scenario"], sort=False).sum()
+    return rmssums.idxmin()
 
 
 def _filter_for_overlap(df1, df2, cols, leaders):
     """
-    Returns rows in the two input dataframes which have the same columns
+    Returns overlapping model/scenario combinations in the two input dataframes, which
+    must have the same columns.
     Parameters
     ----------
     df1 : :obj:`pd.DataFrame`
@@ -291,7 +289,11 @@ def _filter_for_overlap(df1, df2, cols, leaders):
     df2 : :obj:`pd.DataFrame`
         The second dataframe (order is irrelevant)
     cols: list[str]
-        List of columns that should be identical between the two dataframes.
+        List of columns that should be identical between the two dataframes. Typically
+        "scenario", "model", and whatever the time column is.
+    leaders : list[str]
+        List of lead variables that must be found in all acceptable model/scenarios
+        combinations.
     Returns
     -------
     (:obj:`pd.DataFrame`, :obj:`pd.DataFrame`)
@@ -300,6 +302,7 @@ def _filter_for_overlap(df1, df2, cols, leaders):
     """
     lead_data = df1.data.set_index(cols)
     follow_data = df2.data.set_index(cols)
+    # We only want to select model/scenario cases where we have data for all leaders
     shared_indices = [
         ind
         for ind in follow_data.index
