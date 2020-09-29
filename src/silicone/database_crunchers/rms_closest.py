@@ -181,9 +181,7 @@ class RMSClosest(_DatabaseCruncher):
                 if len(lead_var_mod_scen) != len(variable_leaders):
                     raise ValueError(
                         "Insufficient variables are found to infill model {}, scenario "
-                        "{}. Only found {}.".format(
-                            model, scenario, lead_var_mod_scen
-                        )
+                        "{}. Only found {}.".format(model, scenario, lead_var_mod_scen)
                     )
                 closest_model, closest_scenario = _select_closest(
                     iamdf_lead_timeseries, lead_var_mod_scen, weighting

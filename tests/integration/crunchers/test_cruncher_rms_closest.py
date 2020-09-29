@@ -352,9 +352,7 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         error_msg = (
             "Insufficient variables are found to infill model {}, scenario {}."
             " Only found {}."
-        ).format(
-            bad_model, bad_scenario, "Emissions|HFC|C5F12"
-        )
+        ).format(bad_model, bad_scenario, "Emissions|HFC|C5F12")
         with pytest.raises(ValueError, match=error_msg):
             filler(test_downscale_df)
         # If we remove the model/scenario case with insufficient data we get results.
