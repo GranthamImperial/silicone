@@ -326,8 +326,9 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         assert callable(res)
         if add_col:
             add_col_val = "blah"
+            large_db = large_db.data
             large_db[add_col] = add_col_val
-            large_db = IamDataFrame(large_db.data)
+            large_db = IamDataFrame(large_db)
             assert large_db.extra_cols[0] == add_col
         crunched = res(large_db)
 

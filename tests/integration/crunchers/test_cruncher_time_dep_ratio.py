@@ -152,6 +152,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         filler = tcruncher.derive_relationship(follow, lead, match_sign)
         if add_col:
             add_col_val = "blah"
+            test_downscale_df = test_downscale_df.data
             test_downscale_df[add_col] = add_col_val
             test_downscale_df = IamDataFrame(test_downscale_df.data)
             assert test_downscale_df.extra_cols[0] == add_col

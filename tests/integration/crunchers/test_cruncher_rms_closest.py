@@ -485,8 +485,9 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db)
         if add_col:
             add_col_val = "blah"
+            test_downscale_df = test_downscale_df.data
             test_downscale_df[add_col] = add_col_val
-            test_downscale_df = IamDataFrame(test_downscale_df.data)
+            test_downscale_df = IamDataFrame(test_downscale_df)
             assert test_downscale_df.extra_cols[0] == add_col
         res = filler(test_downscale_df)
 

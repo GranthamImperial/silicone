@@ -8,7 +8,6 @@ import scipy.interpolate
 from base import _DataBaseCruncherTester
 from pyam import IamDataFrame
 
-import silicone.multiple_infillers
 from silicone.database_crunchers import EqualQuantileWalk
 
 _ma = "model_a"
@@ -124,8 +123,9 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         res = tcruncher.derive_relationship(follow, lead)
         if add_col:
             add_col_val = "blah"
+            simple_df = simple_df.data
             simple_df[add_col] = add_col_val
-            simple_df = IamDataFrame(simple_df.data)
+            simple_df = IamDataFrame(simple_df)
             assert simple_df.extra_cols[0] == add_col
 
         infilled = res(simple_df)
@@ -208,12 +208,12 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         test_db.filter(model=_ma, inplace=True)
         lead = ["Emissions|CH4"]
         follow = "Emissions|CO2"
-        one_follow = test_db.copy()
+        one_follow = test_db.data
         # We remove two of the CH4 values at the same time
-        one_follow.data = one_follow.data.drop([0, 16])
-        one_follow.data["scenario"] += "_orig"
+        one_follow = one_follow.drop([0, 16])
+        one_follow["scenario"] += "_orig"
+        one_follow = IamDataFrame(one_follow)
         one_follow.append(test_db, inplace=True)
-        one_follow = IamDataFrame(one_follow.data)
         tcruncher = self.tclass(one_follow)
         res = tcruncher.derive_relationship(follow, lead)
         infilled = res(test_db)
@@ -256,7 +256,9 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
             modify_extreme_db["value"] == max(modify_extreme_db["value"])
         ]
         ind = modify_extreme_db["value"].idxmax
+        modify_extreme_db = modify_extreme_db.data
         modify_extreme_db["value"].loc[ind] += 10
+        modify_extreme_db = IamDataFrame(modify_extreme_db)
         extreme_crunched = res(modify_extreme_db)
         # Check results are the same
         assert crunched.equals(extreme_crunched)
@@ -272,7 +274,9 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
             modify_extreme_db["value"] == min(modify_extreme_db["value"])
         ]
         ind = modify_extreme_db["value"].idxmin
+        modify_extreme_db = modify_extreme_db.data
         modify_extreme_db["value"].loc[ind] -= 10
+        modify_extreme_db = IamDataFrame(modify_extreme_db)
         extreme_crunched = res(modify_extreme_db)
         assert crunched.filter(scenario=min_scen)["value"].iloc[0] != min(
             large_db_int.filter(variable=follow)["value"].values
