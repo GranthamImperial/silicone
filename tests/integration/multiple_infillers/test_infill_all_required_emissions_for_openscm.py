@@ -70,12 +70,7 @@ class TestGasDecomposeTimeDepRatio:
         leader = ["Emissions|HFC|C2F6"]
         to_fill = test_db.filter(variable=required_variables_list, keep=False)
         database = test_db.copy()
-        database.data["variable"].loc[
-            database.data["variable"] == required_variables_list[0]
-        ] = "Emissions|odd"
-        err_msg = re.escape(
-            "Missing some requested variables: {}".format(required_variables_list[0])
-        )
+        database.rename({"variable": {required_variables_list[0]: "Emissions|odd"}}, inplace=True)
         with pytest.warns(UserWarning):
             output_df = infill_all_required_variables(
                 to_fill,
@@ -100,9 +95,15 @@ class TestGasDecomposeTimeDepRatio:
         required_variables_list = ["HFC|C5F12"]
         infilled_data_prefix = "Emissions"
         modified_test_db = test_db.copy()
-        modified_test_db.data["variable"] = modified_test_db.data[
-            "variable"
-        ].str.replace(re.escape(infilled_data_prefix + "|"), "")
+        modified_test_db.rename(
+            {
+                "variable": {
+                    var: var.replace(infilled_data_prefix + "|", "")
+                    for var in modified_test_db.variables()
+                }
+            },
+            inplace=True,
+        )
         to_fill = modified_test_db.filter(variable=required_variables_list, keep=False)
         output_df = infill_all_required_variables(
             to_fill,
@@ -121,9 +122,15 @@ class TestGasDecomposeTimeDepRatio:
         required_variables_list = ["HFC|C5F12"]
         infilled_data_prefix = "Emissions"
         modified_test_db = test_db.copy()
-        modified_test_db.data["variable"] = modified_test_db.data[
-            "variable"
-        ].str.replace(re.escape(infilled_data_prefix + "|"), "")
+        modified_test_db.rename(
+            {
+                "variable": {
+                    var: var.replace(infilled_data_prefix + "|", "")
+                    for var in modified_test_db.variables()
+                }
+            },
+            inplace=True,
+        )
         to_fill = modified_test_db.filter(variable=required_variables_list, keep=False)
         output_times = to_fill[to_fill.time_col].unique()
         output_df = infill_all_required_variables(
@@ -144,9 +151,15 @@ class TestGasDecomposeTimeDepRatio:
         required_variables_list = ["HFC|C5F12"]
         infilled_data_prefix = "Emissions"
         modified_test_db = test_db.copy()
-        modified_test_db.data["variable"] = modified_test_db.data[
-            "variable"
-        ].str.replace(re.escape(infilled_data_prefix + "|"), "")
+        modified_test_db.rename(
+            {
+                "variable": {
+                    var: var.replace(infilled_data_prefix + "|", "")
+                    for var in modified_test_db.variables()
+                }
+            },
+            inplace=True,
+        )
         to_fill = test_db.filter(variable=required_variables_list, keep=False)
         output_times = to_fill[to_fill.time_col].unique()
         output_df = infill_all_required_variables(
@@ -169,9 +182,15 @@ class TestGasDecomposeTimeDepRatio:
         required_variables_list = ["HFC|C5F12"]
         infilled_data_prefix = "Emissions"
         modified_test_db = test_db.copy()
-        modified_test_db.data["variable"] = modified_test_db.data[
-            "variable"
-        ].str.replace(re.escape(infilled_data_prefix + "|"), "")
+        modified_test_db.rename(
+            {
+                "variable": {
+                    var: var.replace(infilled_data_prefix + "|", "")
+                    for var in modified_test_db.variables()
+                }
+            },
+            inplace=True,
+        )
         to_fill = modified_test_db.filter(variable=required_variables_list, keep=False)
         if test_db.time_col == "year":
             timesteps = None
@@ -199,9 +218,15 @@ class TestGasDecomposeTimeDepRatio:
         required_variables_list = ["HFC|C5F12"]
         infilled_data_prefix = "Emissions"
         modified_test_db = test_db.copy()
-        modified_test_db.data["variable"] = modified_test_db.data[
-            "variable"
-        ].str.replace(re.escape(infilled_data_prefix + "|"), "")
+        modified_test_db.rename(
+            {
+                "variable": {
+                    var: var.replace(infilled_data_prefix + "|", "")
+                    for var in modified_test_db.variables()
+                }
+            },
+            inplace=True,
+        )
         to_fill = modified_test_db.filter(
             variable=required_variables_list, keep=False
         ).append(test_db)
@@ -224,9 +249,15 @@ class TestGasDecomposeTimeDepRatio:
         required_variables_list = ["HFC|C5F12"]
         infilled_data_prefix = "Emissions"
         modified_test_db = test_db.copy()
-        modified_test_db.data["variable"] = modified_test_db.data[
-            "variable"
-        ].str.replace(re.escape(infilled_data_prefix + "|"), "")
+        modified_test_db.rename(
+            {
+                "variable": {
+                    var: var.replace(infilled_data_prefix + "|", "")
+                    for var in modified_test_db.variables()
+                }
+            },
+            inplace=True,
+        )
         modified_test_db.append(test_db, inplace=True)
         to_fill = modified_test_db.filter(variable=required_variables_list, keep=False)
         if test_db.time_col == "year":
