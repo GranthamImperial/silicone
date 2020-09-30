@@ -2,7 +2,6 @@ import re
 
 import numpy as np
 import pandas as pd
-import pyam
 import pytest
 from base import _DataBaseCruncherTester
 from pyam import IamDataFrame, concat
@@ -28,6 +27,26 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
             ["model_b", "scen_b", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1, 2, 3],
             [
                 "model_b",
+                "scen_b",
+                "World",
+                "Emissions|HFC|CF4",
+                "kt C2F6/yr",
+                10,
+                20,
+                30,
+            ],
+            [
+                "model_b",
+                "scen_d",
+                "World",
+                "Emissions|HFC|CF4",
+                "kt C2F6/yr",
+                10,
+                20,
+                30,
+            ],
+            [
+                "model_b",
                 "scen_c",
                 "World",
                 "Emissions|HFC|C2F6",
@@ -35,6 +54,16 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
                 1.1,
                 2.2,
                 2.8,
+            ],
+            [
+                "model_b",
+                "scen_c",
+                "World",
+                "Emissions|HFC|CF4",
+                "kt C2F6/yr",
+                110,
+                220,
+                280,
             ],
         ],
         columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2050],
@@ -100,6 +129,26 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
                 1.2,
                 2.3,
                 2.8,
+            ],
+            [
+                "model_c",
+                "scen_b",
+                "World",
+                "Emissions|HFC|CF4",
+                "kt C2F6/yr",
+                20.02,
+                20,
+                30,
+            ],
+            [
+                "model_c",
+                "scen_c",
+                "World",
+                "Emissions|HFC|CF4",
+                "kt C2F6/yr",
+                11,
+                22,
+                28,
             ],
         ],
         columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2050],
@@ -225,11 +274,15 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
 
     def test_multiple_units_error(self, multiple_units_df, bad_units_df):
         tcruncher = self.tclass(bad_units_df)
-
-        filler = tcruncher.derive_relationship(
-            "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
+        lead = ["Emissions|HFC|C2F6"]
+        filler = tcruncher.derive_relationship("Emissions|HFC|C5F12", lead)
+        leader_var_unit = {
+            var[1]["variable"]: var[1]["unit"]
+            for var in bad_units_df.variables(True).iterrows()
+        }
+        error_msg = "Units of lead variable is meant to be {}, found {}".format(
+            leader_var_unit, multiple_units_df.filter(variable=lead).variables(True)
         )
-        error_msg = "More than one unit detected for input timeseries"
         with pytest.raises(ValueError, match=error_msg):
             filler(multiple_units_df)
 
@@ -240,7 +293,8 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
             "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
         )
         error_msg = "Units of lead variable is meant to be {}, found {}".format(
-            bad_units_df.data.unit[0], test_downscale_df.data.unit[0]
+            {bad_units_df.data.variable[0]: bad_units_df.data.unit[0]},
+            test_downscale_df.data.unit[0],
         )
         with pytest.raises(ValueError, match=error_msg):
             filler(test_downscale_df)
@@ -289,6 +343,84 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
             [1.1, 2.2, 2.8],
         )
 
+    def test_relationship_multi_lead_usage(self, larger_df, test_downscale_df):
+        tcruncher = self.tclass(larger_df)
+        leads = ["Emissions|HFC|C2F6", "Emissions|HFC|CF4"]
+        filler = tcruncher.derive_relationship("Emissions|HFC|C5F12", leads)
+        bad_model = "model_b"
+        bad_scenario = "scen_d"
+        error_msg = (
+            "Insufficient variables are found to infill model {}, scenario {}."
+            " Only found {}."
+        ).format(bad_model, bad_scenario, "Emissions|HFC|C5F12")
+        with pytest.raises(ValueError, match=error_msg):
+            filler(test_downscale_df)
+        # If we remove the model/scenario case with insufficient data we get results.
+        res = filler(test_downscale_df.filter(scenario=bad_scenario, keep=False))
+        np.testing.assert_allclose(
+            res.filter(model="model_b", scenario="scen_b")
+            .timeseries()
+            .values.squeeze(),
+            [1.1, 2.2, 2.8],
+        )
+        np.testing.assert_allclose(
+            res.filter(model="model_b", scenario="scen_c")
+            .timeseries()
+            .values.squeeze(),
+            [1, 2, 3],
+        )
+
+    def test_relationship_weighted_multi_lead_usage(self, larger_df, test_downscale_df):
+        # If we apply the weightings differently we can change the outcome
+        tcruncher = self.tclass(larger_df)
+        leads = ["Emissions|HFC|C2F6", "Emissions|HFC|CF4"]
+        follow = "Emissions|HFC|C5F12"
+        # If CF4 weight is w, C2F6 weight 1, the RMS error between target and lead data
+        # for target mod_b scen_b is about
+        # RMS = 0.001 + 10 w for mod_c, scen_b
+        # RMS = 0.3 + 3 w for mod_c, scen c.
+        # So if w < 0.3 / 7, we prefer the data from c. Above that, we get the same
+        # result as in the unweighted case:
+        weights = {"Emissions|HFC|C2F6": 1, "Emissions|HFC|CF4": 0.045}
+        filler = tcruncher.derive_relationship(follow, leads, weights)
+        bad_scenario = "scen_d"  # this scenario has insufficient data
+        res = filler(test_downscale_df.filter(scenario=bad_scenario, keep=False))
+        np.testing.assert_allclose(
+            res.filter(model="model_b", scenario="scen_b")
+            .timeseries()
+            .values.squeeze(),
+            [1.1, 2.2, 2.8],
+        )
+        # mod_b, scen_c by contrast has a formula more like
+        # RMS = 0.3 + 332.6 w or mod_c, scen_b
+        # RMS = 335.4 w for mod_c, scen c.
+        # so will show the opposite result at this weighting compared to the unweighted
+        # case
+        np.testing.assert_allclose(
+            res.filter(model="model_b", scenario="scen_c")
+            .timeseries()
+            .values.squeeze(),
+            [1.1, 2.2, 2.8],
+        )
+        # But with a slightly lower weight, we also swap to the other case for the
+        # results of mod_b, scen_b:
+        weights = {"Emissions|HFC|C2F6": 1, "Emissions|HFC|CF4": 0.04}
+        filler = tcruncher.derive_relationship(follow, leads, weights)
+        res = filler(test_downscale_df.filter(scenario=bad_scenario, keep=False))
+        np.testing.assert_allclose(
+            res.filter(model="model_b", scenario="scen_b")
+            .timeseries()
+            .values.squeeze(),
+            [1, 2, 3],
+        )
+        # No change in mod_b, scen_c
+        np.testing.assert_allclose(
+            res.filter(model="model_b", scenario="scen_c")
+            .timeseries()
+            .values.squeeze(),
+            [1.1, 2.2, 2.8],
+        )
+
     def test_derive_relationship(self, test_db):
         tcruncher = self.tclass(test_db)
         res = tcruncher.derive_relationship(
@@ -298,11 +430,12 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
 
     def test_derive_relationship_error_multiple_lead_vars(self, test_db):
         tcruncher = self.tclass(test_db)
+        leaders = ["a", "b"]
         error_msg = re.escape(
-            "For `RMSClosest`, ``variable_leaders`` should only " "contain one variable"
+            "No data for `variable_leaders` (['a', 'b']) in database".format(leaders)
         )
         with pytest.raises(ValueError, match=error_msg):
-            tcruncher.derive_relationship("Emissions|HFC|C5F12", ["a", "b"])
+            tcruncher.derive_relationship("Emissions|HFC|C5F12", leaders)
 
     def test_derive_relationship_error_no_info_leader(self, test_db):
         # test that crunching fails if there's no data about the lead gas in the
@@ -402,35 +535,76 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
             filler(test_downscale_df)
 
 
-# other select closest tests to write before making public:
-#   - what happens if indexes don't align
 def test_select_closest():
-    target = pd.Series([1, 2, 3])
-    possible_answers = pd.DataFrame(
-        [[1, 1, 1], [1, 2, 3.5], [1, 2, 3.5], [1, 2, 4]],
+    bad_target = pd.DataFrame(
+        [[1, 2, 3]],
         index=pd.MultiIndex.from_arrays(
-            [("blue", "red", "green", "yellow"), (1.5, 1.6, 2, 0.4)],
-            names=("colour", "height"),
+            [("chartreuse",), (6,), (5,), (1.5,)],
+            names=("model", "scenario", "homogeneity", "variable"),
         ),
     )
+    target = pd.DataFrame(
+        [[1, 2, 3]],
+        index=pd.MultiIndex.from_arrays(
+            [("chartreuse",), (6,), (5,), (1,)],
+            names=("model", "scenario", "homogeneity", "variable"),
+        ),
+    )
+    possible_answers = pd.DataFrame(
+        [[1, 1, 3.1], [1, 2, 3.5], [1, 2, 3.5], [1, 2, 4]],
+        index=pd.MultiIndex.from_arrays(
+            [
+                ("blue", "red", "green", "yellow"),
+                (1.5, 1.6, 2, 0.4),
+                (1, 1, 1, 1),
+                (1, 1, 1, 1),
+            ],
+            names=("model", "scenario", "homogeneity", "variable"),
+        ),
+    )
+    error_msg = "No variable overlap between target and infiller databases."
+    weighting = {1: 1}
+    with pytest.raises(ValueError, match=error_msg):
+        _select_closest(possible_answers, bad_target, weighting)
+    closest_meta = _select_closest(possible_answers, target, weighting)
 
-    closest_meta = _select_closest(possible_answers, target)
-    assert closest_meta["colour"] == "red"
-    assert closest_meta["height"] == 1.6
-
-
-def test_select_closest_multi_dimensional_target_error():
-    df = pd.DataFrame([1, 1])
-    with pytest.raises(ValueError, match="Target array is multidimensional"):
-        _select_closest(df, df)
+    assert closest_meta[0] == "red"
+    assert closest_meta[1] == 1.6
 
 
 def test_select_closest_wrong_shape_error():
+    # Ensures that find closest produces an error if target and lead do not have
+    # compatible shapes
     to_search = pd.DataFrame([[1, 1, 1], [1, 2, 3.5], [1, 2, 3.5], [1, 2, 4]])
-    target = pd.Series([1, 1])
+    target = pd.DataFrame([[1, 1], [1, 2], [1, 2], [1, 2]])
 
     with pytest.raises(
         ValueError,
         match="Target array does not match the size of the searchable arrays",
     ):
-        _select_closest(to_search, target)
+        _select_closest(to_search, target, {1: 1})
+
+
+def test_select_closest_index_mismatch():
+    # Ensures that the find closest produces an error if the column headings (dates) do
+    # not align between lead and target
+    to_search = pd.DataFrame(
+        {"A": [1, 1], "B": [1, 2]},
+        index=pd.MultiIndex.from_arrays(
+            [("chartreuse", "red"), (6, 7), (5, 8), (1, 1)],
+            names=("colour", "region", "homogeneity", "variable"),
+        ),
+    )
+    target = pd.DataFrame(
+        {"A": [1, 1], "C": [1, 2]},
+        index=pd.MultiIndex.from_arrays(
+            [("chartreuse", "red"), (6, 7), (5, 8), (1, 1)],
+            names=("colour", "region", "homogeneity", "variable"),
+        ),
+    )
+    weights = {1: 1}
+
+    with pytest.raises(
+        ValueError, match="Time values mismatch between target and infiller databases.",
+    ):
+        _select_closest(to_search, target, weights)
