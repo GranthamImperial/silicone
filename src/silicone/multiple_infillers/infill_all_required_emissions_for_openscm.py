@@ -122,8 +122,14 @@ def infill_all_required_variables(
             != to_fill_old_prefix
         ):
             raise ValueError("Not all of the data begins with the expected prefix")
-        to_fill.data["variable"] = to_fill.data["variable"].str.replace(
-            re.escape(to_fill_old_prefix + "|"), ""
+        to_fill.rename(
+            {
+                "variable": {
+                    var: var.replace(to_fill_old_prefix + "|", "")
+                    for var in to_fill.variables()
+                }
+            },
+            inplace=True,
         )
     if infilled_data_prefix:
         if any(
@@ -209,7 +215,14 @@ def infill_all_required_variables(
             **kwargs,
         )
     if infilled_data_prefix:
-        to_fill.data["variable"] = infilled_data_prefix + "|" + to_fill.data["variable"]
+        to_fill.rename(
+            {
+                "variable": {
+                    var: infilled_data_prefix + "|" + var for var in to_fill.variables()
+                }
+            },
+            inplace=True,
+        )
     return to_fill
 
 
