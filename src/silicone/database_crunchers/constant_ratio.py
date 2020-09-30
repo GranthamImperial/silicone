@@ -96,7 +96,7 @@ class ConstantRatio(_DatabaseCruncher):
             ValueError
                 The key year for filling is not in ``in_iamdf``.
             """
-            output_ts = in_iamdf.filter(variable=variable_leaders)
+            output_ts = in_iamdf.filter(variable=variable_leaders).data
             if any(output_ts["value"] < 0):
                 warn_str = "Note that the lead variable {} goes negative.".format(
                     variable_leaders
@@ -110,6 +110,6 @@ class ConstantRatio(_DatabaseCruncher):
             output_ts["variable"] = variable_follower
             output_ts["unit"] = units
 
-            return output_ts
+            return IamDataFrame(output_ts)
 
         return filler

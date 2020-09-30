@@ -70,7 +70,9 @@ class TestGasDecomposeTimeDepRatio:
         leader = ["Emissions|HFC|C2F6"]
         to_fill = test_db.filter(variable=required_variables_list, keep=False)
         database = test_db.copy()
-        database.rename({"variable": {required_variables_list[0]: "Emissions|odd"}}, inplace=True)
+        database.rename(
+            {"variable": {required_variables_list[0]: "Emissions|odd"}}, inplace=True
+        )
         with pytest.warns(UserWarning):
             output_df = infill_all_required_variables(
                 to_fill,

@@ -100,8 +100,9 @@ class TestDatabaseCruncherTimeDepRatio:
         if add_col:
             # what should happen if there's more than one value in the `add_col`?
             add_col_val = "blah"
+            test_downscale_df = test_downscale_df.data
             test_downscale_df[add_col] = add_col_val
-            test_downscale_df = IamDataFrame(test_downscale_df.data)
+            test_downscale_df = IamDataFrame(test_downscale_df)
             assert test_downscale_df.extra_cols[0] == add_col
 
         lead = ["Emissions|HFC|C2F6"]
@@ -110,9 +111,11 @@ class TestDatabaseCruncherTimeDepRatio:
         res = filler(test_downscale_df)
 
         exp = test_downscale_df.filter(variable=lead)
-        exp.data["variable"] = follow
-        exp.data["value"] = exp.data["value"] * 2
-        exp.data["unit"] = units
+        exp = exp.data
+        exp["variable"] = follow
+        exp["value"] = exp["value"] * 2
+        exp["unit"] = units
+        exp = IamDataFrame(exp)
 
         pd.testing.assert_frame_equal(
             res.timeseries(), exp.timeseries(), check_like=True
@@ -139,7 +142,9 @@ class TestDatabaseCruncherTimeDepRatio:
         with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
             filler(test_downscale_df)
         assert len(caplog.record_tuples) == 0
-        test_downscale_df.data["value"].iloc[0] = -1
+        test_downscale_df = test_downscale_df.data
+        test_downscale_df["value"].iloc[0] = -1
+        test_downscale_df = IamDataFrame(test_downscale_df)
         with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
             filler(test_downscale_df)
         assert len(caplog.record_tuples) == 1
@@ -180,10 +185,11 @@ class TestDatabaseCruncherTimeDepRatio:
             "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"], ratio=0, units="units"
         )
 
-        test_downscale_df = test_downscale_df.filter(year=[2010, 2015])
+        test_downscale_df = test_downscale_df.filter(year=[2010, 2015]).data
         test_downscale_df["unit"].iloc[0] = "bad units"
+        test_downscale_df = IamDataFrame(test_downscale_df)
         with pytest.raises(
             AssertionError,
             match="There are multiple or no units for the lead variable.",
         ):
-            res = filler(test_downscale_df)
+            filler(test_downscale_df)
