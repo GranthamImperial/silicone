@@ -155,8 +155,9 @@ class TestDatabaseCruncherLatestTimeRatio(_DataBaseCruncherTester):
         filler = tcruncher.derive_relationship(follow, lead)
         if add_col:
             add_col_val = "blah"
+            test_downscale_df = test_downscale_df.data
             test_downscale_df[add_col] = add_col_val
-            test_downscale_df = IamDataFrame(test_downscale_df.data)
+            test_downscale_df = IamDataFrame(test_downscale_df)
             assert test_downscale_df.extra_cols[0] == add_col
         test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db)
         res = filler(test_downscale_df)
@@ -197,7 +198,9 @@ class TestDatabaseCruncherLatestTimeRatio(_DataBaseCruncherTester):
         with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
             filler(test_downscale_df)
         assert len(caplog.record_tuples) == 0
-        test_downscale_df.data["value"].iloc[0] = -1
+        test_downscale_df = test_downscale_df.data
+        test_downscale_df["value"].iloc[0] = -1
+        test_downscale_df = IamDataFrame(test_downscale_df)
         with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
             filler(test_downscale_df)
         assert len(caplog.record_tuples) == 1

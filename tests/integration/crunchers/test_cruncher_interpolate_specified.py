@@ -157,8 +157,9 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         res = tcruncher.derive_relationship(follow, lead, required_scenario="scen_a")
         if add_col:
             add_col_val = "blah"
+            simple_df = simple_df.data
             simple_df[add_col] = add_col_val
-            simple_df = IamDataFrame(simple_df.data)
+            simple_df = IamDataFrame(simple_df)
             assert simple_df.extra_cols[0] == add_col
 
         expect_00 = res(simple_df)
