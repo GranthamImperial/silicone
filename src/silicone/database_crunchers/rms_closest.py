@@ -269,7 +269,6 @@ def _select_closest(to_search_df, target_df, weighting):
         ].squeeze()
     var_index = to_search_df.index.names.index("variable")
     for label, row in to_search_df.iterrows():
-        # The third item in the label is the variable name.
         varname = label[var_index]
         rms.loc[label] = (
             ((target_for_var[varname] - row) ** 2).mean()
