@@ -286,16 +286,17 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         )
         range_db = IamDataFrame(range_db)
         range_db = self._adjust_time_style_to_match(range_db, test_db)
-        same_db = range_db.copy()
+        same_db = range_db.copy().data
         same_db["variable"] = _eco2
         same_db["value"] = 1
+        same_db = IamDataFrame(same_db)
         same_db.append(range_db, inplace=True)
-        nearly_same_db = same_db.copy()
+        nearly_same_db = same_db.copy().data
         # We change the value of one point on the nearly_same and remove it on the same
-        nearly_same_db.data["value"].iloc[1] = 0
+        nearly_same_db["value"].iloc[1] = 0
+        same_db = IamDataFrame(same_db)
         same_db.filter(scenario="0", keep=False, inplace=True)
-        same_db = IamDataFrame(same_db.data)
-        nearly_same_db = IamDataFrame(nearly_same_db.data)
+        nearly_same_db = IamDataFrame(nearly_same_db)
         # Derive crunchers and compare results from the two values
         same_cruncher = self.tclass(same_db)
         nearly_same_cruncher = self.tclass(nearly_same_db)
@@ -373,7 +374,9 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
             filler(test_downscale_df)
         assert len(caplog.record_tuples) == 0
-        test_downscale_df.data["value"].iloc[0] = -1
+        test_downscale_df = test_downscale_df.data
+        test_downscale_df["value"].iloc[0] = -1
+        test_downscale_df = IamDataFrame(test_downscale_df)
         with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
             filler(test_downscale_df)
         assert len(caplog.record_tuples) == 1

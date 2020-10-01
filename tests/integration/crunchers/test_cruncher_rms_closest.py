@@ -302,10 +302,10 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
     def test_relationship_no_infiller_infillee_time_overlap(
         self, bad_df, test_downscale_df
     ):
-        odd_times = bad_df.copy()
+        odd_times = bad_df.copy().data
         odd_times["scenario"].iloc[0] = "scen_d"
         odd_times["model"].iloc[0] = "model_b"
-        tcruncher = self.tclass(odd_times)
+        tcruncher = self.tclass(IamDataFrame(odd_times))
 
         filler = tcruncher.derive_relationship(
             "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
@@ -453,9 +453,9 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         # test that crunching fails if there's no data about the lead gas in the
         # database
         variable_leaders = ["Emissions|HFC|C2F6"]
-        db_no_overlap_m = test_db.copy()
+        db_no_overlap_m = test_db.copy().data
         db_no_overlap_m["model"].loc[2] = "different model"
-        db_no_overlap_m = IamDataFrame(db_no_overlap_m.data)
+        db_no_overlap_m = IamDataFrame(db_no_overlap_m)
         tcruncher = self.tclass(db_no_overlap_m)
         error_msg = re.escape(
             "No model/scenario overlap between leader and follower data"
@@ -491,17 +491,17 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
             assert test_downscale_df.extra_cols[0] == add_col
         res = filler(test_downscale_df)
 
-        scen_b_df = test_db.filter(variable="Emissions|HFC|C5F12")
-        scen_c_df = test_db.filter(variable="Emissions|HFC|C5F12")
+        scen_b_df = test_db.filter(variable="Emissions|HFC|C5F12").data
+        scen_c_df = test_db.filter(variable="Emissions|HFC|C5F12").data
         scen_b_df["model"] = "model_b"
         scen_b_df["scenario"] = "scen_b"
         scen_c_df["model"] = "model_b"
         scen_c_df["scenario"] = "scen_c"
         if add_col:
             scen_c_df[add_col] = add_col_val
-            scen_c_df = IamDataFrame(scen_c_df.data)
+            scen_c_df = IamDataFrame(scen_c_df)
             scen_b_df[add_col] = add_col_val
-            scen_b_df = IamDataFrame(scen_b_df.data)
+            scen_b_df = IamDataFrame(scen_b_df)
         exp = concat([scen_b_df, scen_c_df])
 
         pd.testing.assert_frame_equal(

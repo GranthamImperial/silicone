@@ -154,7 +154,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             add_col_val = "blah"
             test_downscale_df = test_downscale_df.data
             test_downscale_df[add_col] = add_col_val
-            test_downscale_df = IamDataFrame(test_downscale_df.data)
+            test_downscale_df = IamDataFrame(test_downscale_df)
             assert test_downscale_df.extra_cols[0] == add_col
         with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
             res = filler(test_downscale_df)
@@ -196,17 +196,19 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         follow = "Emissions|HFC|C5F12"
         lead = ["Emissions|HFC|C2F6"]
         equal_df = unequal_df.filter(model="model_a")
-        invert_sign = equal_df.filter(variable=lead)
-        invert_sign.data["value"] = -1 * invert_sign.data["value"]
-        invert_sign.append(equal_df.filter(variable=follow), inplace=True)
-        invert_sign.data["model"] = "negative_model"
+        invert_sign = equal_df.filter(variable=lead).data
+        invert_sign["value"] = -1 * invert_sign["value"]
+        invert_sign = invert_sign.append(equal_df.filter(variable=follow).data)
+        invert_sign["model"] = "negative_model"
+        invert_sign = IamDataFrame(invert_sign)
         equal_df.append(invert_sign, inplace=True)
-        equal_df = IamDataFrame(equal_df.data)
         tcruncher = self.tclass(equal_df)
 
         # Invert the sign of the infillee too, as we haven't tested the formula for
         # negative values
-        test_downscale_df.data["value"] = -1 * test_downscale_df.data["value"]
+        test_downscale_df = test_downscale_df.data
+        test_downscale_df["value"] = -1 * test_downscale_df["value"]
+        test_downscale_df = IamDataFrame(test_downscale_df)
         test_downscale_df = self._adjust_time_style_to_match(
             test_downscale_df, equal_df
         ).filter(year=[2010, 2015])
@@ -257,8 +259,9 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         self, unequal_df, test_downscale_df, match_sign, caplog, consistent_cases
     ):
         leader = ["Emissions|HFC|C2F6"]
-        equal_df = unequal_df.filter(model="model_a")
-        equal_df.data["value"].iloc[0] = np.nan
+        equal_df = unequal_df.filter(model="model_a").data
+        equal_df["value"].iloc[0] = np.nan
+        equal_df = IamDataFrame(equal_df)
         tcruncher = self.tclass(equal_df)
         test_downscale_df = self._adjust_time_style_to_match(
             test_downscale_df, equal_df
@@ -301,8 +304,9 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         # lengths are inconsistent.
         # Otherwise, the ratio is -1 : 1.
         leader = ["Emissions|HFC|C2F6"]
-        equal_df = unequal_df.filter(scenario="scen_a")
-        equal_df.data["value"].iloc[0] = -1
+        equal_df = unequal_df.filter(scenario="scen_a").data
+        equal_df["value"].iloc[0] = -1
+        equal_df = IamDataFrame(equal_df)
         tcruncher = self.tclass(equal_df)
         test_downscale_df = self._adjust_time_style_to_match(
             test_downscale_df, equal_df
@@ -383,15 +387,17 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
 
     def test_multiple_units_breaks_infillee(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db)
-
         filler = tcruncher.derive_relationship(
             "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
         )
 
-        test_downscale_df = self._adjust_time_style_to_match(
-            test_downscale_df, test_db
-        ).filter(year=[2010, 2015])
+        test_downscale_df = (
+            self._adjust_time_style_to_match(test_downscale_df, test_db)
+            .filter(year=[2010, 2015])
+            .data
+        )
         test_downscale_df["unit"].iloc[0] = "bad units"
+        test_downscale_df = IamDataFrame(test_downscale_df)
         with pytest.raises(
             AssertionError, match="There are multiple units for the lead variable."
         ):
@@ -401,7 +407,9 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
     def test_multiple_units_breaks_infiller_follower(
         self, test_db, test_downscale_df, consistent_cases
     ):
+        test_db = test_db.data
         test_db["unit"].iloc[2] = "bad units"
+        test_db = IamDataFrame(test_db)
         if consistent_cases:
             error_str = (
                 "No data is complete enough to use in the time-dependent "
@@ -422,7 +430,9 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
     def test_multiple_units_breaks_infiller_leader(
         self, test_db, test_downscale_df, consistent_cases
     ):
+        test_db = test_db.data
         test_db["unit"].iloc[0] = "bad units"
+        test_db = IamDataFrame(test_db)
         if consistent_cases:
             error_str = (
                 "No data is complete enough to use in the time-dependent "
