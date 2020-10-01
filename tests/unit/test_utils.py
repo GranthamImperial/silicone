@@ -50,15 +50,18 @@ tdb = pd.DataFrame(
 )
 test_db = pyam.IamDataFrame(tdb)
 
-df_low = simple_df.copy()
-df_low.data["scenario"].loc[df_low.data["scenario"] == "scen_a"] = "right_scenario"
-df_low.data["scenario"].loc[df_low.data["scenario"] == "scen_b"] = "wrong_scenario"
+df_low = simple_df.copy().data
+df_low["scenario"].loc[df_low["scenario"] == "scen_a"] = "right_scenario"
+df_low["scenario"].loc[df_low["scenario"] == "scen_b"] = "wrong_scenario"
 df_high = df_low.copy()
 df_high["model"] = "high_model"
-df_low.data["value"] = df_low.data["value"] - 10
-df_high.data["value"] = df_high.data["value"] + 11
+df_low["value"] = df_low["value"] - 10
+df_high["value"] = df_high["value"] + 11
+df_high = pyam.IamDataFrame(df_high)
+df_low = pyam.IamDataFrame(df_low)
 df_near = simple_df.copy()
-df_near.data["value"] = df_near["value"] + 1
+df_near["value"] = df_near["value"] + 1
+df_near = pyam.IamDataFrame(df_near)
 df_to_test = df_low.append(df_near).append(df_high)
 # We need to refresh the metadata in order to proceed.
 df_to_test = pyam.IamDataFrame(df_to_test.data)
@@ -73,10 +76,11 @@ variable_follower = "Emissions|CH4"
 def test_find_matching_scenarios_matched(half_val, expected):
     # Tests
     # 1) that 1st option is used in the case of equality
-    # 2) and if it's closer,
+    # 2) and 1st option used if it's closer,
     # 3) But not if it's further away
-    half_simple_df = simple_df.filter(scenario="scen_a")
-    half_simple_df.data["value"].loc[0] = half_val
+    half_simple_df = simple_df.filter(scenario="scen_a").data
+    half_simple_df["value"].loc[0] = half_val
+    half_simple_df = pyam.IamDataFrame(half_simple_df)
     scenarios = find_matching_scenarios(
         simple_df,
         half_simple_df,
@@ -89,8 +93,9 @@ def test_find_matching_scenarios_matched(half_val, expected):
 
 def test_find_matching_scenarios_no_data_for_time():
     time_col = simple_df.time_col
-    half_simple_df = simple_df.filter(scenario="scen_a")
-    half_simple_df.data[time_col].loc[0] = 0
+    half_simple_df = simple_df.filter(scenario="scen_a").data
+    half_simple_df[time_col].loc[0] = 0
+    half_simple_df = pyam.IamDataFrame(half_simple_df)
     with pytest.raises(ValueError):
         find_matching_scenarios(
             simple_df,
@@ -103,8 +108,9 @@ def test_find_matching_scenarios_no_data_for_time():
 
 def test_find_matching_scenarios_use_change_instead_of_absolute():
     # In this case, we will ignore any offset
-    half_simple_df = simple_df.filter(scenario="scen_a")
-    half_simple_df.data["value"] = half_simple_df.data["value"] + 10000
+    half_simple_df = simple_df.filter(scenario="scen_a").data
+    half_simple_df["value"] = half_simple_df["value"] + 10000
+    half_simple_df = pyam.IamDataFrame(half_simple_df)
     scenarios = find_matching_scenarios(
         simple_df,
         half_simple_df,
@@ -217,9 +223,11 @@ def test_find_matching_scenarios_differential():
     assert all_data[0][1] == all_data[5][1]
     # But if we add a small amount to only one point in the differential, it will
     # be downgraded
-    df_to_test["value"].iloc[0] = df_to_test["value"].iloc[0] + 0.1
+    df_to_test_mod = df_to_test.data.copy()
+    df_to_test_mod["value"].iloc[0] = df_to_test_mod["value"].iloc[0] + 0.1
+    df_to_test_mod = pyam.IamDataFrame(df_to_test_mod)
     all_data = find_matching_scenarios(
-        df_to_test,
+        df_to_test_mod,
         simple_df,
         variable_follower,
         variable_leaders,
@@ -230,9 +238,11 @@ def test_find_matching_scenarios_differential():
     )
     assert all_data[0][0] == ("high_model", "right_scenario")
     assert all_data[0][1] != all_data[1][1]
-    df_to_test["value"].iloc[0] = df_to_test["value"].iloc[0] - 0.6
+    df_to_test_mod = df_to_test_mod.data
+    df_to_test_mod["value"].iloc[0] = df_to_test_mod["value"].iloc[0] - 0.6
+    df_to_test_mod = pyam.IamDataFrame(df_to_test_mod)
     all_data = find_matching_scenarios(
-        df_to_test,
+        df_to_test_mod,
         simple_df,
         variable_follower,
         variable_leaders,
@@ -322,10 +332,11 @@ def test_return_cases_which_consistently_split_bad_to_split(check_aggregate_df):
 def test_return_cases_which_consistently_split_numerical_error(check_aggregate_df):
     limited_check_agg = check_aggregate_df.filter(
         variable="Primary Energy*", keep=False
-    )
-    limited_check_agg.data["value"] = limited_check_agg.data[
+    ).data
+    limited_check_agg["value"] = limited_check_agg[
         "value"
-    ] + np.random.normal(0, 0.0001, len(limited_check_agg.data["value"]))
+    ] + np.random.normal(0, 0.0001, len(limited_check_agg["value"]))
+    limited_check_agg = pyam.IamDataFrame(limited_check_agg)
     cases = return_cases_which_consistently_split(limited_check_agg, "*CO2", ["*CO2*"])
     assert pd.DataFrame(cases, columns=["model", "scenario", "region"]).equals(
         limited_check_agg.data[["model", "scenario", "region"]]
@@ -351,8 +362,9 @@ def test_return_cases_which_consistently_split_returns_nothing_with_no_data(
 def test_return_cases_which_consistently_split_one_fails(check_aggregate_df):
     limited_check_agg = check_aggregate_df.filter(
         variable="Primary Energy*", keep=False
-    )
-    limited_check_agg.data["value"].iloc[0] = 41
+    ).data
+    limited_check_agg["value"].iloc[0] = 41
+    limited_check_agg = pyam.IamDataFrame(limited_check_agg)
     cases = return_cases_which_consistently_split(limited_check_agg, "*CO2", ["*CO2*"])
     # This time do not match the initial case, so we have to remove that to do the
     # comparison.
@@ -367,9 +379,9 @@ def test_return_cases_which_consistently_split_one_fails(check_aggregate_df):
 def test_convert_units_to_mtco2_equiv_fails_with_month_units(check_aggregate_df):
     limited_check_agg = check_aggregate_df.filter(
         variable="Primary Energy*", keep=False
-    )
-    limited_check_agg.data["unit"].iloc[0] = "Mt CH4/mo"
-    limited_check_agg = pyam.IamDataFrame(limited_check_agg.data)
+    ).data
+    limited_check_agg["unit"].iloc[0] = "Mt CH4/mo"
+    limited_check_agg = pyam.IamDataFrame(limited_check_agg)
     err_msg = "'mo' is not defined in the unit registry"
     with pytest.raises(UndefinedUnitError, match=err_msg):
         convert_units_to_MtCO2_equiv(limited_check_agg)
@@ -378,9 +390,9 @@ def test_convert_units_to_mtco2_equiv_fails_with_month_units(check_aggregate_df)
 def test_convert_units_to_mtco2_equiv_fails_with_oom_units(check_aggregate_df):
     limited_check_agg = check_aggregate_df.filter(
         variable="Primary Energy*", keep=False
-    )
-    limited_check_agg.data["unit"].iloc[0] = "Tt CO2"
-    limited_check_agg = pyam.IamDataFrame(limited_check_agg.data)
+    ).data
+    limited_check_agg["unit"].iloc[0] = "Tt CO2"
+    limited_check_agg = pyam.IamDataFrame(limited_check_agg)
     err_msg = re.escape(
         "Cannot convert from Tt CO2 (cleaned is: Tt CO2) to Mt CO2-equiv/yr (cleaned is: Mt CO2/yr)"
     )
@@ -395,8 +407,9 @@ def test_convert_units_to_mtco2_equiv_fails_with_bad_units(check_aggregate_df):
 
     limited_check_agg = check_aggregate_df.filter(
         variable="Primary Energy*", keep=False
-    )
-    limited_check_agg.data["unit"].iloc[0] = "bad unit"
+    ).data
+    limited_check_agg["unit"].iloc[0] = "bad unit"
+    limited_check_agg = pyam.IamDataFrame(limited_check_agg)
     err_msg = "'bad' is not defined in the unit registry"
     with pytest.raises(UndefinedUnitError, match=err_msg):
         convert_units_to_MtCO2_equiv(limited_check_agg)
@@ -462,8 +475,9 @@ def test_convert_units_to_MtCO2_doesnt_change(check_aggregate_df):
     # Check that it does nothing when nothing needs doing
     limited_check_agg = check_aggregate_df.filter(
         variable="Primary Energy*", keep=False
-    )
-    limited_check_agg.data["unit"] = "Mt CO2/yr"
+    ).data
+    limited_check_agg["unit"] = "Mt CO2/yr"
+    limited_check_agg = pyam.IamDataFrame(limited_check_agg)
     converted_data = convert_units_to_MtCO2_equiv(limited_check_agg)
 
     assert (converted_data.data["unit"] == "Mt CO2/yr").all()
