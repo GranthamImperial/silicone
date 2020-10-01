@@ -333,9 +333,9 @@ def test_return_cases_which_consistently_split_numerical_error(check_aggregate_d
     limited_check_agg = check_aggregate_df.filter(
         variable="Primary Energy*", keep=False
     ).data
-    limited_check_agg["value"] = limited_check_agg[
-        "value"
-    ] + np.random.normal(0, 0.0001, len(limited_check_agg["value"]))
+    limited_check_agg["value"] = limited_check_agg["value"] + np.random.normal(
+        0, 0.0001, len(limited_check_agg["value"])
+    )
     limited_check_agg = pyam.IamDataFrame(limited_check_agg)
     cases = return_cases_which_consistently_split(limited_check_agg, "*CO2", ["*CO2*"])
     assert pd.DataFrame(cases, columns=["model", "scenario", "region"]).equals(
