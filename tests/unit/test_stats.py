@@ -185,12 +185,12 @@ def test_calc_all_emissions_numerical(tmpdir):
     if not os.path.isdir(test_folder):
         os.makedirs(test_folder)
     # We establish a more complicated set of values
-    numerical_df = simple_df.copy()
-    numerical_df.data["model"] = numerical_df.data["model"] + numerical_df.data[
-        "year"
-    ].map(lambda x: str(x))
-    numerical_df.data["year"] = 2010
-    numerical_df = pyam.IamDataFrame(numerical_df.data)
+    numerical_df = simple_df.copy().data
+    numerical_df["model"] = numerical_df["model"] + numerical_df["year"].map(
+        lambda x: str(x)
+    )
+    numerical_df["year"] = 2010
+    numerical_df = pyam.IamDataFrame(numerical_df)
     # Perform the calculations
     stats.calc_all_emissions_correlations(numerical_df, [2010], test_folder)
     # The order of the elements is identical for the different cases, no sorting needed
@@ -246,9 +246,11 @@ def test_calc_all_emissions_numerical(tmpdir):
     os.remove(test_file)
     assert not os.path.isfile(test_file)
     # Now do a test for just the variance. This requires multiple years
-    numerical_df["value"] = numerical_df["value"] + 10
-    numerical_df.append(simple_df, inplace=True)
+    numerical_df = numerical_df.data
+    numerical_df["value"] += 10
+    numerical_df = numerical_df.append(simple_df.data)
     numerical_df["year"] = numerical_df["year"].map(lambda x: int(x))
+    numerical_df = pyam.IamDataFrame(numerical_df)
     rank_cors = []
     years = [2010, 2030, 2050]
     for year in years:
