@@ -124,7 +124,9 @@ class TestGasDecomposeTimeDepRatio:
 
     def test_relationship_usage_not_enough_time(self, test_db, test_downscale_df):
         # Ensure that the process fails if not all times have data
-        test_db.data["unit"] = "kt C2F6-equiv/yr"
+        test_db = test_db.data
+        test_db["unit"] = "kt C2F6-equiv/yr"
+        test_db = pyam.IamDataFrame(test_db)
         tcruncher = self.tclass(test_db)
         test_downscale_df = _adjust_time_style_to_match(test_downscale_df, test_db)
         error_msg = re.escape(
@@ -139,7 +141,9 @@ class TestGasDecomposeTimeDepRatio:
     def test_relationship_usage_works(self, test_db, test_downscale_df):
         # Test that we get the correct results when everything is in order.
         # First fix the units problem
-        test_db.data["unit"] = "kt C2F6-equiv/yr"
+        test_db = test_db.data
+        test_db["unit"] = "kt C2F6-equiv/yr"
+        test_db = pyam.IamDataFrame(test_db)
         tcruncher = self.tclass(test_db)
         # Fix times to agree
         test_downscale_df = _adjust_time_style_to_match(test_downscale_df, test_db)

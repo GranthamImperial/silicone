@@ -301,9 +301,9 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         same_cruncher = self.tclass(same_db)
         nearly_same_cruncher = self.tclass(nearly_same_db)
         if test_db.time_col == "year":
-            single_date_df = test_db.filter(year=int(same_db[same_db.time_col][0]))
+            single_date_df = test_db.filter(year=int(same_db[same_db.time_col].iloc[0]))
         else:
-            single_date_df = test_db.filter(time=(same_db[same_db.time_col][0]))
+            single_date_df = test_db.filter(time=(same_db[same_db.time_col].iloc[0]))
         # We choose the case model a, which has only values over 1.
         single_date_df.filter(model=_mb, scenario=_sa, keep=False, inplace=True)
         same_res = same_cruncher.derive_relationship(_ech4, [_eco2])(single_date_df)
