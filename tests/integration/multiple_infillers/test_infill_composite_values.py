@@ -91,7 +91,7 @@ class TestInfillCompositeValues:
             infilled.filter(model="model_C", scenario="scen_C").data["value"], 2.5
         )
         assert np.allclose(
-            infilled.filter(
+            larger_df_copy.filter(
                 model="model_D", scenario="scen_C", variable="Emissions|CO2"
             ).data["value"],
             2,
