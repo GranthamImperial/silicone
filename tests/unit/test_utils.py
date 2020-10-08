@@ -427,7 +427,7 @@ def test_convert_units_to_MtCO2_equiv_works(check_aggregate_df, ARoption, expect
     assert all(y[:6] == "Mt CO2" for y in converted_units.data["unit"].unique())
     assert np.allclose(
         converted_units.filter(variable="*CO2*")["value"],
-        limited_check_agg.filter(variable="*CO2*")["value"]
+        limited_check_agg.filter(variable="*CO2*")["value"],
     )
     # Methane is in Mt methane, rate 28* higher in AR5
     assert np.allclose(

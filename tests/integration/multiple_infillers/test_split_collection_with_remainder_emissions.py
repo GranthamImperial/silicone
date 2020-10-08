@@ -286,7 +286,7 @@ class TestSplitCollectionWithRemainderEmissions:
         remainder = "Emissions|CO2"
         # Make the test data variables appropriate
         test_db = test_db.data
-        test_db["variable"][0, 1] = aggregate
+        test_db["variable"].iloc[0:2] = aggregate
         test_db["unit"] = "Mt CO2-equiv/yr"
         test_db = pyam.IamDataFrame(test_db)
         # We remove the extra column from the larger_df as it's not found in test_df
@@ -306,15 +306,12 @@ class TestSplitCollectionWithRemainderEmissions:
         assert len(caplog.record_tuples) == 2
         assert len(returned.data) == len(test_db.filter(variable=aggregate).data) * 2
         # Make the data consistent:
-        test_db = test_db.data
-        test_db = test_db.iloc[0:2]
-        test_db = pyam.IamDataFrame(test_db)
+        test_db = test_db.filter(variable="*Kyoto*")
         returned = infiller.infill_components(aggregate, components, remainder, test_db)
         assert len(returned.data) == 2 * len(test_db.filter(variable=aggregate).data)
 
         # Ensure that we get the same number if the unit conversion is done outside the
         # function
-
         infiller = self.tclass(
             convert_units_to_MtCO2_equiv(
                 larger_df.filter(variable=[aggregate, remainder] + components)
