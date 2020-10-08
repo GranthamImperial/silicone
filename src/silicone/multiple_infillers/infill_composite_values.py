@@ -1,5 +1,7 @@
 import logging
+
 from pyam import IamDataFrame
+
 from silicone.utils import _construct_consistent_values
 
 logger = logging.getLogger(__name__)
