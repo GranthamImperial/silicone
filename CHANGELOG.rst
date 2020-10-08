@@ -3,7 +3,7 @@ Changelog
 
 master
 ------
-- (`#116 <https://github.com/GranthamImperial/silicone/pull/116>`_) Updated to work with new version of pyam/
+- (`#116 <https://github.com/GranthamImperial/silicone/pull/116>`_) Updated to work with new version of pyam
 - (`#115 <https://github.com/GranthamImperial/silicone/pull/115>`_) Pinned black
 - (`#113 <https://github.com/GranthamImperial/silicone/pull/113>`_) Added a warning for using ratio-based crunchers with negative values. Fixed some unit conversion todos (not user-facing).
 - (`#112 <https://github.com/GranthamImperial/silicone/pull/112>`_) Enabled more general unit conversion, bug fix and improvement for infill_composite_values.
