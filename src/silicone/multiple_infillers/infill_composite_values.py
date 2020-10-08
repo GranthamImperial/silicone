@@ -1,5 +1,5 @@
 import logging
-
+from pyam import IamDataFrame
 from silicone.utils import _construct_consistent_values
 
 logger = logging.getLogger(__name__)
@@ -69,14 +69,16 @@ def infill_composite_values(df, composite_dic=None):
     df = df.filter(variable=composite_dic.keys(), keep=False)
     for composite, composite_variables in composite_dic.items():
         if isinstance(composite_variables, dict):
-            temp_df = df.filter(variable=[composite] + list(composite_variables.keys()))
+            temp_df = df.filter(
+                variable=[composite] + list(composite_variables.keys())
+            ).data
             for contributor, factor in composite_variables.items():
-                temp_df.data.loc[
-                    temp_df.data["variable"] == contributor, "value"
+                temp_df.loc[
+                    temp_df["variable"] == contributor, "value"
                 ] *= factor
 
             composite_df = _construct_consistent_values(
-                composite, composite_variables, temp_df
+                composite, composite_variables, IamDataFrame(temp_df)
             )
 
         else:

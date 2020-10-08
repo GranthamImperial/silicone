@@ -173,8 +173,12 @@ class TestSplitCollectionWithRemainderEmissions:
     def test_relationship_usage_works(self, test_db, test_downscale_df):
         # Test that we get the correct results when everything is in order.
         # First fix the units problem
-        test_db.data["unit"] = "kt C2F6-equiv/yr"
+        test_db = test_db.data
+        test_db["unit"] = "kt C2F6-equiv/yr"
+        test_db = pyam.IamDataFrame(test_db)
+        test_downscale_df = test_downscale_df.data
         test_downscale_df["unit"] = "kt C2F6-equiv/yr"
+        test_downscale_df = pyam.IamDataFrame(test_downscale_df)
         components = ["Emissions|HFC|C2F6"]
         aggregate = "Emissions|HFC"
         remainder = "Emissions|HFC|C5F12"
@@ -256,7 +260,9 @@ class TestSplitCollectionWithRemainderEmissions:
         aggregate = "Emissions|KyotoTotal"
         components = ["Emissions|CH4", "Emissions|N2O"]
         remainder = "Emissions|CO2"
-        test_db.data["variable"] = aggregate
+        test_db = test_db.data
+        test_db["variable"] = aggregate
+        test_db = pyam.IamDataFrame(test_db)
         # larger_df has an extra column, "meta"
         larger_df = _adjust_time_style_to_match(larger_df, test_db)
         infiller = self.tclass(larger_df)
@@ -279,11 +285,14 @@ class TestSplitCollectionWithRemainderEmissions:
         components = ["Emissions|CH4", "Emissions|N2O"]
         remainder = "Emissions|CO2"
         # Make the test data variables appropriate
-        test_db.data["variable"][0, 1] = aggregate
-        test_db.data["unit"] = "Mt CO2-equiv/yr"
+        test_db = test_db.data
+        test_db["variable"][0, 1] = aggregate
+        test_db["unit"] = "Mt CO2-equiv/yr"
+        test_db = pyam.IamDataFrame(test_db)
         # We remove the extra column from the larger_df as it's not found in test_df
-        larger_df.data.drop("meta", axis=1, inplace=True)
-        larger_df = pyam.IamDataFrame(larger_df.data)
+        larger_df = larger_df.data
+        larger_df.drop("meta", axis=1, inplace=True)
+        larger_df = pyam.IamDataFrame(larger_df)
         larger_df = _adjust_time_style_to_match(larger_df, test_db)
         infiller = self.tclass(larger_df)
         if test_db.time_col == "year":
@@ -297,7 +306,9 @@ class TestSplitCollectionWithRemainderEmissions:
         assert len(caplog.record_tuples) == 2
         assert len(returned.data) == len(test_db.filter(variable=aggregate).data) * 2
         # Make the data consistent:
-        test_db.data = test_db.data.iloc[0:2]
+        test_db = test_db.data
+        test_db = test_db.iloc[0:2]
+        test_db = pyam.IamDataFrame(test_db)
         returned = infiller.infill_components(aggregate, components, remainder, test_db)
         assert len(returned.data) == 2 * len(test_db.filter(variable=aggregate).data)
 
