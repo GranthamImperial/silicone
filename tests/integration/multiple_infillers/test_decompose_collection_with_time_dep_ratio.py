@@ -226,7 +226,7 @@ class TestGasDecomposeTimeDepRatio:
         # Make the variables work for our case
         components = ["Emissions|HFC|C5F12", "Emissions|HFC|C2F6"]
         aggregate = "Emissions|HFC"
-        test_downscale_df.data["variable"] = aggregate
+        test_downscale_df["variable"] = aggregate
         tcruncher = self.tclass(test_db)
         with pytest.raises(ValueError):
             filled = tcruncher.infill_components(
@@ -259,7 +259,7 @@ class TestGasDecomposeTimeDepRatio:
         # There are optional extra columns on the DataFrame objects. This test ensures
         # that an error is thrown if we add together different sorts of DataFrame.
         aggregate = "Emissions|KyotoTotal"
-        test_db.data["variable"] = aggregate
+        test_db["variable"] = aggregate
         # larger_df has an extra column, "meta"
         larger_df = _adjust_time_style_to_match(larger_df, test_db)
         tcruncher = self.tclass(larger_df)
@@ -275,16 +275,14 @@ class TestGasDecomposeTimeDepRatio:
         with pytest.raises(AssertionError, match=err_msg):
             tcruncher.infill_components(aggregate, components, test_db)
 
-    def test_relationship_ignores_incomplete_data(self, larger_df, test_db):
-        # If we make the data inconsistent, we still get a consistent (if arbitrary)
-        # output.
+    def test_relationship_works_with_additional_cols(self, larger_df, test_db):
+        # Try adding another column of data and the data is still found in the output
         aggregate = "Emissions|KyotoTotal"
-        # This makes the data contain duplicates:
-        test_db.data["variable"] = aggregate
-        test_db.data["unit"] = "Mt CO2/yr"
-        # We remove the extra column from the larger_df as it's not found in test_df
-        larger_df.data.drop("meta", axis=1, inplace=True)
-        larger_df = pyam.IamDataFrame(larger_df.data)
+        test_db = test_db.data.iloc[:2]
+        test_db["variable"] = aggregate
+        test_db["unit"] = "Mt CO2/yr"
+        test_db["meta"] = "some_meta"
+        test_db = pyam.IamDataFrame(test_db)
         larger_df = _adjust_time_style_to_match(larger_df, test_db)
         tcruncher = self.tclass(larger_df)
         if test_db.time_col == "year":
@@ -293,8 +291,5 @@ class TestGasDecomposeTimeDepRatio:
             larger_df.filter(time=test_db.data[test_db.time_col], inplace=True)
         components = ["Emissions|CH4", "Emissions|CO2"]
         returned = tcruncher.infill_components(aggregate, components, test_db)
-        assert len(returned.data) == len(test_db.data)
-        # Make the data consistent:
-        test_db.data = test_db.data.iloc[0:2]
-        returned = tcruncher.infill_components(aggregate, components, test_db)
         assert len(returned.data) == 2 * len(test_db.data)
+        assert returned.extra_cols == test_db.extra_cols

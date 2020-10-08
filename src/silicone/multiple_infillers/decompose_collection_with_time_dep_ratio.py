@@ -72,6 +72,8 @@ class DecomposeCollectionTimeDepRatio:
         # Units are sorted in alphabetical order so we choose the first to get -equiv
         use["unit"] = units.iloc[0]
         use["variable"] = aggregate_name
+        for col in relevant_db.extra_cols:
+            use[col] = ""
         return pyam.IamDataFrame(use)
 
     def _set_of_units_without_equiv(self, df):

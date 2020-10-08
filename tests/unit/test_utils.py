@@ -425,19 +425,19 @@ def test_convert_units_to_MtCO2_equiv_works(check_aggregate_df, ARoption, expect
     )
     converted_units = convert_units_to_MtCO2_equiv(limited_check_agg, ARoption)
     assert all(y[:6] == "Mt CO2" for y in converted_units.data["unit"].unique())
-    # Index 1 is already in CO2
-    assert (
-        converted_units.data["value"].loc[1] == limited_check_agg.data["value"].loc[1]
+    assert np.allclose(
+        converted_units.filter(variable="*CO2*")["value"],
+        limited_check_agg.filter(variable="*CO2*")["value"]
     )
-    # At index 122 we are in units of Mt methane, rate 28* higher in AR5
-    assert np.isclose(
-        converted_units.data["value"].loc[122],
-        limited_check_agg.data["value"].loc[122] * expected[0],
+    # Methane is in Mt methane, rate 28* higher in AR5
+    assert np.allclose(
+        converted_units.filter(variable="*CH4*")["value"],
+        limited_check_agg.filter(variable="*CH4*")["value"] * expected[0],
     )
-    # At index 142 we have kt CF4, 6630 times more effective/kg but / 1000 for k -> G
-    assert np.isclose(
-        converted_units.data["value"].loc[142],
-        limited_check_agg.data["value"].loc[142] * expected[1],
+    # CF4 is in kt, 6630 times more effective/kg but / 1000 for k -> G
+    assert np.allclose(
+        converted_units.filter(variable="*CF4*").data["value"],
+        limited_check_agg.filter(variable="*CF4*")["value"] * expected[1],
     )
 
 
@@ -448,7 +448,9 @@ def test_convert_units_to_MtCO2_equiv_equiv_start(check_aggregate_df, unit_start
     limited_check_agg = check_aggregate_df.filter(
         variable="Primary Energy*", keep=False
     )
-    limited_check_agg.data["unit"] = unit_start
+    limited_check_agg = limited_check_agg.data
+    limited_check_agg["unit"] = unit_start
+    limited_check_agg = pyam.IamDataFrame(limited_check_agg)
     converted_data = convert_units_to_MtCO2_equiv(limited_check_agg)
 
     assert (converted_data.data["unit"] == "Mt CO2-equiv/yr").all()
@@ -464,8 +466,9 @@ def test_convert_units_to_MtCO2_equiv_doesnt_change(check_aggregate_df):
     # Check that it does nothing when nothing needs doing
     limited_check_agg = check_aggregate_df.filter(
         variable="Primary Energy*", keep=False
-    )
-    limited_check_agg.data["unit"] = "Mt CO2-equiv/yr"
+    ).data
+    limited_check_agg["unit"] = "Mt CO2-equiv/yr"
+    limited_check_agg = pyam.IamDataFrame(limited_check_agg)
     converted_data = convert_units_to_MtCO2_equiv(limited_check_agg)
     assert (converted_data.data["unit"] == "Mt CO2-equiv/yr").all()
     assert converted_data.data.equals(limited_check_agg.data)
@@ -569,8 +572,9 @@ def test_construct_consistent_error_multiple_units():
     # database
     aggregate_name = "Emissions|HFC|C5F12"
     components = ["Emissions|HFC|C2F6"]
-    test_db_units = test_db.copy()
-    test_db_units.data["variable"] = components[0]
+    test_db_units = test_db.copy().data
+    test_db_units["variable"] = components[0]
+    test_db_units = pyam.IamDataFrame(test_db_units)
     error_msg = re.escape(
         "Too many units found to make a consistent {}".format(aggregate_name)
     )
