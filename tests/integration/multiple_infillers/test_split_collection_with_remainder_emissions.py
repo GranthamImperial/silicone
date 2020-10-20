@@ -108,7 +108,7 @@ class TestSplitCollectionWithRemainderEmissions:
             "region",
             "variable",
             "unit",
-            "meta",
+            "meta1",
             2010,
             2015,
             2050,
@@ -263,7 +263,7 @@ class TestSplitCollectionWithRemainderEmissions:
         test_db = test_db.data
         test_db["variable"] = aggregate
         test_db = pyam.IamDataFrame(test_db)
-        # larger_df has an extra column, "meta"
+        # larger_df has an extra column, "meta1"
         larger_df = _adjust_time_style_to_match(larger_df, test_db)
         infiller = self.tclass(larger_df)
         if test_db.time_col == "year":
@@ -291,7 +291,7 @@ class TestSplitCollectionWithRemainderEmissions:
         test_db = pyam.IamDataFrame(test_db)
         # We remove the extra column from the larger_df as it's not found in test_df
         larger_df = larger_df.data
-        larger_df.drop("meta", axis=1, inplace=True)
+        larger_df.drop("meta1", axis=1, inplace=True)
         larger_df = pyam.IamDataFrame(larger_df)
         larger_df = _adjust_time_style_to_match(larger_df, test_db)
         infiller = self.tclass(larger_df)

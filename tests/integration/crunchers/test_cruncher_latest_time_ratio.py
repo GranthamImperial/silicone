@@ -19,7 +19,7 @@ class TestDatabaseCruncherLatestTimeRatio(_DataBaseCruncherTester):
             _msa + ["World", "Emissions|HFC|C5F12", "kt C5F12/yr", "", np.nan, 3.14],
             _msa + ["World", "Emissions|HFC|C2F6", "kt C2F6/yr", "", 1.2, 1.5],
         ],
-        columns=["model", "scenario", "region", "variable", "unit", "meta", 2010, 2015],
+        columns=["model", "scenario", "region", "variable", "unit", "meta1", 2010, 2015],
     )
     tdownscale_df = pd.DataFrame(
         [
@@ -89,7 +89,7 @@ class TestDatabaseCruncherLatestTimeRatio(_DataBaseCruncherTester):
                     "region",
                     "variable",
                     "unit",
-                    "meta",
+                    "meta1",
                     2010,
                     2015,
                 ],
@@ -105,7 +105,7 @@ class TestDatabaseCruncherLatestTimeRatio(_DataBaseCruncherTester):
                     "region",
                     "variable",
                     "unit",
-                    "meta",
+                    "meta1",
                     2015,
                 ],
             ),

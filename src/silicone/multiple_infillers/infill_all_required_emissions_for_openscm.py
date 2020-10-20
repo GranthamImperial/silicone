@@ -1,5 +1,4 @@
 import logging
-import re
 import warnings
 
 import pandas as pd

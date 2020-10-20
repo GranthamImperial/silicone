@@ -76,7 +76,7 @@ class TestGasDecomposeTimeDepRatio:
             "region",
             "variable",
             "unit",
-            "meta",
+            "meta1",
             2010,
             2015,
             2050,
@@ -260,7 +260,7 @@ class TestGasDecomposeTimeDepRatio:
         # that an error is thrown if we add together different sorts of DataFrame.
         aggregate = "Emissions|KyotoTotal"
         test_db["variable"] = aggregate
-        # larger_df has an extra column, "meta"
+        # larger_df has an extra column, "meta1"
         larger_df = _adjust_time_style_to_match(larger_df, test_db)
         tcruncher = self.tclass(larger_df)
         if test_db.time_col == "year":
@@ -281,7 +281,7 @@ class TestGasDecomposeTimeDepRatio:
         test_db = test_db.data.iloc[:2]
         test_db["variable"] = aggregate
         test_db["unit"] = "Mt CO2/yr"
-        test_db["meta"] = "some_meta"
+        test_db["meta1"] = "some_meta"
         test_db = pyam.IamDataFrame(test_db)
         larger_df = _adjust_time_style_to_match(larger_df, test_db)
         tcruncher = self.tclass(larger_df)
