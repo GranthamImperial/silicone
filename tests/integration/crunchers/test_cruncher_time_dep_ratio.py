@@ -8,6 +8,7 @@ from base import _DataBaseCruncherTester
 from pyam import IamDataFrame
 
 from silicone.database_crunchers import TimeDepRatio
+from silicone.utils import _remove_deprecation_warnings
 
 _msa = ["model_a", "scen_a"]
 _msb = ["model_a", "scen_b"]
@@ -159,7 +160,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
             res = filler(test_downscale_df)
         # We did not have any negative values so do not expect errors to be logged
-        assert len(caplog.record_tuples) == 0
+        assert len(_remove_deprecation_warnings(caplog.record_tuples)) == 0
         lead_iamdf = test_downscale_df.filter(variable=lead)
 
         exp = lead_iamdf.timeseries()
@@ -219,8 +220,8 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
             res = filler(test_downscale_df)
         # we expect there to be an error message for a negative result
-        assert len(caplog.record_tuples) == 1
-        assert caplog.record_tuples[-1][2] == (
+        assert len(_remove_deprecation_warnings(caplog.record_tuples)) == 1
+        assert _remove_deprecation_warnings(caplog.record_tuples)[-1][2] == (
             "Note that the lead variable {} goes negative. The time dependent "
             "ratio cruncher can produce unexpected results in this case.".format(lead)
         )

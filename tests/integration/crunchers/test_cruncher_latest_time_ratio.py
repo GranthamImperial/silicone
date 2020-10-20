@@ -8,6 +8,7 @@ from base import _DataBaseCruncherTester
 from pyam import IamDataFrame
 
 from silicone.database_crunchers import LatestTimeRatio
+from silicone.utils import _remove_deprecation_warnings
 
 _msa = ["model_a", "scen_a"]
 
@@ -19,7 +20,16 @@ class TestDatabaseCruncherLatestTimeRatio(_DataBaseCruncherTester):
             _msa + ["World", "Emissions|HFC|C5F12", "kt C5F12/yr", "", np.nan, 3.14],
             _msa + ["World", "Emissions|HFC|C2F6", "kt C2F6/yr", "", 1.2, 1.5],
         ],
-        columns=["model", "scenario", "region", "variable", "unit", "meta1", 2010, 2015],
+        columns=[
+            "model",
+            "scenario",
+            "region",
+            "variable",
+            "unit",
+            "meta1",
+            2010,
+            2015,
+        ],
     )
     tdownscale_df = pd.DataFrame(
         [
@@ -197,15 +207,15 @@ class TestDatabaseCruncherLatestTimeRatio(_DataBaseCruncherTester):
         test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db)
         with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
             filler(test_downscale_df)
-        assert len(caplog.record_tuples) == 0
+        assert len(_remove_deprecation_warnings(caplog.record_tuples)) == 0
         test_downscale_df = test_downscale_df.data
         test_downscale_df["value"].iloc[0] = -1
         test_downscale_df = IamDataFrame(test_downscale_df)
         with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
             filler(test_downscale_df)
-        assert len(caplog.record_tuples) == 1
+        assert len(_remove_deprecation_warnings(caplog.record_tuples)) == 1
         warn_str = "Note that the lead variable {} goes negative.".format(lead)
-        assert caplog.record_tuples[0][2] == warn_str
+        assert _remove_deprecation_warnings(caplog.record_tuples)[0][2] == warn_str
 
     @pytest.mark.parametrize("interpolate", [True, False])
     def test_relationship_usage_interpolation(
