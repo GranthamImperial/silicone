@@ -526,3 +526,17 @@ def _construct_consistent_values(aggregate_name, components, db_to_generate):
     use["unit"] = units.iloc[0]
     use["variable"] = aggregate_name
     return pyam.IamDataFrame(use)
+
+
+def _remove_deprecation_warnings(caplog_warnings):
+    """
+    Takes a caplog warnings list of tuples and removes any deprecation notices.
+    Purely for use in testing to ensure inter-version compatibility.
+    :param caplog_warnings: list[tuple]
+    :return: list[tuple]
+    """
+    return [
+        ctuple
+        for ctuple in caplog_warnings
+        if ctuple[2][:25] != "This method is deprecated"
+    ]
