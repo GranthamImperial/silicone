@@ -8,7 +8,6 @@ from base import _DataBaseCruncherTester
 from pyam import IamDataFrame
 
 from silicone.database_crunchers import LatestTimeRatio
-from silicone.utils import _remove_deprecation_warnings
 
 _msa = ["model_a", "scen_a"]
 
@@ -200,6 +199,9 @@ class TestDatabaseCruncherLatestTimeRatio(_DataBaseCruncherTester):
             assert all(append_df[add_col] == add_col_val)
 
     def test_negative_val_warning(self, test_db, test_downscale_df, caplog):
+        # quiet pyam
+        caplog.set_level(logging.ERROR, logger="pyam")
+
         tcruncher = self.tclass(test_db)
         lead = ["Emissions|HFC|C2F6"]
         follow = "Emissions|HFC|C5F12"
@@ -207,15 +209,15 @@ class TestDatabaseCruncherLatestTimeRatio(_DataBaseCruncherTester):
         test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db)
         with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
             filler(test_downscale_df)
-        assert len(_remove_deprecation_warnings(caplog.record_tuples)) == 0
+        assert len(caplog.record_tuples) == 0
         test_downscale_df = test_downscale_df.data
         test_downscale_df["value"].iloc[0] = -1
         test_downscale_df = IamDataFrame(test_downscale_df)
         with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
             filler(test_downscale_df)
-        assert len(_remove_deprecation_warnings(caplog.record_tuples)) == 1
+        assert len(caplog.record_tuples) == 1
         warn_str = "Note that the lead variable {} goes negative.".format(lead)
-        assert _remove_deprecation_warnings(caplog.record_tuples)[0][2] == warn_str
+        assert caplog.record_tuples[0][2] == warn_str
 
     @pytest.mark.parametrize("interpolate", [True, False])
     def test_relationship_usage_interpolation(
