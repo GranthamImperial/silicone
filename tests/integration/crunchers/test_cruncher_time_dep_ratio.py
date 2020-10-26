@@ -8,7 +8,6 @@ from base import _DataBaseCruncherTester
 from pyam import IamDataFrame
 
 from silicone.database_crunchers import TimeDepRatio
-from silicone.utils import _remove_deprecation_warnings
 
 _msa = ["model_a", "scen_a"]
 _msb = ["model_a", "scen_b"]
@@ -143,6 +142,9 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
     def test_relationship_usage_multiple_data(
         self, unequal_df, test_downscale_df, match_sign, add_col, caplog
     ):
+        # quiet pyam
+        caplog.set_level(logging.ERROR, logger="pyam")
+
         equal_df = unequal_df.filter(model="model_a")
         tcruncher = self.tclass(equal_df)
         test_downscale_df = self._adjust_time_style_to_match(
@@ -160,7 +162,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
             res = filler(test_downscale_df)
         # We did not have any negative values so do not expect errors to be logged
-        assert len(_remove_deprecation_warnings(caplog.record_tuples)) == 0
+        assert len(caplog.record_tuples) == 0
         lead_iamdf = test_downscale_df.filter(variable=lead)
 
         exp = lead_iamdf.timeseries()
@@ -192,6 +194,9 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
     def test_relationship_negative_specific(
         self, unequal_df, test_downscale_df, match_sign, caplog
     ):
+        # quiet pyam
+        caplog.set_level(logging.ERROR, logger="pyam")
+
         # Test that match_sign results in the correct multipliers when negative values
         # are added to the positive ones.
         follow = "Emissions|HFC|C5F12"
@@ -220,8 +225,8 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
             res = filler(test_downscale_df)
         # we expect there to be an error message for a negative result
-        assert len(_remove_deprecation_warnings(caplog.record_tuples)) == 1
-        assert _remove_deprecation_warnings(caplog.record_tuples)[-1][2] == (
+        assert len(caplog.record_tuples) == 1
+        assert caplog.record_tuples[-1][2] == (
             "Note that the lead variable {} goes negative. The time dependent "
             "ratio cruncher can produce unexpected results in this case.".format(lead)
         )

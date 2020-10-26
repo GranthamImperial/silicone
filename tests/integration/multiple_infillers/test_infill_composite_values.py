@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from silicone.multiple_infillers.infill_composite_values import infill_composite_values
-from silicone.utils import _remove_deprecation_warnings, convert_units_to_MtCO2_equiv
+from silicone.utils import convert_units_to_MtCO2_equiv
 
 
 class TestInfillCompositeValues:
@@ -59,11 +59,11 @@ class TestInfillCompositeValues:
             infill_composite_values(
                 larger_df, composite_dic={"Emissions|CO2": ["Emissions|CO2|*"]}
             )
-        assert len(_remove_deprecation_warnings(caplog.record_tuples)) == 0
+        assert len(caplog.record_tuples) == 0
         with caplog.at_level("DEBUG"):
             infill_composite_values(larger_df)
         # Warnings are reported by the system for non-available data.
-        assert _remove_deprecation_warnings(caplog.record_tuples)[0][
+        assert caplog.record_tuples[0][
             2
         ] == "No data found for {}".format(
             [
