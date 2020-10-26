@@ -63,9 +63,7 @@ class TestInfillCompositeValues:
         with caplog.at_level("DEBUG"):
             infill_composite_values(larger_df)
         # Warnings are reported by the system for non-available data.
-        assert caplog.record_tuples[0][
-            2
-        ] == "No data found for {}".format(
+        assert caplog.record_tuples[0][2] == "No data found for {}".format(
             [
                 "Emissions*|CF4",
                 "Emissions*|C2F6",
