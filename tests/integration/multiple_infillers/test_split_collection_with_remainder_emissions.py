@@ -9,10 +9,7 @@ import pytest
 from silicone.multiple_infillers.split_collection_with_remainder_emissions import (
     SplitCollectionWithRemainderEmissions,
 )
-from silicone.utils import (
-    _adjust_time_style_to_match,
-    convert_units_to_MtCO2_equiv,
-)
+from silicone.utils import _adjust_time_style_to_match, convert_units_to_MtCO2_equiv
 
 _msa = ["model_a", "scen_a"]
 _msb = ["model_a", "scen_b"]
