@@ -11,7 +11,6 @@ from silicone.multiple_infillers.split_collection_with_remainder_emissions impor
 )
 from silicone.utils import (
     _adjust_time_style_to_match,
-    _remove_deprecation_warnings,
     convert_units_to_MtCO2_equiv,
 )
 
@@ -283,6 +282,9 @@ class TestSplitCollectionWithRemainderEmissions:
             infiller.infill_components(aggregate, components, remainder, test_db)
 
     def test_relationship_works_with_unit_conversion(self, larger_df, test_db, caplog):
+        # quiet pyam
+        caplog.set_level(logging.ERROR, logger="pyam")
+
         # If we ask for N2O emissions when we don't have any in the input, we should
         # get a warning but also an output.
         aggregate = "Emissions|KyotoTotal"
@@ -307,7 +309,7 @@ class TestSplitCollectionWithRemainderEmissions:
             returned = infiller.infill_components(
                 aggregate, components, remainder, test_db
             )
-        assert len(_remove_deprecation_warnings(caplog.record_tuples)) == 2
+        assert len(caplog.record_tuples) == 2
         assert len(returned.data) == len(test_db.filter(variable=aggregate).data) * 2
         # Make the data consistent:
         test_db = test_db.filter(variable="*Kyoto*")
@@ -321,12 +323,12 @@ class TestSplitCollectionWithRemainderEmissions:
                 larger_df.filter(variable=[aggregate, remainder] + components)
             )
         )
-        old_caplog = len(_remove_deprecation_warnings(caplog.record_tuples))
+        old_caplog = len(caplog.record_tuples)
         with caplog.at_level(logging.INFO, logger="silicone.multiple_infillers"):
             conv_returned = infiller.infill_components(
                 aggregate, components, remainder, test_db
             )
-        assert len(_remove_deprecation_warnings(caplog.record_tuples)) - old_caplog == 2
+        assert len(caplog.record_tuples) - old_caplog == 2
         assert all(conv_returned["unit"].unique() == "Mt CO2-equiv/yr")
         assert conv_returned.filter(variable=remainder).equals(
             returned.filter(variable=remainder)

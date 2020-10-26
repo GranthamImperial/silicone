@@ -11,7 +11,6 @@ from pyam import IamDataFrame
 
 import silicone.stats
 from silicone.database_crunchers import QuantileRollingWindows
-from silicone.utils import _remove_deprecation_warnings
 
 _ma = "model_a"
 _mb = "model_b"
@@ -117,6 +116,9 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
 
     @pytest.mark.parametrize("use_ratio", [True, False])
     def test_relationship_usage(self, simple_df, use_ratio, caplog):
+        # quiet pyam
+        caplog.set_level(logging.ERROR, logger="pyam")
+
         # This tests that using the cruncher for a simple case (no averages, just
         # choosing one of two values) produces the expected results. We test the
         # quantiles that should result in a flip between the two states.
@@ -134,10 +136,10 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         if use_ratio:
             # We have a 0/0*0 in the calculation, so error message happens and 0 is
             # infilled.
-            assert len(_remove_deprecation_warnings(caplog.record_tuples)) == 1
+            assert len(caplog.record_tuples) == 1
             assert returned.filter(scenario="scen_a", year=2010)["value"].iloc[0] == 0
         else:
-            assert len(_remove_deprecation_warnings(caplog.record_tuples)) == 0
+            assert len(caplog.record_tuples) == 0
             # For the window centre at lead value of 0, given that default
             # decay_length_factor is 1, the follower value of 1,
             # which is also at a lead value of 1 and hence  an entire window away,
@@ -199,9 +201,9 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
             expect_00 = res(simple_df)
         if use_ratio:
             # We have 0/0*0, so no value appears.
-            assert len(_remove_deprecation_warnings(caplog.record_tuples)) == 1
+            assert len(caplog.record_tuples) == 1
         else:
-            assert len(_remove_deprecation_warnings(caplog.record_tuples)) == 0
+            assert len(caplog.record_tuples) == 0
         assert expect_00.filter(scenario="scen_a", year=2010)["value"].iloc[0] == 0
         assert expect_00.filter(scenario="scen_b", year=2010)["value"].iloc[0] == 0
         assert all(expect_00.filter(year=2030)["value"] == 1000)
@@ -367,6 +369,9 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         )
 
     def test_negative_val_warning(self, test_db, test_downscale_df, caplog):
+        # quiet pyam
+        caplog.set_level(logging.ERROR, logger="pyam")
+
         tcruncher = self.tclass(test_db)
         lead = [_eco2]
         follow = _ech4
@@ -374,20 +379,20 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db)
         with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
             filler(test_downscale_df)
-        assert len(_remove_deprecation_warnings(caplog.record_tuples)) == 0
+        assert len(caplog.record_tuples) == 0
         test_downscale_df = test_downscale_df.data
         test_downscale_df["value"].iloc[0] = -1
         test_downscale_df = IamDataFrame(test_downscale_df)
         with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
             filler(test_downscale_df)
-        assert len(_remove_deprecation_warnings(caplog.record_tuples)) == 1
+        assert len(caplog.record_tuples) == 1
         warn_str = "Note that the lead variable {} goes negative.".format(lead)
-        assert _remove_deprecation_warnings(caplog.record_tuples)[0][2] == warn_str
+        assert caplog.record_tuples[0][2] == warn_str
         filler = tcruncher.derive_relationship(follow, lead, use_ratio=False)
         with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
             filler(test_downscale_df)
         # We do not expect to see any new errors, hence the number is still 1.
-        assert len(_remove_deprecation_warnings(caplog.record_tuples)) == 1
+        assert len(caplog.record_tuples) == 1
 
     def test_derive_relationship_error_no_info_leader(self, test_db):
         # test that crunching fails if there's no data about the lead gas in the
