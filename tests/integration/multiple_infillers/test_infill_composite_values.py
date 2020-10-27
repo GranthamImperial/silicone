@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 import pandas as pd
 
@@ -55,6 +57,7 @@ class TestInfillCompositeValues:
     )
 
     def test_infill_composite_values_warns(self, larger_df, caplog):
+        caplog.set_level(logging.ERROR, logger="pyam")
         with caplog.at_level("DEBUG"):
             infill_composite_values(
                 larger_df, composite_dic={"Emissions|CO2": ["Emissions|CO2|*"]}
