@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pyam
 import pytest
-from openscm_units.unit_registry import ScmUnitRegistry
+from openscm_units import ScmUnitRegistry
 from pint.errors import UndefinedUnitError
 from requests.exceptions import ConnectionError
 

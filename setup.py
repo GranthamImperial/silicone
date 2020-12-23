@@ -35,7 +35,7 @@ CLASSIFIERS = [
 ]
 
 REQUIREMENTS_INSTALL = [
-    "openscm-units>=0.1.1",
+    "openscm-units>=0.2,<0.3",
     "pint",
     "pyam-iamc>=0.5.0",
     "python-dateutil",

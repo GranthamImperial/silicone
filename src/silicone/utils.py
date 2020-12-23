@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pyam
 import scipy.interpolate
-from openscm_units.unit_registry import ScmUnitRegistry
+from openscm_units import ScmUnitRegistry
 from pint.errors import DimensionalityError
 
 logger = logging.getLogger(__name__)
