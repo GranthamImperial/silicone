@@ -3,6 +3,8 @@ Changelog
 
 master
 ------
+
+- (`#121 <https://github.com/GranthamImperial/silicone/pull/121>`_) Updated to openscm-units>0.2
 - (`#116 <https://github.com/GranthamImperial/silicone/pull/116>`_) Updated to work with pyam v0.8
 - (`#115 <https://github.com/GranthamImperial/silicone/pull/115>`_) Pinned black
 - (`#113 <https://github.com/GranthamImperial/silicone/pull/113>`_) Added a warning for using ratio-based crunchers with negative values. Fixed some unit conversion todos (not user-facing).
