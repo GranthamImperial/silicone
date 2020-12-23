@@ -81,8 +81,28 @@ jobs:
       run: |
           pytest notebooks -r a --nbval-lax --sanitize-with tests/notebook-tests.cfg --no-cov
 
-  deploy-test-pypi:
+  test-install:
     needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Setup python
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Test installation
+      run: |
+        pip install --upgrade pip wheel
+        pip install .
+        python scripts/test_install.py
+
+  deploy-test-pypi:
+    needs: test-install
     if: startsWith(github.ref, 'refs/tags/v')
 
     runs-on: ubuntu-latest
