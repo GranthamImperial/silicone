@@ -10,21 +10,25 @@ Important updates since v1.0.0
 Details
 -------
 
-v1.0.3
+[v1.0.3] 
+--------
 
 - (`#124 <https://github.com/GranthamImperial/silicone/pull/124>`_) Neatened up the changelog
 
-v1.0.2 - 4 Jan 2021
+[v1.0.2] - 4 Jan 2021
+---------------------
 
 - (`#123 <https://github.com/GranthamImperial/silicone/pull/123>`_) Made the installation runner avoid prerelease.
 - (`#121 <https://github.com/GranthamImperial/silicone/pull/121>`_) Updated to openscm-units>0.2
 
-v1.0.1 - 27 Oct 2020
+[v1.0.1] - 27 Oct 2020
+----------------------
 
 - (`#119 <https://github.com/GranthamImperial/silicone/pull/119>`_) Updated to work with pyam v0.8
 - (`#115 <https://github.com/GranthamImperial/silicone/pull/115>`_) Enabled multiple lead gases to be used with RMS closest cruncher
 
-v1.0.0 - 9 Sept 2020
+[v1.0.0] - 9 Sept 2020
+----------------------
 
 - (`#116 <https://github.com/GranthamImperial/silicone/pull/116>`_) Pinned black
 - (`#113 <https://github.com/GranthamImperial/silicone/pull/113>`_) Added a warning for using ratio-based crunchers with negative values. Fixed some unit conversion todos (not user-facing).
