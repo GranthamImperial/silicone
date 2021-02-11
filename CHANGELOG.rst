@@ -12,6 +12,7 @@ Changed
 Fixed
 ~~~~~
 - (`#123 <https://github.com/GranthamImperial/silicone/pull/123>`_) Made the installation runner avoid prerelease.
+
 Changed
 ~~~~~~~
 - (`#121 <https://github.com/GranthamImperial/silicone/pull/121>`_) Updated to openscm-units>0.2
@@ -21,6 +22,7 @@ Changed
 Changed
 ~~~~~~~
 - (`#119 <https://github.com/GranthamImperial/silicone/pull/119>`_) Updated to work with pyam v0.8
+
 Added
 ~~~~~
 - (`#115 <https://github.com/GranthamImperial/silicone/pull/115>`_) Enabled multiple lead gases to be used with RMS closest cruncher.
