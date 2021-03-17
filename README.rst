@@ -49,7 +49,7 @@ Silicone is free software under a BSD 3-Clause License, see
 Funders
 -------
 This project has received funding from the European Union Horizon 2020 research and
-innovation programme under grant agreement No 820829.
+innovation programme under grant agreement No 820829 (CONSTRAIN) and No 641816 (CRESCENDO).
 
 .. sec-end-funders
 .. sec-end-long-description
