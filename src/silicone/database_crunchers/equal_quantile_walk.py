@@ -63,7 +63,7 @@ class EqualQuantileWalk(_DatabaseCruncher):
 
         def filler(in_iamdf, interpolate=False):
             """
-            Filler function derived from :obj:`LatestTimeRatio`.
+            Filler function derived from :obj:`EqualQuantileWalk`.
 
             Parameters
             ----------
