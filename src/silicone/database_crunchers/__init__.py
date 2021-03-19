@@ -9,6 +9,7 @@ timeseries.
 
 from .constant_ratio import ConstantRatio  # noqa: F401
 from .equal_quantile_walk import EqualQuantileWalk  # noqa: F401
+from .extend_latest_time_quantile import ExtendLatestTimeQuantile  # noqa: F401
 from .interpolate_specified_scenarios_and_models import (  # noqa: F401
     ScenarioAndModelSpecificInterpolate,
 )
