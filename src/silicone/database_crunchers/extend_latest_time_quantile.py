@@ -49,7 +49,7 @@ class ExtendLatestTimeQuantile(_DatabaseCruncher):
         iamdf = self._get_iamdf_variable(variable)
 
         infiller_time_col = iamdf.time_col
-        data_follower_unit = iamdf.data["unit"]
+        data_follower_unit = iamdf.data["unit"].unique()
 
         assert len(data_follower_unit) == 1, \
             "The infiller database has {} units in it. It should have one. ".format(
@@ -57,7 +57,7 @@ class ExtendLatestTimeQuantile(_DatabaseCruncher):
             )
 
 
-        def filler(in_iamdf, interpolate=False):
+        def filler(in_iamdf):
             """
             Filler function derived from :obj:`LatestTimeRatio`.
 
@@ -65,10 +65,6 @@ class ExtendLatestTimeQuantile(_DatabaseCruncher):
             ----------
             in_iamdf : :obj:`pyam.IamDataFrame`
                 Input data to fill data in
-
-            interpolate : bool
-                If the key year for filling is not in ``in_iamdf``, should a value be
-                interpolated?
 
             Returns
             -------
@@ -97,7 +93,7 @@ class ExtendLatestTimeQuantile(_DatabaseCruncher):
 
             key_timepoint = max(target_df.data[infiller_time_col])
             later_times = [
-                t for t in iamdf.data[infiller_time_col] if t > key_timepoint
+                t for t in iamdf.data[infiller_time_col].unique() if t > key_timepoint
             ]
             if not later_times:
                 raise ValueError(
@@ -105,22 +101,13 @@ class ExtendLatestTimeQuantile(_DatabaseCruncher):
                     "database, so no infilling can occur."
                 )
             key_timepoint_filter = {infiller_time_col: key_timepoint}
+
             def get_values_in_key_timepoint(idf):
                 # filter warning about empty data frame as we handle it ourselves
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
                     filtered = idf.filter(**key_timepoint_filter)
-                if filtered.data.empty:
-                    if not interpolate:
-                        error_msg = (
-                            "Required timepoint ({}) is not in the data for "
-                            "the variable {}".format(
-                                key_timepoint, variable
-                            )
-                        )
-                        raise ValueError(error_msg)
-                    idf.interpolate(key_timepoint)
-                idf = idf.timeseries()
+                idf = filtered.timeseries()
                 if not idf.shape[1] == 1:
                     raise AssertionError(
                         "How did filtering for a single timepoint result in more than "
@@ -133,14 +120,21 @@ class ExtendLatestTimeQuantile(_DatabaseCruncher):
             target_at_key_time = get_values_in_key_timepoint(target_df)
 
             quantiles = calc_quantiles_of_data(infiller_at_key_time, target_at_key_time)
-            output_ts = target_df.timeseries().reset_index()
+            if any(np.isnan(quantiles)):
+                logger.warning("Only a single value provided for calculating quantiles")
+                quantiles = [0.5 if np.isnan(q) else q for q in quantiles]
+            output_ts = target_df.timeseries()
+            iamdf_ts = iamdf.timeseries()
             for time in later_times:
                 output_ts[time] = np.nanquantile(
-                    in_iamdf.filter(**{infiller_time_col: time}).data,
-                    quantiles
+                    iamdf_ts[time],
+                    quantiles,
                 )
+            for col in output_ts.columns:
+                if col not in later_times:
+                    del output_ts[col]
             return IamDataFrame(output_ts)
-        
+
         return filler
 
     def _get_iamdf_variable(self, variable):
