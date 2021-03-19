@@ -103,6 +103,28 @@ def rolling_window_find_quantiles(
     return results
 
 
+def calc_quantiles_of_data(distribution, points_to_quant):
+    """
+    Calculates the points at which the
+    :param distribution:
+    :param points_to_quant:
+    :return:
+    """
+    distribution = distribution[~np.isnan(distribution)]
+    len_lead_not_nan = len(distribution)
+    if len_lead_not_nan == 1:
+        # If there is only a single value then quantile is not defined and we return nan
+        return [np.nan]
+    if len_lead_not_nan == 0:
+        raise ValueError("No valid data entered to establish the quantiles.")
+    distribution = distribution.sort_values()
+    quant_of_lead_vals = np.arange(len_lead_not_nan) / (len_lead_not_nan - 1)
+    if any(quant_of_lead_vals > 1) or any(quant_of_lead_vals < 0):
+        raise ValueError("Impossible quantiles!")
+    return scipy.interpolate.interp1d(
+        distribution, quant_of_lead_vals, bounds_error=False, fill_value=(0, 1)
+    )(points_to_quant)
+
 def calc_all_emissions_correlations(emms_df, years, output_dir):
     """
     Save csv files of the correlation coefficients and the rank correlation

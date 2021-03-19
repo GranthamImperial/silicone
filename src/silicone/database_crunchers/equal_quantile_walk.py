@@ -3,10 +3,10 @@ Module for the database cruncher which uses the 'equal quantile walk' technique.
 """
 
 import numpy as np
-import scipy.interpolate
 from pyam import IamDataFrame
 
 from .base import _DatabaseCruncher
+from ..stats import calc_quantiles_of_data
 
 
 class EqualQuantileWalk(_DatabaseCruncher):
@@ -61,7 +61,7 @@ class EqualQuantileWalk(_DatabaseCruncher):
         lead_ts = self._db.filter(variable=variable_leaders).timeseries()
         lead_unit = lead_ts.index.get_level_values("unit")[0]
 
-        def filler(in_iamdf, interpolate=False):
+        def filler(in_iamdf):
             """
             Filler function derived from :obj:`EqualQuantileWalk`.
 
@@ -69,10 +69,6 @@ class EqualQuantileWalk(_DatabaseCruncher):
             ----------
             in_iamdf : :obj:`pyam.IamDataFrame`
                 Input data to fill data in
-
-            interpolate : bool
-                If the key year for filling is not in ``in_iamdf``, should a value be
-                interpolated?
 
             Returns
             -------
@@ -82,8 +78,7 @@ class EqualQuantileWalk(_DatabaseCruncher):
             Raises
             ------
             ValueError
-                The key year for filling is not in ``in_iamdf`` and ``interpolate is
-                False``.
+                Not all required timepoints are present in the database we crunched...
             """
             lead_in = in_iamdf.filter(variable=variable_leaders)
             if not all(lead_in.variables(True)["unit"] == lead_unit):
@@ -146,16 +141,7 @@ class EqualQuantileWalk(_DatabaseCruncher):
     def _find_same_quantile(self, follow_vals, lead_vals, lead_input):
         # Dispose of nans that can cloud the calculation
         follow_vals = follow_vals[~np.isnan(follow_vals)]
-        lead_vals = lead_vals[~np.isnan(lead_vals)]
-        len_lead_not_nan = len(lead_vals)
-        if len_lead_not_nan <= 1:
-            # If there is only a single value we have to return the best guess.
+        input_quantiles = calc_quantiles_of_data(lead_vals, lead_input)
+        if all(np.isnan(input_quantiles)):
             return np.nanmean(follow_vals)
-        lead_vals = lead_vals.sort_values()
-        quant_of_lead_vals = np.arange(len_lead_not_nan) / (len_lead_not_nan - 1)
-        if any(quant_of_lead_vals > 1) or any(quant_of_lead_vals < 0):
-            raise ValueError("Impossible quantiles!")
-        input_quantiles = scipy.interpolate.interp1d(
-            lead_vals, quant_of_lead_vals, bounds_error=False, fill_value=(0, 1)
-        )(lead_input)
         return np.nanquantile(follow_vals, input_quantiles)
