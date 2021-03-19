@@ -7,12 +7,13 @@ import pandas as pd
 import pytest
 from pyam import IamDataFrame
 
+from base import _DataBaseCruncherTester
 from silicone.database_crunchers import ExtendLatestTimeQuantile
 
 _msa = ["model_a", "scen_a"]
 
 
-class TestDatabaseCruncherLatestTimeRatio():
+class TestDatabaseCruncherLatestTimeRatio(_DataBaseCruncherTester):
     tclass = ExtendLatestTimeQuantile
     tdb = pd.DataFrame(
         [
@@ -110,8 +111,8 @@ class TestDatabaseCruncherLatestTimeRatio():
         "extra_info",
         (
                 pd.DataFrame(
-                    [["ma", "sb", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", "", 5,
-                      2]],
+                    [["ma", "sb", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", "", 5,
+                      2, 3]],
                     columns=[
                         "model",
                         "scenario",
@@ -119,16 +120,17 @@ class TestDatabaseCruncherLatestTimeRatio():
                         "variable",
                         "unit",
                         "meta1",
-                        2010,
                         2015,
+                        2020,
+                        2030,
                     ],
                 ),
                 pd.DataFrame(
                     [
-                        ["ma", "sa", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", "",
-                         1],
-                        ["ma", "sb", "World", "Emissions|HFC|C5F12", "kt C5F12/yr", "",
-                         3],
+                        ["ma", "sa", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", "",
+                         1, 1, 2],
+                        ["ma", "sb", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", "",
+                         2, 3, 3],
                     ],
                     columns=[
                         "model",
@@ -138,34 +140,46 @@ class TestDatabaseCruncherLatestTimeRatio():
                         "unit",
                         "meta1",
                         2015,
+                        2020,
+                        2030,
                     ],
                 ),
         ),
     )
-    def test_derive_relationship_averaging_info(self, test_db, extra_info):
-        # test that crunching uses average values if there's more than a single point
-        # in the latest year for the lead gas in the database
-        variable_follower = "Emissions|HFC|C5F12"
-        variable_leader = ["Emissions|HFC|C2F6"]
-        tdb = test_db.filter(variable=variable_follower, keep=False)
-        tcruncher = self.tclass(
-            self._join_iamdfs_time_wrangle(tdb, IamDataFrame(extra_info))
+    def test_derive_relationship_single_line(self, test_db, extra_info):
+        # We test that the formula produces the correct answer when there is only one
+        # value in the target dataframe
+        variable = "Emissions|HFC|C2F6"
+        infiller_df = self._join_iamdfs_time_wrangle(test_db, IamDataFrame(extra_info))
+        tcruncher = self.tclass(infiller_df)
+        cruncher = tcruncher.derive_relationship(variable)
+        infill_df = test_db.filter(
+            **{test_db.time_col: test_db[test_db.time_col][0]},
+            keep=False
         )
-        cruncher = tcruncher.derive_relationship(variable_follower, variable_leader)
-        lead_db = test_db.filter(variable=variable_leader)
-        infilled = cruncher(lead_db)
-        # In both cases, the average follower value at the latest time is 2. We divide
-        # by the value in 2015, which we have data for in both cases.
-        lead_db_time = lead_db.data[lead_db.time_col]
-        latest_time = lead_db_time == max(lead_db_time)
-        expected = (
-                2 * lead_db.data["value"] / lead_db.data["value"].loc[
-            latest_time].values
-        )
-        assert np.allclose(infilled.data["value"], expected)
+        infilled_filt = cruncher(infill_df)
+        infilled_test = cruncher(test_db)
+        assert infilled_filt.equals(infilled_test)
+        times = [
+            time for time in infiller_df[infiller_df.time_col].unique()
+            if time > max(infill_df[infill_df.time_col])
+        ]
+        assert all(infilled_filt[infilled_filt.time_col].unique() == times)
+        if len(extra_info) == 1:
+            # If there is only one row in the infiller dataframe, we return that row.
+            expected = IamDataFrame(extra_info).filter(year=[2020, 2030]).data["value"]
+        else:
+            # If there are multiple, we must consider where we lie in between them.
+            # With values 1, and 2 in 2015 the input value, 1.5, is halfway through the
+            # data. We therefore expect values 2/3rds between the values
+            # at each time.
+            expected = [1 + (3-1)/2, 2 + (3-2)/2]
+        assert np.allclose(infilled_filt.data["value"], expected)
         # Test that the result can be appended without problems.
-        lead_db.append(infilled, inplace=True)
-        assert lead_db.filter(variable=variable_follower).equals(infilled)
+        infill_df.append(infilled_filt, inplace=True)
+        assert infill_df.filter(variable=variable, **{infill_df.time_col:times}).equals(
+            infilled_filt
+        )
 
     @pytest.mark.parametrize("add_col", [None, "extra_col"])
     def test_relationship_usage(self, test_db, test_downscale_df, add_col):
