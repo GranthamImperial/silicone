@@ -125,6 +125,27 @@ def test_rolling_window_find_quantiles_one():
     assert np.allclose(quantiles.values.squeeze(), 2)
 
 
+def test_calc_quantiles_of_data():
+    # We want to include the value 100 at the end of this range, so go to 101.
+    range100 = pd.Series(np.arange(0, 101))
+    to_quant = pd.Series([-1, 0, 10, 50, 99, 100, 101])
+    expected = np.array([0, 0, 0.1, 0.5, 0.99, 1, 1])
+    res = stats.calc_quantiles_of_data(range100, to_quant)
+    assert np.allclose(res, expected)
+
+
+def test_calc_quantiles_of_insufficient_data():
+    message = "No valid data entered to establish the quantiles."
+    nans = pd.Series(np.nan)
+    single_val = pd.Series(1)
+    to_quant = pd.Series([-1, 0, 10, 50, 99, 100, 101])
+    with pytest.raises(ValueError, match=message):
+        stats.calc_quantiles_of_data(nans, to_quant)
+    res = stats.calc_quantiles_of_data(single_val, to_quant)
+    assert all(np.isnan(res))
+    assert len(res) == len(to_quant)
+
+
 def test_calc_all_emissions_correlations_works(tmpdir):
     # We test that this saves a file in the correct place, with the correct results
     test_folder = os.path.join(tmpdir, "output")
