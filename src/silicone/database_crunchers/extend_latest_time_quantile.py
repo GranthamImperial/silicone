@@ -2,12 +2,13 @@
 Module for the database cruncher which uses the 'latest time quantile' technique.
 """
 import logging
-import numpy as np
 import warnings
 
+import numpy as np
 from pyam import IamDataFrame
-from .base import _DatabaseCruncher
+
 from ..stats import calc_quantiles_of_data
+from .base import _DatabaseCruncher
 
 logger = logging.getLogger(__name__)
 

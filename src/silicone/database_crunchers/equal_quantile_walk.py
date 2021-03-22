@@ -5,8 +5,8 @@ Module for the database cruncher which uses the 'equal quantile walk' technique.
 import numpy as np
 from pyam import IamDataFrame
 
-from .base import _DatabaseCruncher
 from ..stats import calc_quantiles_of_data
+from .base import _DatabaseCruncher
 
 
 class EqualQuantileWalk(_DatabaseCruncher):

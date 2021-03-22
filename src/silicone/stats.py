@@ -105,16 +105,26 @@ def rolling_window_find_quantiles(
 
 def calc_quantiles_of_data(distribution, points_to_quant):
     """
-    Calculates the points at which the
-    :param distribution:
-    :param points_to_quant:
-    :return:
+    Calculates the quantiles of points_to_quant in the distribution of values described
+    by distribution
+    Parameters
+    ----------
+    distribution : pd.Series
+        The distribution of values.
+     points_to_quant : pd.Series
+        The points which we want to know the quantiles of.
+
+    Returns
+    -------
+    :obj:`np.ndarray`
+        an array of width 1 and the same length as points_to_quant, containing the
+        quantiles of these points in order.
     """
     distribution = distribution[~np.isnan(distribution)]
     len_lead_not_nan = len(distribution)
     if len_lead_not_nan == 1:
         # If there is only a single value then quantile is not defined and we return nan
-        return [np.nan]
+        return np.array([np.nan for a in range(len(points_to_quant))])
     if len_lead_not_nan == 0:
         raise ValueError("No valid data entered to establish the quantiles.")
     distribution = distribution.sort_values()
