@@ -125,6 +125,7 @@ def calc_quantiles_of_data(distribution, points_to_quant):
         distribution, quant_of_lead_vals, bounds_error=False, fill_value=(0, 1)
     )(points_to_quant)
 
+
 def calc_all_emissions_correlations(emms_df, years, output_dir):
     """
     Save csv files of the correlation coefficients and the rank correlation
