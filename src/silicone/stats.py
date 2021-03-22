@@ -111,7 +111,7 @@ def calc_quantiles_of_data(distribution, points_to_quant):
     ----------
     distribution : pd.Series
         The distribution of values.
-     points_to_quant : pd.Series
+    points_to_quant : pd.Series
         The points which we want to know the quantiles of.
 
     Returns
