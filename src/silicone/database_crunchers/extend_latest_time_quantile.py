@@ -51,11 +51,11 @@ class ExtendLatestTimeQuantile(_DatabaseCruncher):
         infiller_time_col = iamdf.time_col
         data_follower_unit = iamdf.data["unit"].unique()
 
-        assert len(data_follower_unit) == 1, \
-            "The infiller database has {} units in it. It should have one. ".format(
-                len(data_follower_unit)
-            )
-
+        assert (
+            len(data_follower_unit) == 1
+        ), "The infiller database has {} units in it. It should have one. ".format(
+            len(data_follower_unit)
+        )
 
         def filler(in_iamdf):
             """
@@ -86,9 +86,7 @@ class ExtendLatestTimeQuantile(_DatabaseCruncher):
             if infiller_time_col != in_iamdf.time_col:
                 raise ValueError(
                     "`in_iamdf` time column must be the same as the time column used "
-                    "to generate this filler function (`{}`)".format(
-                        infiller_time_col
-                    )
+                    "to generate this filler function (`{}`)".format(infiller_time_col)
                 )
 
             key_timepoint = max(target_df.data[infiller_time_col])
@@ -126,10 +124,7 @@ class ExtendLatestTimeQuantile(_DatabaseCruncher):
             output_ts = target_df.timeseries()
             iamdf_ts = iamdf.timeseries()
             for time in later_times:
-                output_ts[time] = np.nanquantile(
-                    iamdf_ts[time],
-                    quantiles,
-                )
+                output_ts[time] = np.nanquantile(iamdf_ts[time], quantiles,)
             for col in output_ts.columns:
                 if col not in later_times:
                     del output_ts[col]
@@ -139,9 +134,7 @@ class ExtendLatestTimeQuantile(_DatabaseCruncher):
 
     def _get_iamdf_variable(self, variable):
         if variable not in self._db.variables().tolist():
-            error_msg = "No data for `variable` ({}) in database".format(
-                variable
-            )
+            error_msg = "No data for `variable` ({}) in database".format(variable)
             raise ValueError(error_msg)
 
         return self._db.filter(variable=variable)
