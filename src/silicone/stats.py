@@ -107,7 +107,8 @@ def rolling_window_find_quantiles(
 def calc_quantiles_of_data(distribution, points_to_quant, smoothing=None):
     """
     Calculates the quantiles of points_to_quant in the distribution of values described
-    by distribution
+    by distribution.
+
     Parameters
     ----------
     distribution : pd.Series
