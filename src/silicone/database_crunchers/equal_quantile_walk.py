@@ -20,7 +20,7 @@ class EqualQuantileWalk(_DatabaseCruncher):
     then outputs that quantile of the follow data in the infiller database.
     """
 
-    def derive_relationship(self, variable_follower, variable_leaders):
+    def derive_relationship(self, variable_follower, variable_leaders, smoothing=None):
         """
         Derive the relationship between two variables from the database.
 
@@ -33,6 +33,14 @@ class EqualQuantileWalk(_DatabaseCruncher):
         variable_leaders : list[str]
             The variable we want to use in order to infer timeseries of
             ``variable_follower`` (e.g. ``["Emissions|CO2"]``).
+
+        smoothing : float or string
+            By default, no smoothing is done on the distribution. If an argument is
+            used, it is fed into scipy.stats.gaussian_kde. If a float is input, we
+            fit a Gaussian kernel density estimator with that width to the points and
+            return the quantiles of that distribution. If a string is used, it must be
+            either "scott" or "silverman", after those two methods of determining the
+            best kernel bandwidth.
 
         Returns
         -------
@@ -118,7 +126,7 @@ class EqualQuantileWalk(_DatabaseCruncher):
                 )
             for col in output_ts.columns:
                 output_ts[col] = self._find_same_quantile(
-                    follower_ts[col], lead_ts[col], output_ts[col]
+                    follower_ts[col], lead_ts[col], output_ts[col], smoothing
                 )
             output_ts = output_ts.reset_index()
             output_ts["variable"] = variable_follower
@@ -138,10 +146,10 @@ class EqualQuantileWalk(_DatabaseCruncher):
 
         return self._db.filter(variable=variable_follower)
 
-    def _find_same_quantile(self, follow_vals, lead_vals, lead_input):
+    def _find_same_quantile(self, follow_vals, lead_vals, lead_input, smoothing):
         # Dispose of nans that can cloud the calculation
         follow_vals = follow_vals[~np.isnan(follow_vals)]
-        input_quantiles = calc_quantiles_of_data(lead_vals, lead_input)
+        input_quantiles = calc_quantiles_of_data(lead_vals, lead_input, smoothing)
         if all(np.isnan(input_quantiles)):
             return np.nanmean(follow_vals)
         return np.nanquantile(follow_vals, input_quantiles)

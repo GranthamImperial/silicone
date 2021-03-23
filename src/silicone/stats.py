@@ -6,6 +6,7 @@ import os
 import numpy as np
 import pandas as pd
 import scipy.interpolate
+import scipy.stats
 
 
 def rolling_window_find_quantiles(
@@ -103,7 +104,7 @@ def rolling_window_find_quantiles(
     return results
 
 
-def calc_quantiles_of_data(distribution, points_to_quant):
+def calc_quantiles_of_data(distribution, points_to_quant, smoothing=None):
     """
     Calculates the quantiles of points_to_quant in the distribution of values described
     by distribution
@@ -113,6 +114,13 @@ def calc_quantiles_of_data(distribution, points_to_quant):
         The distribution of values.
     points_to_quant : pd.Series
         The points which we want to know the quantiles of.
+    smoothing : float or string
+        By default, no smoothing is done on the distribution. If an argument is used,
+        it is fed into scipy.stats.gaussian_kde. If a float is input, we
+        fit a Gaussian kernel density estimator with that width to the points and return
+        the quantiles of that distribution. If a string is used, it must be either
+        "scott" or "silverman", after those two methods of determining the best kernel
+        bandwidth.
 
     Returns
     -------
@@ -127,6 +135,20 @@ def calc_quantiles_of_data(distribution, points_to_quant):
         return np.array([np.nan for a in range(len(points_to_quant))])
     if len_lead_not_nan == 0:
         raise ValueError("No valid data entered to establish the quantiles.")
+    if smoothing:
+        smooth_points = scipy.stats.gaussian_kde(
+            distribution, smoothing
+        )  # TODO: weights
+        minx = min(distribution)
+        maxx = max(distribution)
+        tail = maxx - minx
+        # tile the probability space with 200 points between the tail ends
+        xpts = np.linspace(minx - tail, maxx + tail, 6000)
+        smooth_dist = np.cumsum(smooth_points(xpts)) * (xpts[1] - xpts[0])
+        return scipy.interpolate.interp1d(
+            xpts, smooth_dist, bounds_error=False, fill_value=(0, 1)
+        )(points_to_quant)
+
     distribution = distribution.sort_values()
     quant_of_lead_vals = np.arange(len_lead_not_nan) / (len_lead_not_nan - 1)
     if any(quant_of_lead_vals > 1) or any(quant_of_lead_vals < 0):
