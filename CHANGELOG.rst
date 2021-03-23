@@ -1,5 +1,10 @@
 Changelog
 =========
+Work in progress
+----------------
+Added
+~~~~~
+- (`#12 <https://github.com/GranthamImperial/silicone/pull/126>`_) Added a cruncher (Extend latest time quantile) that extends a pathway to cover later times, assuming it remains at the same quantile. (Like EQW but for a single variable)
 
 [v1.0.3]
 --------
