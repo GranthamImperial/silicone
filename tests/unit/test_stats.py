@@ -134,14 +134,39 @@ def test_calc_quantiles_of_data():
     assert np.allclose(res, expected)
 
 
-def test_calc_quantiles_of_insufficient_data():
+def test_calc_quantiles_of_data_smooth():
+    # We want to include the value 100 at the end of this range, so go to 101.
+    range100 = pd.Series(np.arange(0, 101))
+    to_quant = pd.Series([-1, 0, 10, 50, 99, 100, 101])
+    expected = np.array([0, 0, 0.1, 0.5, 0.99, 1, 1])
+    # In the limit of no smoothness we should recover the original result
+    res = stats.calc_quantiles_of_data(range100, to_quant, 0.002)
+    assert np.allclose(res, expected, atol=0.01, rtol=0.01)
+
+    # But when we add smoothness, we encounter slight, symmetric differences
+    res_smooth = stats.calc_quantiles_of_data(range100, to_quant, 0.3)
+    assert np.allclose(res[0] + res[-1], res_smooth[0] + res_smooth[-1], atol=5e-4)
+    assert np.allclose(res[1] + res[-2], res_smooth[1] + res_smooth[-2], atol=5e-3)
+    assert all([res_smooth[i] > res[i] for i in range(3)])
+    assert all([res_smooth[i] < res[i] for i in range(4, 7)])
+    # Substantially the same results should be found when using the "scott" smoothing
+    res_smooth = stats.calc_quantiles_of_data(range100, to_quant, "scott")
+    assert np.allclose(res_smooth[3], 0.5, atol=0.003)
+    assert np.allclose(res[0] + res[-1], res_smooth[0] + res_smooth[-1], atol=5e-4)
+    assert all([res_smooth[i] > res[i] for i in range(3)])
+    assert all([res_smooth[i] < res[i] for i in range(4, 7)])
+    assert all([res_smooth[i] > res[i] for i in range(3)])
+
+
+@pytest.mark.parametrize("smoothing", (None, 0.3))
+def test_calc_quantiles_of_insufficient_data(smoothing):
     message = "No valid data entered to establish the quantiles."
     nans = pd.Series(np.nan)
     single_val = pd.Series(1)
     to_quant = pd.Series([-1, 0, 10, 50, 99, 100, 101])
     with pytest.raises(ValueError, match=message):
-        stats.calc_quantiles_of_data(nans, to_quant)
-    res = stats.calc_quantiles_of_data(single_val, to_quant)
+        stats.calc_quantiles_of_data(nans, to_quant, smoothing)
+    res = stats.calc_quantiles_of_data(single_val, to_quant, smoothing)
     assert all(np.isnan(res))
     assert len(res) == len(to_quant)
 
