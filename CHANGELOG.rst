@@ -4,6 +4,7 @@ Work in progress
 ----------------
 Added
 ~~~~~
+- (`#127 <https://github.com/GranthamImperial/silicone/pull/127>`_) Added the ability to use smoothing based on Gaussian KDE in the quantile-based crunchers that don't already have smoothness control.
 - (`#126 <https://github.com/GranthamImperial/silicone/pull/126>`_) Added the first time projector (Extend latest time quantile) that extends a pathway to cover later times, assuming it remains at the same quantile.
 
 [v1.0.3]
