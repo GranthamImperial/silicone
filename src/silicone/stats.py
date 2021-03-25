@@ -104,7 +104,9 @@ def rolling_window_find_quantiles(
     return results
 
 
-def calc_quantiles_of_data(distribution, points_to_quant, smoothing=None):
+def calc_quantiles_of_data(
+        distribution, points_to_quant, smoothing=None, weighting=None
+):
     """
     Calculates the quantiles of points_to_quant in the distribution of values described
     by distribution.
@@ -122,6 +124,9 @@ def calc_quantiles_of_data(distribution, points_to_quant, smoothing=None):
         the quantiles of that distribution. If a string is used, it must be either
         "scott" or "silverman", after those two methods of determining the best kernel
         bandwidth.
+    weighting : None or Series
+        If a series, must have the same indices as distribution, giving the
+        relative weights of each point.
 
     Returns
     -------
@@ -129,7 +134,28 @@ def calc_quantiles_of_data(distribution, points_to_quant, smoothing=None):
         an array of width 1 and the same length as points_to_quant, containing the
         quantiles of these points in order.
     """
-    distribution = distribution[~np.isnan(distribution)]
+    if type(weighting) == type(None):
+        weighting = pd.Series([1 for i in range(len(distribution))],
+                              index=distribution.index)
+    else:
+        assert type(weighting) == pd.Series, "The weighting variable should be a Series"
+        assert len(weighting) == len(distribution), \
+            "There must be the same number of weights as entries in the database. " \
+            "We have len {} in weights and len {} in distribution.".format(
+                len(weighting),
+                len(distribution)
+            )
+        assert np.array_equal(
+            weighting.index.sort_values(), distribution.index.sort_values()
+        ), "The entries in the weighting Series are not clearly aligned with the " \
+            "distribution Series. We have \n {} \n in the weighting and \n {} \n in " \
+            "the distribution ".format(
+                weighting.index, distribution.index
+            )
+
+    if any(np.isnan(distribution)):
+        distribution = distribution[~np.isnan(distribution)]
+        weighting = weighting[distribution.index]
     len_lead_not_nan = len(distribution)
     if len_lead_not_nan == 1:
         # If there is only a single value then quantile is not defined and we return nan
@@ -138,8 +164,8 @@ def calc_quantiles_of_data(distribution, points_to_quant, smoothing=None):
         raise ValueError("No valid data entered to establish the quantiles.")
     if smoothing:
         smooth_points = scipy.stats.gaussian_kde(
-            distribution, smoothing
-        )  # TODO: weights
+            distribution, smoothing, weights=weighting
+        )
         minx = min(distribution)
         maxx = max(distribution)
         tail = maxx - minx
@@ -150,8 +176,10 @@ def calc_quantiles_of_data(distribution, points_to_quant, smoothing=None):
             xpts, smooth_dist, bounds_error=False, fill_value=(0, 1)
         )(points_to_quant)
 
-    distribution = distribution.sort_values()
-    quant_of_lead_vals = np.arange(len_lead_not_nan) / (len_lead_not_nan - 1)
+    dist_sort_ind = np.argsort(distribution)
+    distribution = distribution[dist_sort_ind.index[dist_sort_ind]]
+    weighting = weighting[dist_sort_ind.index[dist_sort_ind]]
+    quant_of_lead_vals = (np.cumsum(weighting) - weighting) / (sum(weighting) - weighting)
     if any(quant_of_lead_vals > 1) or any(quant_of_lead_vals < 0):
         raise ValueError("Impossible quantiles!")
     return scipy.interpolate.interp1d(
