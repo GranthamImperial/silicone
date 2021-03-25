@@ -138,6 +138,47 @@ def test_calc_quantiles_of_data():
     expected = np.array([0, 0, 0.1, 0.5, 0.99, 1, 1])
     res = stats.calc_quantiles_of_data(range100, to_quant)
     assert np.allclose(res, expected)
+    # Ensure that we're not using the index in the calculation
+    range100_rev = pd.Series(np.arange(100, -1, -1))
+    res = stats.calc_quantiles_of_data(range100_rev, to_quant)
+    assert np.allclose(res, expected)
+    # Test that uniform weighting does not affect the values
+    weights = pd.Series([30 for i in range(len(range100))], index=range100_rev.index)
+    res = stats.calc_quantiles_of_data(range100_rev, to_quant, weighting=weights)
+    assert np.allclose(res, expected)
+
+def test_calc_quantiles_weighted():
+    # Test that using weighted quantiles produces the expected results
+    between1and10 = pd.Series([0, 1, 10], index=["nought", "one", "ten"])
+    small = 0.00001
+    weights = pd.Series([small, 1, 1], index=["nought", "one", "ten"])
+    to_quant = pd.Series([0, 1, 1.1, 5, 7, 10, 11])
+    # We expect: 1 should be small/ (1+small) exactly. higher values are this plus the
+    # remaining distance interpolated between 1 and 10.
+    smaller = small / (1 + small)
+    expected = np.array([0, smaller, smaller + 0.1 / 9, smaller + 4/9, smaller + 6/9, 1, 1])
+    res = stats.calc_quantiles_of_data(between1and10, to_quant, weighting=weights)
+    assert np.allclose(res, expected)
+
+    # The weights value can be entered in any order
+    weights = pd.Series([1, 1, small], index=["one", "ten", "nought"])
+    res = stats.calc_quantiles_of_data(between1and10, to_quant, weighting=weights)
+    assert np.allclose(res, expected)
+
+def test_calc_quantiles_weighted_nans():
+    # Test that adding nan values to the system doesn't affect results
+    between1and10 = pd.Series([0, 1, np.nan, 10], index=["nought", "one", "non", "ten"])
+    small = 0.00001
+    weights = pd.Series([small, 1, 1, 10], index=["nought", "one", "ten", "non"])
+    to_quant = pd.Series([0, 1, 1.1, 5, 7, 10, 11])
+    # We expect: 1 should be small/ (1+small) exactly. higher values are this plus the
+    # remaining distance interpolated between 1 and 10.
+    smaller = small / (1 + small)
+    expected = np.array(
+        [0, smaller, smaller + 0.1 / 9, smaller + 4 / 9, smaller + 6 / 9, 1, 1]
+    )
+    res = stats.calc_quantiles_of_data(between1and10, to_quant, weighting=weights)
+    assert np.allclose(res, expected)
 
 
 def test_calc_quantiles_of_data_smooth():
