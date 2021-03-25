@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import pyam
 import pytest
+import re
 import scipy.interpolate
 
 import silicone.stats as stats
@@ -141,6 +142,7 @@ def test_calc_quantiles_of_data():
     res = stats.calc_quantiles_of_data(range100_rev, to_quant, weighting=weights)
     assert np.allclose(res, expected)
 
+
 def test_calc_quantiles_weighted():
     # Test that using weighted quantiles produces the expected results
     between1and10 = pd.Series([0, 1, 10], index=["nought", "one", "ten"])
@@ -150,7 +152,9 @@ def test_calc_quantiles_weighted():
     # We expect: 1 should be small/ (1+small) exactly. higher values are this plus the
     # remaining distance interpolated between 1 and 10.
     smaller = small / (1 + small)
-    expected = np.array([0, smaller, smaller + 0.1 / 9, smaller + 4/9, smaller + 6/9, 1, 1])
+    expected = np.array(
+        [0, smaller, smaller + 0.1 / 9, smaller + 4 / 9, smaller + 6 / 9, 1, 1]
+    )
     res = stats.calc_quantiles_of_data(between1and10, to_quant, weighting=weights)
     assert np.allclose(res, expected)
 
@@ -158,6 +162,7 @@ def test_calc_quantiles_weighted():
     weights = pd.Series([1, 1, small], index=["one", "ten", "nought"])
     res = stats.calc_quantiles_of_data(between1and10, to_quant, weighting=weights)
     assert np.allclose(res, expected)
+
 
 def test_calc_quantiles_weighted_nans():
     # Test that adding nan values to the system doesn't affect results
@@ -173,6 +178,32 @@ def test_calc_quantiles_weighted_nans():
     )
     res = stats.calc_quantiles_of_data(between1and10, to_quant, weighting=weights)
     assert np.allclose(res, expected)
+
+
+def test_calc_quantile_bad_weights():
+    between1and10 = pd.Series([0, 1, np.nan, 10], index=["nought", "one", "non", "ten"])
+    weights = [0.1, 1, 1, 10, 1]
+    to_quant = pd.Series([0, 1, 1.1, 5, 7, 10, 11])
+    msg = "The weighting variable should be a Series"
+    with pytest.raises(AssertionError, match=msg):
+        stats.calc_quantiles_of_data(between1and10, to_quant, weighting=weights)
+    weights = pd.Series(weights, index=["nought", "one", "ten", "non", "o"])
+    msg = (
+            "There must be the same number of weights as entries in the database. "
+            "We have len {} in weights and len {} in distribution.".format(
+                len(weights), len(between1and10)
+            )
+    )
+    with pytest.raises(AssertionError, match=msg):
+        stats.calc_quantiles_of_data(between1and10, to_quant, weighting=weights)
+    weights = weights.iloc[1:]
+    msg = re.escape(
+            "The entries in the weighting Series are not clearly aligned with the "
+            "distribution Series. We have \n {} \n in the weighting and \n {} \n in "
+            "the distribution ".format(weights.index,between1and10.index)
+        )
+    with pytest.raises(AssertionError, match=msg):
+        stats.calc_quantiles_of_data(between1and10, to_quant, weighting=weights)
 
 
 def test_calc_quantiles_of_data_smooth():
