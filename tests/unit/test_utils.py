@@ -13,11 +13,11 @@ from silicone.utils import (
     _construct_consistent_values,
     _get_unit_of_variable,
     _make_interpolator,
+    _make_weighting_series,
     convert_units_to_MtCO2_equiv,
     download_or_load_sr15,
     find_matching_scenarios,
     return_cases_which_consistently_split,
-    _make_weighting_series,
 )
 
 _ur = ScmUnitRegistry()
