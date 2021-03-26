@@ -18,6 +18,7 @@ from silicone.utils import (
     download_or_load_sr15,
     find_matching_scenarios,
     return_cases_which_consistently_split,
+    _make_weighting_series,
 )
 
 _ur = ScmUnitRegistry()
