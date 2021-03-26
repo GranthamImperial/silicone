@@ -526,3 +526,38 @@ def _construct_consistent_values(aggregate_name, components, db_to_generate):
     use["unit"] = units.iloc[0]
     use["variable"] = aggregate_name
     return pyam.IamDataFrame(use)
+
+
+def _make_weighting_series(df, weights):
+    """
+    Makes a complete list of weights for all scenarios from a dictionary of only
+    unusual weights.
+    Parameters
+    ----------
+    df: pd.DataFrame
+        The timseries with the full set of models and scenarios whose weights
+        should be returned
+    weights: Dict{(str, str) : float}
+        The dictionary, mapping the (model and scenario) tuple onto the weight (relative
+        to a weight of 1 for the default). This does not have to include all scenarios
+        in df, but cannot include scenarios not in df.
+
+    Returns
+    -------
+    Series
+        A series with index corresponding to the timeseries of the dataframe and values
+        corresponding to the weights.
+
+    """
+    all_mod_scen = [(i[0], i[1]) for i in df.index]
+    all_mod_scen = list(set(all_mod_scen))
+
+    if any([key not in all_mod_scen for key in weights.keys()]):
+        raise ValueError(
+            "Not all the weighting values are found in the database. We "
+            "lack {}".format([key for key in weights.keys() if key not in all_mod_scen])
+        )
+    result = pd.Series([1 for i in range(len(df))], index=df.index)
+    for (key, val) in weights.items():
+        result[key[0], key[1]] = val
+    return result
