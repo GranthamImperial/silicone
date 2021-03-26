@@ -195,19 +195,19 @@ def test_calc_quantile_bad_weights():
         stats.calc_quantiles_of_data(between1and10, to_quant, weighting=weights)
     weights = pd.Series(weights, index=["nought", "one", "ten", "non", "o"])
     msg = (
-            "There must be the same number of weights as entries in the database. "
-            "We have len {} in weights and len {} in distribution.".format(
-                len(weights), len(between1and10)
-            )
+        "There must be the same number of weights as entries in the database. "
+        "We have len {} in weights and len {} in distribution.".format(
+            len(weights), len(between1and10)
+        )
     )
     with pytest.raises(AssertionError, match=msg):
         stats.calc_quantiles_of_data(between1and10, to_quant, weighting=weights)
     weights = weights.iloc[1:]
     msg = re.escape(
-            "The entries in the weighting Series are not clearly aligned with the "
-            "distribution Series. We have \n {} \n in the weighting and \n {} \n in "
-            "the distribution ".format(weights.index,between1and10.index)
-        )
+        "The entries in the weighting Series are not clearly aligned with the "
+        "distribution Series. We have \n {} \n in the weighting and \n {} \n in "
+        "the distribution ".format(weights.index, between1and10.index)
+    )
     with pytest.raises(AssertionError, match=msg):
         stats.calc_quantiles_of_data(between1and10, to_quant, weighting=weights)
 

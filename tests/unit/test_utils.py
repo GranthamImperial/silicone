@@ -17,6 +17,7 @@ from silicone.utils import (
     download_or_load_sr15,
     find_matching_scenarios,
     return_cases_which_consistently_split,
+    _make_weighting_series,
 )
 
 _ur = ScmUnitRegistry()
@@ -597,3 +598,28 @@ def test_construct_consistent_error_no_data():
     )
     with pytest.raises(ValueError, match=error_msg):
         _construct_consistent_values(aggregate_name, components, test_db_ag)
+
+
+def test_get_weights():
+    to_weight = simple_df.filter(variable="Emissions|CH4").timeseries()
+    maps = {(_mc, _sa): 3, (_mc, _sb): 2}
+    ret = _make_weighting_series(to_weight, maps)
+    assert len(ret) == 2
+    assert ret[to_weight.index[0]] == 3
+    assert ret[to_weight.index[1]] == 2
+    maps = {(_mc, _sb): 2}
+    ret_sing = _make_weighting_series(to_weight, maps)
+    assert len(ret_sing) == 2
+    assert ret_sing[to_weight.index[0]] == 1
+    assert ret_sing[to_weight.index[1]] == 2
+
+
+def test_get_weights_wrong_names():
+    wrong_name = "wrong name"
+    maps = {("model_a", _sa): 2, (_mc, wrong_name): 3}
+    msg = re.escape(
+        "Not all the weighting values are found in the database. We "
+        "lack {}".format([(_mc, wrong_name)])
+    )
+    with pytest.raises(ValueError, match=msg):
+        _make_weighting_series(test_db.timeseries(), maps)
