@@ -1,10 +1,10 @@
 import os
+import re
 
 import numpy as np
 import pandas as pd
 import pyam
 import pytest
-import re
 import scipy.interpolate
 
 import silicone.stats as stats
