@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from pyam import IamDataFrame
 
-from silicone.database_crunchers import ExtendLatestTimeQuantile
+from silicone.time_projectors import ExtendLatestTimeQuantile
 from silicone.utils import _adjust_time_style_to_match
 
 _msa = ["model_a", "scen_a"]

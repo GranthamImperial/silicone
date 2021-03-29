@@ -7,20 +7,32 @@ import warnings
 import numpy as np
 from pyam import IamDataFrame
 
-from ..stats import calc_quantiles_of_data
-from .base import _DatabaseCruncher
+from silicone.stats import calc_quantiles_of_data
 
 logger = logging.getLogger(__name__)
 
 
-class ExtendLatestTimeQuantile(_DatabaseCruncher):
+class ExtendLatestTimeQuantile():
     """
-    Database cruncher which extends the timeseries of a variable by assuming that it
+    Time projector which extends the timeseries of a variable by assuming that it
     remains that a fixed quantile in the infiller database, the quantile it is in at the
-    last available time.
+    last available time. This is the natural counterpart to the equal quantile walk
+    extending a single variable over time rather than over different emissions.
 
     It assumes that the target timeseries is shorter than the infiller timeseries.
     """
+
+    def __init__(self, db):
+        """
+        Initialise the time projector with a database containing data from the full
+        range of times you wish to see in the output.
+
+        Parameters
+        ----------
+        db : IamDataFrame
+            The database to use
+        """
+        self._db = db.copy()
 
     def derive_relationship(self, variable):
         """
