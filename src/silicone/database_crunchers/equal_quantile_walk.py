@@ -6,6 +6,7 @@ import numpy as np
 from pyam import IamDataFrame
 
 from ..stats import calc_quantiles_of_data
+from ..utils import _make_weighting_series
 from .base import _DatabaseCruncher
 
 
@@ -20,7 +21,9 @@ class EqualQuantileWalk(_DatabaseCruncher):
     then outputs that quantile of the follow data in the infiller database.
     """
 
-    def derive_relationship(self, variable_follower, variable_leaders, smoothing=None):
+    def derive_relationship(
+        self, variable_follower, variable_leaders, smoothing=None, weighting=None
+    ):
         """
         Derive the relationship between two variables from the database.
 
@@ -41,6 +44,11 @@ class EqualQuantileWalk(_DatabaseCruncher):
             return the quantiles of that distribution. If a string is used, it must be
             either "scott" or "silverman", after those two methods of determining the
             best kernel bandwidth.
+
+        weighting: Dict{(str, str) : float}
+            The dictionary, mapping the (model and scenario) tuple onto the weight (relative
+            to a weight of 1 for the default). This does not have to include all scenarios
+            in df, but cannot include scenarios not in df.
 
         Returns
         -------
@@ -67,6 +75,16 @@ class EqualQuantileWalk(_DatabaseCruncher):
         data_follower_time_col = iamdf_follower.time_col
         data_follower_unit = iamdf_follower["unit"].values[0]
         lead_ts = self._db.filter(variable=variable_leaders).timeseries()
+        if not isinstance(weighting, type(None)):
+            if type(weighting) == dict:
+                weighting_follow = _make_weighting_series(follower_ts, weighting)
+                weighting_lead = _make_weighting_series(lead_ts, weighting)
+            else:
+                raise ValueError("We can only use dictionary values for weights")
+        else:
+            weighting_follow = None
+            weighting_lead = None
+
         lead_unit = lead_ts.index.get_level_values("unit")[0]
 
         def filler(in_iamdf):
@@ -126,7 +144,12 @@ class EqualQuantileWalk(_DatabaseCruncher):
                 )
             for col in output_ts.columns:
                 output_ts[col] = self._find_same_quantile(
-                    follower_ts[col], lead_ts[col], output_ts[col], smoothing
+                    follower_ts[col],
+                    lead_ts[col],
+                    output_ts[col],
+                    smoothing,
+                    weighting_lead,
+                    weighting_follow,
                 )
             output_ts = output_ts.reset_index()
             output_ts["variable"] = variable_follower
@@ -146,10 +169,16 @@ class EqualQuantileWalk(_DatabaseCruncher):
 
         return self._db.filter(variable=variable_follower)
 
-    def _find_same_quantile(self, follow_vals, lead_vals, lead_input, smoothing):
+    def _find_same_quantile(
+        self, follow_vals, lead_vals, lead_input, smoothing, weighting_lead, weighting_follow
+    ):
         # Dispose of nans that can cloud the calculation
         follow_vals = follow_vals[~np.isnan(follow_vals)]
-        input_quantiles = calc_quantiles_of_data(lead_vals, lead_input, smoothing)
+        input_quantiles = calc_quantiles_of_data(
+            lead_vals, lead_input, smoothing, weighting_lead
+        )
         if all(np.isnan(input_quantiles)):
             return np.nanmean(follow_vals)
-        return np.nanquantile(follow_vals, input_quantiles)
+        return calc_quantiles_of_data(
+            follow_vals, input_quantiles, smoothing, weighting_follow, to_quantile=False
+        )
