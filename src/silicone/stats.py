@@ -105,7 +105,7 @@ def rolling_window_find_quantiles(
 
 
 def calc_quantiles_of_data(
-    distribution, points_to_quant, smoothing=None, weighting=None
+    distribution, points_to_quant, smoothing=None, weighting=None, to_quantile=True
 ):
     """
     Calculates the quantiles of points_to_quant in the distribution of values described
@@ -127,14 +127,22 @@ def calc_quantiles_of_data(
     weighting : None or Series
         If a series, must have the same indices as distribution, giving the
         relative weights of each point.
+    to_quantile : Bool
+        If true, we return the quantiles of the data in points_to_quant. If true, we
+        instead treat points_to_quant as the quantiles themselves (they must all be 0-1)
+        and return the values in distribution that occur at these quantiles.
 
     Returns
     -------
     :obj:`np.ndarray`
         an array of width 1 and the same length as points_to_quant, containing the
-        quantiles of these points in order.
+        quantiles of these points in order. Or, if to_quantile is false, containing the
+        values corresponding to the quantiles points_to_quant.
     """
-    if type(weighting) == type(None):
+    if not to_quantile:
+        assert all([i <= 1 and i>=0 for i in points_to_quant]), \
+            "Quantiles are not defined outside the range 0-1"
+    if isinstance(weighting, type(None)):
         weighting = pd.Series(
             [1 for i in range(len(distribution))], index=distribution.index
         )
@@ -159,8 +167,12 @@ def calc_quantiles_of_data(
         weighting = weighting[distribution.index]
     len_lead_not_nan = len(distribution)
     if len_lead_not_nan == 1:
-        # If there is only a single value then quantile is not defined and we return nan
-        return np.array([np.nan for a in range(len(points_to_quant))])
+        # If there is only a single value then quantile is not defined
+        if to_quantile:
+            return np.array([np.nan for a in range(len(points_to_quant))])
+        else:
+            # all quantiles give the same point
+            return distribution[0]
     if len_lead_not_nan == 0:
         raise ValueError("No valid data entered to establish the quantiles.")
     if smoothing:
@@ -173,9 +185,14 @@ def calc_quantiles_of_data(
         # tile the probability space with 200 points between the tail ends
         xpts = np.linspace(minx - tail, maxx + tail, 6000)
         smooth_dist = np.cumsum(smooth_points(xpts)) * (xpts[1] - xpts[0])
-        return scipy.interpolate.interp1d(
-            xpts, smooth_dist, bounds_error=False, fill_value=(0, 1)
-        )(points_to_quant)
+        if to_quantile:
+            return scipy.interpolate.interp1d(
+                xpts, smooth_dist, bounds_error=False, fill_value=(0, 1)
+            )(points_to_quant)
+        else:
+            return scipy.interpolate.interp1d(
+                smooth_dist, xpts, bounds_error=True
+            )(points_to_quant)
 
     dist_sort_ind = np.argsort(distribution)
     distribution = distribution[dist_sort_ind.index[dist_sort_ind]]
@@ -185,9 +202,14 @@ def calc_quantiles_of_data(
     )
     if any(quant_of_lead_vals > 1) or any(quant_of_lead_vals < 0):
         raise ValueError("Impossible quantiles!")
-    return scipy.interpolate.interp1d(
-        distribution, quant_of_lead_vals, bounds_error=False, fill_value=(0, 1)
-    )(points_to_quant)
+    if to_quantile:
+        return scipy.interpolate.interp1d(
+            distribution, quant_of_lead_vals, bounds_error=False, fill_value=(0, 1)
+        )(points_to_quant)
+    else:
+        return scipy.interpolate.interp1d(
+            quant_of_lead_vals, distribution
+        )(points_to_quant)
 
 
 def calc_all_emissions_correlations(emms_df, years, output_dir):

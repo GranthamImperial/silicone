@@ -34,7 +34,7 @@ class ExtendLatestTimeQuantile:
         """
         self._db = db.copy()
 
-    def derive_relationship(self, variable, smoothing=None):
+    def derive_relationship(self, variable, smoothing=None, weighting=None):
         """
         Derives the quantiles of the variable in the infiller database. Note that this
         takes only one variable as an argument, whereas most crunchers take two.
@@ -45,13 +45,17 @@ class ExtendLatestTimeQuantile:
             The variable for which we want to calculate timeseries (e.g.
             ``"Emissions|CO2"``).
 
-        smoothing : float or string
-            By default, no smoothing is done on the distribution. If an argument is
-            used, it is fed into scipy.stats.gaussian_kde. If a float is input, we
+        smoothing : None, float or string
+            By default (None), no smoothing is done on the distribution. If an argument
+            is used, it is fed into scipy.stats.gaussian_kde. If a float is input, we
             fit a Gaussian kernel density estimator with that width to the points and
             return the quantiles of that distribution. If a string is used, it must be
             either "scott" or "silverman", after those two methods of determining the
             best kernel bandwidth.
+
+        weighting : None or list[str]
+            By default, all scenarios have equal weight. If some model/scenario
+            combinations have weights other than 1, give a dictionary of the
 
         Returns
         -------
@@ -139,7 +143,7 @@ class ExtendLatestTimeQuantile:
             target_at_key_time = get_values_in_key_timepoint(target_df)
 
             quantiles = calc_quantiles_of_data(
-                infiller_at_key_time, target_at_key_time, smoothing
+                infiller_at_key_time, target_at_key_time, smoothing, weighting
             )
             if any(np.isnan(quantiles)):
                 logger.warning("Only a single value provided for calculating quantiles")
