@@ -192,6 +192,37 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
 
         assert all(crunched["value"].values == expected)
 
+
+    def test_weighting_results(self, test_db):
+        # Ensure that duplicating data and giving it a weight of 1/2 makes no difference
+
+        # First check that giving a weight of 1 does nothing.
+        large_db = IamDataFrame(self.large_db.copy())
+        large_db = self._adjust_time_style_to_match(large_db, test_db)
+        to_infill = test_db.filter(**{test_db.time_col: large_db[large_db.time_col][0]})
+        lead = ["Emissions|CO2"]
+        follow = "Emissions|CH4"
+        tcruncher = self.tclass(large_db)
+        normal_results = tcruncher.derive_relationship(variable_follower=follow, variable_leaders=lead)(to_infill)
+        weight_1 = {(_ma, _sb): 1, (_ma, _sa): 1}
+        norm_weight_results = tcruncher.derive_relationship(variable_follower=follow, variable_leaders=lead, weighting=weight_1)(to_infill)
+        assert normal_results.equals(norm_weight_results)
+
+        # Compare these with a run where we have a duplicated datapoint.
+        new_scen = "new_scen"
+        duplicate = large_db.filter(model=_mb, scenario=_sd)
+        duplicate.rename({"scenario": {_sd: new_scen}}, inplace=True)
+        larger_db = large_db.append(duplicate)
+        tcruncher_dup = self.tclass(larger_db)
+        weights = {(_mb, _sd): 0.5, (_mb, new_scen): 0.5}
+        weighted_results = tcruncher_dup.derive_relationship(variable_follower=follow, variable_leaders=lead, weighting=weights)(to_infill)
+        assert normal_results.equals(weighted_results)
+        # Also check that the duplication changes the results!
+        duplicate_results = tcruncher_dup.derive_relationship(variable_follower=follow, variable_leaders=lead)(to_infill)
+        assert not normal_results.equals(duplicate_results)
+
+
+
     def test_uneven_lead_follow_len_short_lead(self, test_db):
         # In the event that there is only one set of lead data, all follow data should
         # be the same at a given time, and should equal the mean value in the input.
