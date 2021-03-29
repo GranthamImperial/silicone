@@ -12,7 +12,7 @@ from silicone.stats import calc_quantiles_of_data
 logger = logging.getLogger(__name__)
 
 
-class ExtendLatestTimeQuantile():
+class ExtendLatestTimeQuantile:
     """
     Time projector which extends the timeseries of a variable by assuming that it
     remains that a fixed quantile in the infiller database, the quantile it is in at the
