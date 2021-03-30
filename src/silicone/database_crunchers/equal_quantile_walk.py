@@ -170,7 +170,13 @@ class EqualQuantileWalk(_DatabaseCruncher):
         return self._db.filter(variable=variable_follower)
 
     def _find_same_quantile(
-        self, follow_vals, lead_vals, lead_input, smoothing, weighting_lead, weighting_follow
+        self,
+        follow_vals,
+        lead_vals,
+        lead_input,
+        smoothing,
+        weighting_lead,
+        weighting_follow,
     ):
         # Dispose of nans that can cloud the calculation
         follow_vals = follow_vals[~np.isnan(follow_vals)]
