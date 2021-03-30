@@ -140,8 +140,9 @@ def calc_quantiles_of_data(
         values corresponding to the quantiles points_to_quant.
     """
     if not to_quantile:
-        assert all([i <= 1 and i>=0 for i in points_to_quant]), \
-            "Quantiles are not defined outside the range 0-1"
+        assert all(
+            [i <= 1 and i >= 0 for i in points_to_quant]
+        ), "Quantiles are not defined outside the range 0-1"
     if isinstance(weighting, type(None)):
         weighting = pd.Series(
             [1 for i in range(len(distribution))], index=distribution.index
@@ -190,9 +191,9 @@ def calc_quantiles_of_data(
                 xpts, smooth_dist, bounds_error=False, fill_value=(0, 1)
             )(points_to_quant)
         else:
-            return scipy.interpolate.interp1d(
-                smooth_dist, xpts, bounds_error=True
-            )(points_to_quant)
+            return scipy.interpolate.interp1d(smooth_dist, xpts, bounds_error=True)(
+                points_to_quant
+            )
 
     dist_sort_ind = np.argsort(distribution)
     distribution = distribution[dist_sort_ind.index[dist_sort_ind]]
@@ -207,9 +208,9 @@ def calc_quantiles_of_data(
             distribution, quant_of_lead_vals, bounds_error=False, fill_value=(0, 1)
         )(points_to_quant)
     else:
-        return scipy.interpolate.interp1d(
-            quant_of_lead_vals, distribution
-        )(points_to_quant)
+        return scipy.interpolate.interp1d(quant_of_lead_vals, distribution)(
+            points_to_quant
+        )
 
 
 def calc_all_emissions_correlations(emms_df, years, output_dir):

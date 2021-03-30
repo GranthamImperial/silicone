@@ -190,22 +190,34 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
 
         expected = np.quantile(ys, quant_of_y)
 
-        assert all(crunched["value"].values == expected)
+        assert np.allclose(crunched["value"].values, expected)
 
-
-    def test_weighting_results(self, test_db):
-        # Ensure that duplicating data and giving it a weight of 1/2 makes no difference
+    @pytest.mark.parametrize("smoothing", [True, False])
+    def test_weighting_results(self, test_db, smoothing):
+        # Ensure that duplicating data and giving it a weight of 1/2 makes little
+        # difference to the results
 
         # First check that giving a weight of 1 does nothing.
         large_db = IamDataFrame(self.large_db.copy())
         large_db = self._adjust_time_style_to_match(large_db, test_db)
-        to_infill = test_db.filter(**{test_db.time_col: large_db[large_db.time_col][0]})
+        to_infill = test_db.filter(
+            **{test_db.time_col: large_db[large_db.time_col][0]}
+        ).data
+        to_infill["value"].iloc[-1] = 3.7
+        to_infill = IamDataFrame(to_infill)
         lead = ["Emissions|CO2"]
         follow = "Emissions|CH4"
         tcruncher = self.tclass(large_db)
-        normal_results = tcruncher.derive_relationship(variable_follower=follow, variable_leaders=lead)(to_infill)
+        normal_results = tcruncher.derive_relationship(
+            variable_follower=follow, variable_leaders=lead, smoothing=smoothing
+        )(to_infill)
         weight_1 = {(_ma, _sb): 1, (_ma, _sa): 1}
-        norm_weight_results = tcruncher.derive_relationship(variable_follower=follow, variable_leaders=lead, weighting=weight_1)(to_infill)
+        norm_weight_results = tcruncher.derive_relationship(
+            variable_follower=follow,
+            variable_leaders=lead,
+            weighting=weight_1,
+            smoothing=smoothing,
+        )(to_infill)
         assert normal_results.equals(norm_weight_results)
 
         # Compare these with a run where we have a duplicated datapoint.
@@ -215,13 +227,34 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         larger_db = large_db.append(duplicate)
         tcruncher_dup = self.tclass(larger_db)
         weights = {(_mb, _sd): 0.5, (_mb, new_scen): 0.5}
-        weighted_results = tcruncher_dup.derive_relationship(variable_follower=follow, variable_leaders=lead, weighting=weights)(to_infill)
-        assert normal_results.equals(weighted_results)
+        weighted_results = tcruncher_dup.derive_relationship(
+            variable_follower=follow,
+            variable_leaders=lead,
+            weighting=weights,
+            smoothing=smoothing,
+        )(to_infill)
+        if smoothing:
+            np.allclose(
+                normal_results.data.value, weighted_results.data.value, rtol=0.002
+            )
+        else:
+            # The first points are precisely equal but the final point is interpolated
+            # slightly differently
+            assert normal_results.data.iloc[:3].equals(weighted_results.data.iloc[:3])
+            assert np.allclose(
+                normal_results.data.value.iloc[3:],
+                weighted_results.data.value.iloc[3:],
+                rtol=0.03,
+            )
         # Also check that the duplication changes the results!
-        duplicate_results = tcruncher_dup.derive_relationship(variable_follower=follow, variable_leaders=lead)(to_infill)
-        assert not normal_results.equals(duplicate_results)
-
-
+        duplicate_results = tcruncher_dup.derive_relationship(
+            variable_follower=follow, variable_leaders=lead, smoothing=smoothing
+        )(to_infill)
+        assert not np.allclose(
+            normal_results.data.value.iloc[:3],
+            duplicate_results.data.value.iloc[:3],
+            rtol=0.002,
+        )
 
     def test_uneven_lead_follow_len_short_lead(self, test_db):
         # In the event that there is only one set of lead data, all follow data should
