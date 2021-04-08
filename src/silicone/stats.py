@@ -116,7 +116,9 @@ def calc_quantiles_of_data(
     distribution : pd.Series
         The distribution of values.
     points_to_quant : pd.Series
-        The points which we want to know the quantiles of.
+        The points which we want find: if to_quantile == True (default) these are the
+        values which we will compare to the distribution, if false, these are the
+        quantiles which we want to find.
     smoothing : float or string
         By default, no smoothing is done on the distribution. If an argument is used,
         it is fed into scipy.stats.gaussian_kde. If a float is input, we
@@ -148,6 +150,7 @@ def calc_quantiles_of_data(
             [1 for i in range(len(distribution))], index=distribution.index
         )
     else:
+
         assert type(weighting) == pd.Series, "The weighting variable should be a Series"
         assert len(weighting) == len(distribution), (
             "There must be the same number of weights as entries in the database. "
@@ -191,6 +194,12 @@ def calc_quantiles_of_data(
                 xpts, smooth_dist, bounds_error=False, fill_value=(0, 1)
             )(points_to_quant)
         else:
+            # These quantiles are not defined in the smooth case
+            qmax = 0.999
+            qmin = 0.001
+            points_to_quant = np.array(
+                [max(min(qmax, q), qmin) for q in points_to_quant]
+            )
             return scipy.interpolate.interp1d(smooth_dist, xpts, bounds_error=True)(
                 points_to_quant
             )
