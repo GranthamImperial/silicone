@@ -52,6 +52,16 @@ def unequal_df(request):
     return IamDataFrame(request.cls.unequal_df)
 
 
+@pytest.fixture(scope="function")
+def range_df(request):
+    return IamDataFrame(request.cls.range_df)
+
+
+@pytest.fixture(scope="function")
+def sparse_df(request):
+    return IamDataFrame(request.cls.sparse_df)
+
+
 mg_ascen = ["MSG-GLB", "a_scen"]
 mg_ascen_2 = ["MSG-GLB", "a_scen_2"]
 CHECK_AGG_DF = pd.DataFrame(

@@ -8,6 +8,7 @@ import numpy as np
 from pyam import IamDataFrame
 
 from silicone.stats import calc_quantiles_of_data
+from silicone.utils import _make_weighting_series
 
 logger = logging.getLogger(__name__)
 
@@ -53,9 +54,10 @@ class ExtendLatestTimeQuantile:
             either "scott" or "silverman", after those two methods of determining the
             best kernel bandwidth.
 
-        weighting : None or list[str]
-            By default, all scenarios have equal weight. If some model/scenario
-            combinations have weights other than 1, give a dictionary of the
+        weighting : None or dict{(str, str): float}
+            The dictionary, mapping the (model and scenario) tuple onto the weight (
+            relative to a weight of 1 for the default). This does not have to include
+            all scenarios in df, but cannot include scenarios not in df.
 
         Returns
         -------
@@ -81,6 +83,11 @@ class ExtendLatestTimeQuantile:
         ), "The infiller database has {} units in it. It should have one. ".format(
             len(data_follower_unit)
         )
+        if not isinstance(weighting, type(None)):
+            if type(weighting) == dict:
+                weighting = _make_weighting_series(iamdf.timeseries(), weighting)
+            else:
+                raise ValueError("We can only use dictionary values for weights")
 
         def filler(in_iamdf):
             """
@@ -151,7 +158,9 @@ class ExtendLatestTimeQuantile:
             output_ts = target_df.timeseries()
             iamdf_ts = iamdf.timeseries()
             for time in later_times:
-                output_ts[time] = np.nanquantile(iamdf_ts[time], quantiles,)
+                output_ts[time] = calc_quantiles_of_data(
+                    iamdf_ts[time], quantiles, smoothing, weighting, to_quantile=False
+                )
             for col in output_ts.columns:
                 if col not in later_times:
                     del output_ts[col]

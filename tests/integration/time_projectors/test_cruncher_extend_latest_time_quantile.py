@@ -10,6 +10,8 @@ from silicone.time_projectors import ExtendLatestTimeQuantile
 from silicone.utils import _adjust_time_style_to_match
 
 _msa = ["model_a", "scen_a"]
+_mb = "model_b"
+_ma = "model_a"
 
 
 class TestDatabaseCruncherExtendLatestTimeQuantile:
@@ -34,7 +36,7 @@ class TestDatabaseCruncherExtendLatestTimeQuantile:
         [
             ["model_b", "scen_b", "World", "Emissions|HFC|C2F6", "kt C2F6/yr", 1, 2, 3],
             [
-                "model_b",
+                _mb,
                 "scen_c",
                 "World",
                 "Emissions|HFC|C2F6",
@@ -45,6 +47,50 @@ class TestDatabaseCruncherExtendLatestTimeQuantile:
             ],
         ],
         columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2050],
+    )
+    range_df = IamDataFrame(
+        pd.DataFrame(
+            [
+                [
+                    "model_b",
+                    "scen_" + str(n),
+                    "World",
+                    "Emissions|CO2",
+                    "kt C2F6/yr",
+                    n,
+                    1 + n,
+                    2 + n,
+                    3 + n,
+                ]
+                for n in range(100)
+            ],
+            columns=[
+                "model",
+                "scenario",
+                "region",
+                "variable",
+                "unit",
+                2010,
+                2015,
+                2020,
+                2050,
+            ],
+        )
+    )
+    sparse_df = pd.DataFrame(
+        [
+            [
+                _ma,
+                "sc_" + str(n),
+                "World",
+                "Emissions|CO2",
+                "kt C2F6/yr",
+                n,
+                10 + 10 * n,
+            ]
+            for n in range(11)
+        ],
+        columns=["model", "scenario", "region", "variable", "unit", 2010, 2015],
     )
 
     def test_derive_relationship(self, test_db):
@@ -203,54 +249,11 @@ class TestDatabaseCruncherExtendLatestTimeQuantile:
         ).equals(infilled_filt)
 
     @pytest.mark.parametrize("add_col", [None, "extra_col"])
-    def test_relationship_usage(self, add_col):
-        variable = "Emissions|HFC|C2F6"
-        range_df = IamDataFrame(
-            pd.DataFrame(
-                [
-                    [
-                        "model_b",
-                        "scen_" + str(n),
-                        "World",
-                        variable,
-                        "kt C2F6/yr",
-                        n,
-                        1 + n,
-                        2 + n,
-                        3 + n,
-                    ]
-                    for n in range(100)
-                ],
-                columns=[
-                    "model",
-                    "scenario",
-                    "region",
-                    "variable",
-                    "unit",
-                    2010,
-                    2015,
-                    2020,
-                    2050,
-                ],
-            )
-        )
-        sparse_df = pd.DataFrame(
-            [
-                [
-                    "model_a",
-                    "sc_" + str(n),
-                    "World",
-                    variable,
-                    "kt C2F6/yr",
-                    n,
-                    10 + 10 * n,
-                ]
-                for n in range(11)
-            ],
-            columns=["model", "scenario", "region", "variable", "unit", 2010, 2015],
-        )
+    def test_relationship_usage(self, range_df, sparse_df, add_col):
+        variable = "Emissions|CO2"
         if add_col:
             add_col_val = "blah"
+            sparse_df = sparse_df.data
             sparse_df[add_col] = add_col_val
         target_df = IamDataFrame(sparse_df)
         tcruncher = self.tclass(range_df)
@@ -294,3 +297,83 @@ class TestDatabaseCruncherExtendLatestTimeQuantile:
             .filter(variable=variable)
             .equals(test_db.filter(variable=variable))
         )
+
+    @pytest.mark.parametrize("smoothing", [True, False])
+    def test_weighting_results(self, sparse_df, range_df, smoothing):
+        # Ensure that duplicating data and giving it a weight of 1/2 makes little
+        # difference to the results
+
+        # First check that giving a weight of 1 does nothing.
+        to_infill = range_df.filter(
+            **{range_df.time_col: range_df[range_df.time_col][0]}
+        )
+        sparse_df = sparse_df.data
+        sparse_df.value[0::4] *= 5
+        sparse_df.value[3::4] += -1
+        sparse_df = IamDataFrame(sparse_df)
+        variable = "Emissions|CO2"
+        tcruncher = self.tclass(sparse_df)
+        normal_results = tcruncher.derive_relationship(
+            variable=variable, smoothing=smoothing
+        )(to_infill)
+        weight_1 = {(_ma, "sc_5"): 1, (_ma, "sc_6"): 1}
+        norm_weight_results = tcruncher.derive_relationship(
+            variable=variable, weighting=weight_1, smoothing=smoothing,
+        )(to_infill)
+        assert normal_results.equals(norm_weight_results)
+
+        # Compare these with a run where we have a duplicated datapoint.
+        new_scen = "new_scen"
+        duplicated_scen = "sc_6"
+        duplicate = sparse_df.filter(model=_ma, scenario=duplicated_scen)
+        duplicate.rename({"scenario": {duplicated_scen: new_scen}}, inplace=True)
+        larger_db = sparse_df.append(duplicate)
+        tcruncher_dup = self.tclass(larger_db)
+        weights = {(_ma, duplicated_scen): 0.5, (_ma, new_scen): 0.5}
+        weighted_results = tcruncher_dup.derive_relationship(
+            variable=variable, weighting=weights, smoothing=smoothing,
+        )(to_infill)
+        np.allclose(normal_results.data.value, weighted_results.data.value)
+        # Also check that the duplication changes the results!
+        duplicate_results = tcruncher_dup.derive_relationship(
+            variable=variable, smoothing=smoothing
+        )(to_infill)
+        assert not np.allclose(normal_results.data.value, duplicate_results.data.value,)
+
+    @pytest.mark.parametrize("smoothing", [True, False])
+    def test_weighting_at_limits(self, sparse_df, range_df, smoothing):
+        # We should get sensible results when infilling results well outside the limit
+        # of the input data
+        to_infill = range_df.filter(
+            **{range_df.time_col: range_df[range_df.time_col][0]}
+        )
+        # Adjust the data to have a lowest value well below the normal range
+        to_infill = to_infill.data
+        to_infill.value.iloc[0] = -100
+        to_infill = IamDataFrame(to_infill)
+
+        variable = "Emissions|CO2"
+        tcruncher = self.tclass(sparse_df)
+        weight = {(_ma, "sc_5"): 1, (_ma, "sc_6"): 2}
+        results = tcruncher.derive_relationship(
+            variable=variable, smoothing=smoothing, weighting=weight
+        )(to_infill)
+        assert all(np.isfinite(results.data.value))
+        if smoothing:
+            # If we do smoothing, we limit the results in a fuzzy way, so that the
+            # values must be within one range-distance outside the range of values. The
+            # lower point of the range is at 0.
+            assert (
+                max(results.data.value)
+                < max(sparse_df.filter(year=2015).data.value) * 2
+            )
+            assert min(results.data.value) > -max(
+                sparse_df.filter(year=2015).data.value
+            )
+        else:
+            assert max(results.data.value) == max(
+                sparse_df.filter(year=2015).data.value
+            )
+            assert min(results.data.value) == min(
+                sparse_df.filter(year=2015).data.value
+            )
