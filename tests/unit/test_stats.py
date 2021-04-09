@@ -218,22 +218,22 @@ def test_calc_quantiles_of_data_smooth():
     to_quant = pd.Series([-1, 0, 10, 50, 99, 100, 101])
     expected = np.array([0, 0, 0.1, 0.5, 0.99, 1, 1])
     # In the limit of no smoothness we should recover the original result
-    res = stats.calc_quantiles_of_data(range100, to_quant, 0.002)
+    res = stats.calc_quantiles_of_data(range100, to_quant, 0.001)
     assert np.allclose(res, expected, atol=0.01, rtol=0.01)
 
     # But when we add smoothness, we encounter slight, symmetric differences
     res_smooth = stats.calc_quantiles_of_data(range100, to_quant, 0.3)
     assert np.allclose(res[0] + res[-1], res_smooth[0] + res_smooth[-1], atol=5e-4)
     assert np.allclose(res[1] + res[-2], res_smooth[1] + res_smooth[-2], atol=5e-3)
-    assert all([res_smooth[i] > res[i] for i in range(3)])
-    assert all([res_smooth[i] < res[i] for i in range(4, 7)])
+    assert all([res_smooth[i] >= res[i] for i in range(3)])
+    assert all([res_smooth[i] <= res[i] for i in range(4, 7)])
     # Substantially the same results should be found when using the "scott" smoothing
     res_smooth = stats.calc_quantiles_of_data(range100, to_quant, "scott")
     assert np.allclose(res_smooth[3], 0.5, atol=0.003)
     assert np.allclose(res[0] + res[-1], res_smooth[0] + res_smooth[-1], atol=5e-4)
-    assert all([res_smooth[i] > res[i] for i in range(3)])
-    assert all([res_smooth[i] < res[i] for i in range(4, 7)])
-    assert all([res_smooth[i] > res[i] for i in range(3)])
+    assert all([res_smooth[i] >= res[i] for i in range(3)])
+    assert all([res_smooth[i] <= res[i] for i in range(4, 7)])
+    assert all([res_smooth[i] >= res[i] for i in range(3)])
 
 
 @pytest.mark.parametrize("smoothing", (None, 0.3))
@@ -401,3 +401,17 @@ def test_calc_all_emissions_numerical(tmpdir):
         if file_string == "time_variance_rank_correlation":
             assert np.isclose(expect_var, test_results.iloc[1].iloc[1])
         os.remove(test_file)
+
+
+def test_quantile_values_above_1():
+    # We construct a scenario that can return quantile values above 1 if the numerical
+    # sums are not handled properly
+    to_quant = pd.Series(
+        [38751.41118, 40656.52654, 40656.52654, 40656.52654, 40656.52654, 42656.04102]
+    )
+    fringe = max(to_quant) - min(to_quant)
+    infiller = pd.Series(
+        np.arange(min(to_quant) - fringe, max(to_quant) + fringe, 1000)
+    )
+    res = stats.calc_quantiles_of_data(to_quant, infiller, 0.3)
+    assert max(res) == 1
