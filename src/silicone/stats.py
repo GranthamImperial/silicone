@@ -185,24 +185,23 @@ def calc_quantiles_of_data(
         )
         minx = min(distribution)
         maxx = max(distribution)
-        tail = maxx - minx
-        # tile the probability space with 200 points between the tail ends
-        xpts = np.linspace(minx - tail, maxx + tail, 6000)
+        tail = (maxx - minx)/2
+        # tile the probability space with 10000 points between the tail ends
+        xpts = np.linspace(minx - tail, maxx + tail, 10000)
         smooth_dist = np.cumsum(smooth_points(xpts)) * (xpts[1] - xpts[0])
+        # But we only want to return values between the extrema
+        xkeep = (xpts >= minx) & (xpts <= maxx)
+        xpts = xpts[xkeep]
+        smooth_dist = smooth_dist[xkeep]
+
         if to_quantile:
             return scipy.interpolate.interp1d(
                 xpts, smooth_dist, bounds_error=False, fill_value=(0, 1)
             )(points_to_quant)
         else:
-            # These quantiles are not defined in the smooth case
-            qmax = 0.999
-            qmin = 0.001
-            points_to_quant = np.array(
-                [max(min(qmax, q), qmin) for q in points_to_quant]
-            )
-            return scipy.interpolate.interp1d(smooth_dist, xpts, bounds_error=True)(
-                points_to_quant
-            )
+            return scipy.interpolate.interp1d(
+                smooth_dist, xpts, bounds_error=False, fill_value=(minx, maxx)
+            )(points_to_quant)
 
     dist_sort_ind = np.argsort(distribution)
     distribution = distribution[dist_sort_ind.index[dist_sort_ind]]
