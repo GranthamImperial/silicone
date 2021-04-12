@@ -185,7 +185,7 @@ def calc_quantiles_of_data(
         )
         minx = min(distribution)
         maxx = max(distribution)
-        tail = (maxx - minx)/2
+        tail = (maxx - minx) / 2
         # tile the probability space with 10000 points between the tail ends
         xpts = np.linspace(minx - tail, maxx + tail, 10000)
         smooth_dist = np.cumsum(smooth_points(xpts)) * (xpts[1] - xpts[0])
