@@ -109,7 +109,8 @@ def calc_quantiles_of_data(
 ):
     """
     Calculates the quantiles of points_to_quant in the distribution of values described
-    by distribution.
+    by distribution. Optionally treats points_to_quant as quantiles and returns the
+    values that would lead to them instead.
 
     Parameters
     ----------
@@ -125,12 +126,12 @@ def calc_quantiles_of_data(
         fit a Gaussian kernel density estimator with that width to the points and return
         the quantiles of that distribution. If a string is used, it must be either
         "scott" or "silverman", after those two methods of determining the best kernel
-        bandwidth.
+        bandwidth. 
     weighting : None or Series
         If a series, must have the same indices as distribution, giving the
         relative weights of each point.
     to_quantile : Bool
-        If true, we return the quantiles of the data in points_to_quant. If true, we
+        If true, we return the quantiles of the data in points_to_quant. If False, we
         instead treat points_to_quant as the quantiles themselves (they must all be 0-1)
         and return the values in distribution that occur at these quantiles.
 
