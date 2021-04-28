@@ -76,7 +76,7 @@ class EqualQuantileWalk(_DatabaseCruncher):
         data_follower_unit = iamdf_follower["unit"].values[0]
         lead_ts = self._db.filter(variable=variable_leaders).timeseries()
         if not isinstance(weighting, type(None)):
-            if type(weighting) == dict:
+            if isinstance(weighting, dict):
                 weighting_follow = _make_weighting_series(follower_ts, weighting)
                 weighting_lead = _make_weighting_series(lead_ts, weighting)
             else:
