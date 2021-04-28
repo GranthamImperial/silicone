@@ -80,7 +80,7 @@ class EqualQuantileWalk(_DatabaseCruncher):
                 weighting_follow = _make_weighting_series(follower_ts, weighting)
                 weighting_lead = _make_weighting_series(lead_ts, weighting)
             else:
-                raise ValueError("We can only use dictionary values for weights")
+                raise TypeError("``weighting`` should be a dictionary")
         else:
             weighting_follow = None
             weighting_lead = None
