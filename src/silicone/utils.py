@@ -557,7 +557,7 @@ def _make_weighting_series(df, weights):
             "Not all the weighting values are found in the database. We "
             "lack {}".format([key for key in weights.keys() if key not in all_mod_scen])
         )
-    result = pd.Series([1 for i in range(len(df))], index=df.index)
+    result = pd.Series(np.ones_like(len(df)), index=df.index)
     for (key, val) in weights.items():
         result[key[0], key[1]] = val
     return result
