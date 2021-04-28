@@ -605,7 +605,7 @@ def test_get_weights():
     maps = {(_mc, _sa): 3, (_mc, _sb): 2}
     ret = _make_weighting_series(to_weight, maps)
     assert len(ret) == 2
-    assert ret[to_weight.index[0]] == 3
+    assert ret[(_mc, _sa)] == 3
     assert ret[to_weight.index[1]] == 2
     maps = {(_mc, _sb): 2}
     ret_sing = _make_weighting_series(to_weight, maps)
