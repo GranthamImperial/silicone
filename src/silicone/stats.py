@@ -117,7 +117,7 @@ def calc_quantiles_of_data(
     distribution : pd.Series
         The distribution of values.
     points_to_quant : pd.Series
-        The points which we want find: if to_quantile == True (default) these are the
+        The points which we want find: if ``to_quantile`` is ``True`` (default) these are the
         values which we will compare to the distribution, if false, these are the
         quantiles which we want to find.
     smoothing : float or string
