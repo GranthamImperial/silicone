@@ -602,13 +602,14 @@ def test_get_weights():
     maps = {(_mc, _sa): 3, (_mc, _sb): 2}
     ret = _make_weighting_series(to_weight, maps)
     assert len(ret) == 2
-    assert ret[(_mc, _sa)] == 3
-    assert ret[to_weight.index[1]] == 2
+    assert ret[(_mc, _sa)].iloc[0] == 3
+    assert ret[(_mc, _sb)].iloc[0] == 2
+
     maps = {(_mc, _sb): 2}
     ret_sing = _make_weighting_series(to_weight, maps)
     assert len(ret_sing) == 2
-    assert ret_sing[to_weight.index[0]] == 1
-    assert ret_sing[to_weight.index[1]] == 2
+    assert ret_sing[(_mc, _sa)].iloc[0] == 1
+    assert ret_sing[(_mc, _sb)].iloc[0] == 2
 
 
 def test_get_weights_wrong_names():
