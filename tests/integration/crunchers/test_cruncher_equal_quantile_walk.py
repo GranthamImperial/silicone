@@ -240,10 +240,10 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         else:
             # The first points are precisely equal but the final point is interpolated
             # slightly differently
-            assert normal_results.data.iloc[:3].equals(weighted_results.data.iloc[:3])
+            assert normal_results.data.iloc[:-1].equals(weighted_results.data.iloc[:-1])
             assert np.allclose(
-                normal_results.data.value.iloc[3:],
-                weighted_results.data.value.iloc[3:],
+                normal_results.data.value.iloc[-1],
+                weighted_results.data.value.iloc[-1],
                 rtol=0.03,
             )
         # Also check that the duplication changes the results!
@@ -251,8 +251,8 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
             variable_follower=follow, variable_leaders=lead, smoothing=smoothing
         )(to_infill)
         assert not np.allclose(
-            normal_results.data.value.iloc[:3],
-            duplicate_results.data.value.iloc[:3],
+            normal_results.data.value.iloc[:-1],
+            duplicate_results.data.value.iloc[:-1],
             rtol=0.002,
         )
 
