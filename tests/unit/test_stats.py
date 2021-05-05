@@ -409,9 +409,10 @@ def test_quantile_values_above_1():
     to_quant = pd.Series(
         [38751.41118, 40656.52654, 40656.52654, 40656.52654, 40656.52654, 42656.04102]
     )
-    fringe = max(to_quant) - min(to_quant)
+    fringe = (max(to_quant) - min(to_quant)) * 2
     infiller = pd.Series(
         np.arange(min(to_quant) - fringe, max(to_quant) + fringe, 1000)
     )
     res = stats.calc_quantiles_of_data(to_quant, infiller, 0.3)
     assert max(res) == 1
+    assert min(res) == 0
