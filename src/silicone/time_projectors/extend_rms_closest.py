@@ -22,13 +22,32 @@ class ExtendRMSClosest:
     """
     def __init__(self, db):
         """
-        Initialise the time projector with the infilling database
-        :param db: Infilling database
-        :type db: IamDataFrame
+        Initialise the time projector with a database that contains 
+        the range of times you wish to see in the output.
+
+        Parameters
+        ----------
+        db : IamDataFrame
+            The database to use
         """
         self._db = db.copy()
     
     def derive_relationship(self, variable):
+        """
+        Derives the values for the model/scenario combination in the database
+        with the least RMS error.
+
+        Parameters
+        ----------
+        variable : str
+            The variable for which we want to calculate the timeseries (e.g.
+            `Emissions|CO2`).
+
+        Returns
+        -------
+        :obj: `pyam.IamDataFrame`
+            Filled in data (without original source data)
+        """
         iamdf = self._get_iamdf_variable(variable)
 
         infiller_time_col = iamdf.time_col 
@@ -41,6 +60,25 @@ class ExtendRMSClosest:
         )
 
         def filler(in_iamdf):
+            """
+            Filler function 
+
+            Parameters
+            ----------
+            in_iamdf : pyam.IamDataFrame
+                Input data to be infilled
+
+            Returns
+            -------
+            :obj:pyam.IamDataFrame
+                Filled in data (without original source data)
+
+            Raises
+            ------
+            ValueError
+                "The infiller database does not extend in time past the target "
+                "database, so no infilling can occur."
+            """
             target_df = in_iamdf.filter(variable=variable)
             if target_df.empty:
                 error_msg = "No data for `variable`({}) in target dataframe".format(
