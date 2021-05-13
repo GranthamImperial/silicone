@@ -5,6 +5,7 @@ import logging
 import warnings 
 
 import numpy as np 
+import pandas as pd 
 from pyam import IamDataFrame 
 
 logger = logging.getLogger(__name__)
@@ -66,23 +67,20 @@ class ExtendRMSClosest:
                         "Not timeseries overlap between original and unfilled data"
                     )
                 
-                return to_return 
+                return to_return.timeseries() 
 
             infiller_at_key_times = get_values_at_key_timepoints(iamdf, key_timepoint_filter)
-            target_at_key_times = get_values_at_key_timepoints(target_df)
+            target_at_key_times = get_values_at_key_timepoints(target_df, key_timepoint_filter)
 
-            # Identify the closest model and scenario
             closest_model, closest_scenario = _select_closest(
                 infiller_at_key_times, target_at_key_times
             )
-
             tmp = iamdf.filter(
                 model = closest_model, scenario = closest_scenario
-            ).data
+            ).timeseries()
             output_ts = target_df.timeseries()
-
             for time in later_times:
-                output_ts[time] = tmp[time]
+                output_ts[time] = tmp[time].values[0]
             for col in output_ts.columns:
                 if col not in later_times:
                     del output_ts[col]
@@ -106,10 +104,10 @@ def _select_closest(to_search_df, target_df):
     
     rms = pd.Series(index=to_search_df.index)
     target_for_var = {}
-    variable = to_search_df.index.get_level_values("variable").unique()
-    target_for_var[variable] = target_df[
-        target_df.index.get_level_values("variable")
-    ].squeeze()
+    for var in to_search_df.index.get_level_values("variable").unique():
+        target_for_var[var] = target_df[
+            target_df.index.get_level_values("variable") == var
+        ].squeeze()
     var_index = to_search_df.index.names.index("variable")
     for label, row in to_search_df.iterrows():
         varname = label[var_index]
