@@ -5,6 +5,7 @@ Work in progress
 Added
 ~~~~~
 - (`#126 <https://github.com/GranthamImperial/silicone/pull/126>`_) Added the first time projector (Extend latest time quantile) that extends a pathway to cover later times, assuming it remains at the same quantile.
+- (`#129 <https://github.com/GranthamImperial/silicone/pull/129>`_) Added an additional time projector (Extend RMS closest) that extends a pathway to cover later times by selecting future data from the closest pathway.
 
 [v1.0.3]
 --------
