@@ -1,14 +1,13 @@
 """
 Module for the database cruncher that uses the rms closest extension method
 """
-import logging 
-import warnings 
+import logging
 
-import numpy as np 
-import pandas as pd 
-from pyam import IamDataFrame 
+import pandas as pd
+from pyam import IamDataFrame
 
 logger = logging.getLogger(__name__)
+
 
 class ExtendRMSClosest:
     """
@@ -20,6 +19,7 @@ class ExtendRMSClosest:
     time-averaged (over the reported time steps) root mean squared 
     difference 
     """
+
     def __init__(self, db):
         """
         Initialise the time projector with a database that contains 
@@ -31,7 +31,7 @@ class ExtendRMSClosest:
             The database to use
         """
         self._db = db.copy()
-    
+
     def derive_relationship(self, variable):
         """
         Derives the values for the model/scenario combination in the database
@@ -50,7 +50,7 @@ class ExtendRMSClosest:
         """
         iamdf = self._get_iamdf_variable(variable)
 
-        infiller_time_col = iamdf.time_col 
+        infiller_time_col = iamdf.time_col
         data_follower_unit = iamdf.data["unit"].unique()
 
         assert (
@@ -85,10 +85,12 @@ class ExtendRMSClosest:
                     variable
                 )
                 raise ValueError(error_msg)
-            
+
             key_timepoints = target_df.data[infiller_time_col]
-            later_times = [ 
-                t for t in iamdf.data[infiller_time_col].unique() if t > max(key_timepoints)
+            later_times = [
+                t
+                for t in iamdf.data[infiller_time_col].unique()
+                if t > max(key_timepoints)
             ]
 
             if not later_times:
@@ -104,17 +106,21 @@ class ExtendRMSClosest:
                     raise ValueError(
                         "Not timeseries overlap between original and unfilled data"
                     )
-                
-                return to_return.timeseries() 
 
-            infiller_at_key_times = get_values_at_key_timepoints(iamdf, key_timepoint_filter)
-            target_at_key_times = get_values_at_key_timepoints(target_df, key_timepoint_filter)
+                return to_return.timeseries()
+
+            infiller_at_key_times = get_values_at_key_timepoints(
+                iamdf, key_timepoint_filter
+            )
+            target_at_key_times = get_values_at_key_timepoints(
+                target_df, key_timepoint_filter
+            )
 
             closest_model, closest_scenario = _select_closest(
                 infiller_at_key_times, target_at_key_times
             )
             tmp = iamdf.filter(
-                model = closest_model, scenario = closest_scenario
+                model=closest_model, scenario=closest_scenario
             ).timeseries()
             output_ts = target_df.timeseries()
             for time in later_times:
@@ -123,23 +129,23 @@ class ExtendRMSClosest:
                 if col not in later_times:
                     del output_ts[col]
             return IamDataFrame(output_ts)
-        
+
         return filler
 
     def _get_iamdf_variable(self, variable):
-        
         if variable not in self._db.variables().to_list():
             error_msg = "No data for `variable`({}) in database".format(variable)
             raise ValueError(error_msg)
-        
+
         return self._db.filter(variable=variable)
+
 
 def _select_closest(to_search_df, target_df):
     if target_df.shape[1] != to_search_df.shape[1]:
         raise ValueError(
             "Target array does not match the size of the searchable arrays"
         )
-    
+
     rms = pd.Series(index=to_search_df.index)
     target_for_var = {}
     for var in to_search_df.index.get_level_values("variable").unique():
@@ -149,8 +155,6 @@ def _select_closest(to_search_df, target_df):
     var_index = to_search_df.index.names.index("variable")
     for label, row in to_search_df.iterrows():
         varname = label[var_index]
-        rms.loc[label] = (
-            ((target_for_var[varname] - row) ** 2).mean()
-        )** 0.5
-    rmssums = rms.groupby(level = ["model", "scenario"], sort=False).sum()
+        rms.loc[label] = (((target_for_var[varname] - row) ** 2).mean()) ** 0.5
+    rmssums = rms.groupby(level=["model", "scenario"], sort=False).sum()
     return rmssums.idxmin()

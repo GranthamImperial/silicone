@@ -7,4 +7,4 @@ the trends before that time.
 """
 
 from .extend_latest_time_quantile import ExtendLatestTimeQuantile  # noqa: F401
-from .extend_rms_closest import ExtendRMSClosest # noqa: F401
+from .extend_rms_closest import ExtendRMSClosest  # noqa: F401
