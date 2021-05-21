@@ -9,7 +9,7 @@ Added
 
 Fixed
 ~~~~~
-- (`#130 <https://github.com/GranthamImperial/silicone/pull/130>`_) Reformatted notebook 06 to remove a linter warning.
+- (`#130 <https://github.com/GranthamImperial/silicone/pull/130>`_) Reformatted files to make the linter happy (no functional changes). 
 
 [v1.0.3]
 --------
