@@ -7,6 +7,10 @@ Added
 - (`#129 <https://github.com/GranthamImperial/silicone/pull/129>`_) Added an additional time projector (Extend RMS closest) that extends a pathway to cover later times by selecting future data from the closest pathway.
 - (`#126 <https://github.com/GranthamImperial/silicone/pull/126>`_) Added the first time projector (Extend latest time quantile) that extends a pathway to cover later times, assuming it remains at the same quantile.
 
+Fixed
+~~~~~
+- (`#130 <https://github.com/GranthamImperial/silicone/pull/130>`_) Reformatted notebook 06 to remove a linter warning.
+
 [v1.0.3]
 --------
 Changed
