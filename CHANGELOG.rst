@@ -1,44 +1,58 @@
 Changelog
 =========
+
 Work in progress
 ----------------
+
 Added
 ~~~~~
 - (`#129 <https://github.com/GranthamImperial/silicone/pull/129>`_) Added an additional time projector (Extend RMS closest) that extends a pathway to cover later times by selecting future data from the closest pathway.
 - (`#126 <https://github.com/GranthamImperial/silicone/pull/126>`_) Added the first time projector (Extend latest time quantile) that extends a pathway to cover later times, assuming it remains at the same quantile.
 
+Changed
+~~~~~~~
+- (`#131 <https://github.com/GranthamImperial/silicone/pull/131>`_) Updated to allow compatibility with latest versions of pyam, openscm-units, coverage, pytest and black
+
 Fixed
 ~~~~~
 - (`#130 <https://github.com/GranthamImperial/silicone/pull/130>`_) Reformatted files to make the linter happy (no functional changes).
 
+
 [v1.0.3]
 --------
+
 Changed
 ~~~~~~~
 - (`#124 <https://github.com/GranthamImperial/silicone/pull/124>`_) Neatened up the changelog
 
+
 [v1.0.2] - 4 Jan 2021
 ---------------------
-Fixed
-~~~~~
-- (`#123 <https://github.com/GranthamImperial/silicone/pull/123>`_) Made the installation runner avoid prerelease.
 
 Changed
 ~~~~~~~
 - (`#121 <https://github.com/GranthamImperial/silicone/pull/121>`_) Updated to openscm-units>0.2
 
+Fixed
+~~~~~
+- (`#123 <https://github.com/GranthamImperial/silicone/pull/123>`_) Made the installation runner avoid prerelease.
+
+
 [v1.0.1] - 27 Oct 2020
 ----------------------
-Changed
-~~~~~~~
-- (`#119 <https://github.com/GranthamImperial/silicone/pull/119>`_) Updated to work with pyam v0.8
 
 Added
 ~~~~~
 - (`#115 <https://github.com/GranthamImperial/silicone/pull/115>`_) Enabled multiple lead gases to be used with RMS closest cruncher.
 
+Changed
+~~~~~~~
+- (`#119 <https://github.com/GranthamImperial/silicone/pull/119>`_) Updated to work with pyam v0.8
+
+
 [v1.0.0] - 9 Sept 2020
 ----------------------
+
 Initial release
 ~~~~~~~~~~~~~~~
 - (`#116 <https://github.com/GranthamImperial/silicone/pull/116>`_) Pinned black
