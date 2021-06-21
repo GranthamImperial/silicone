@@ -403,7 +403,7 @@ def test_calc_all_emissions_numerical(tmpdir):
         os.remove(test_file)
 
 
-def test_quantile_values_above_1():
+def test_quantile_values_not_above_1():
     # We construct a scenario that can return quantile values above 1 if the numerical
     # sums are not handled properly
     to_quant = pd.Series(
