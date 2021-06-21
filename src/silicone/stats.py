@@ -174,7 +174,7 @@ def calc_quantiles_of_data(
     if len_lead_not_nan == 1:
         # If there is only a single value then quantile is not defined
         if to_quantile:
-            return np.array([np.nan for a in range(len(points_to_quant))])
+            return np.nan * np.zeros_like(points_to_quant)
         else:
             # all quantiles give the same point
             return distribution[0]
