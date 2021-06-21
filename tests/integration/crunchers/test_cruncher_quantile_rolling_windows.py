@@ -116,9 +116,6 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
 
     @pytest.mark.parametrize("use_ratio", [True, False])
     def test_relationship_usage(self, simple_df, use_ratio, caplog):
-        # quiet pyam
-        caplog.set_level(logging.ERROR, logger="pyam")
-
         # This tests that using the cruncher for a simple case (no averages, just
         # choosing one of two values) produces the expected results. We test the
         # quantiles that should result in a flip between the two states.
@@ -133,6 +130,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         )
         with caplog.at_level(logging.INFO, logger="silicone.database_crunchers"):
             returned = res(simple_df)
+
         if use_ratio:
             # We have a 0/0*0 in the calculation, so error message happens and 0 is
             # infilled.

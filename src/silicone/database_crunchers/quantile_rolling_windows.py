@@ -200,7 +200,7 @@ class QuantileRollingWindows(_DatabaseCruncher):
                 # We want the ratio between x and y, not the actual values of y.
                 ys = ys / xs
                 if np.isnan(ys).any():
-                    logging.warning(
+                    logger.warning(
                         "Undefined values of ratio appear in the quantiles when "
                         "infilling {}, setting some values to 0 (this may not affect "
                         "results).".format(variable_follower)

@@ -35,9 +35,9 @@ CLASSIFIERS = [
 ]
 
 REQUIREMENTS_INSTALL = [
-    "openscm-units>=0.2,<0.3",
+    "openscm-units>=0.3",
     "pint",
-    "pyam-iamc>=0.10.0, <0.11",
+    "pyam-iamc>=0.12.0",
     "python-dateutil",
     "numpy",
     "scipy",
@@ -47,8 +47,8 @@ REQUIREMENTS_NOTEBOOKS = ["notebook", "seaborn", "statsmodels"]
 REQUIREMENTS_TESTS = [
     "codecov",
     "nbval",
-    "coverage<5",  # nbval requirement, see https://github.com/computationalmodelling/nbval/issues/129
-    "pytest>=4.0,<5.0",
+    "coverage",
+    "pytest",
     "pytest-console-scripts",
     "pytest-cov",
 ]
@@ -60,7 +60,7 @@ REQUIREMENTS_DOCS = [
 REQUIREMENTS_DEPLOY = ["setuptools>=38.6.0", "twine>=1.11.0", "wheel>=0.31.0"]
 REQUIREMENTS_DEV = (
     [
-        "black==19.10b0",
+        "black",
         "black-nb",
         "bandit",
         "coverage",
