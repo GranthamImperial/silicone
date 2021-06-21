@@ -312,8 +312,9 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         exp_units = test_db.filter(variable="Emissions|CO2")["unit"].iloc[0]
 
         wrong_unit = "t C/yr"
-        test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db)
+        test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db).data
         test_downscale_df["unit"] = wrong_unit
+        test_downscale_df = IamDataFrame(test_downscale_df)
 
         error_msg = re.escape(
             "Units of lead variable is meant to be `{}`, found `{}`".format(
