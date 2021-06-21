@@ -161,8 +161,9 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
     def test_numerical_relationship(self, test_db):
         # Calculate the values using the cruncher for a fairly detailed dataset
         large_db = IamDataFrame(self.large_db.copy())
-        large_db = self._adjust_time_style_to_match(large_db, test_db,)
+        large_db = self._adjust_time_style_to_match(large_db, test_db,).data
         large_db["value"] -= 0.1
+        large_db = IamDataFrame(large_db)
         test_db.filter(year=2010, inplace=True)
         tcruncher = self.tclass(large_db)
         lead = ["Emissions|CO2"]
@@ -190,8 +191,9 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         test_db.filter(model=_ma, inplace=True)
         lead = ["Emissions|CH4"]
         follow = "Emissions|CO2"
-        one_lead = test_db.copy()
-        one_lead.data = one_lead.data.iloc[4:]
+        one_lead = test_db.data
+        one_lead = one_lead.iloc[4:]
+        one_lead = IamDataFrame(one_lead)
         tcruncher = self.tclass(one_lead)
         res = tcruncher.derive_relationship(follow, lead)
         infilled = res(test_db)
@@ -225,7 +227,7 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         # uneven lead case above, although this time there are no nans involved in the
         # calculation.
         one_entry_db = test_db.filter(
-            scenario=test_db.scenarios()[0], model=test_db.models()[0],
+            scenario=test_db.scenario[0], model=test_db.model[0],
         )
         tcruncher = self.tclass(one_entry_db)
         follow = "Emissions|CH4"
@@ -348,8 +350,9 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         exp_units = test_db.filter(variable="Emissions|CO2")["unit"].iloc[0]
 
         wrong_unit = "t C/yr"
-        test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db)
+        test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db).data
         test_downscale_df["unit"] = wrong_unit
+        test_downscale_df = IamDataFrame(test_downscale_df)
 
         error_msg = re.escape(
             "Units of lead variable is meant to be `{}`, found `{}`".format(
