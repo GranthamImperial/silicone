@@ -76,11 +76,11 @@ test-all:  ## run the testsuite and test the notebooks
 
 .PHONY: test
 test: $(VENV_DIR) ## run the full testsuite
-	$(VENV_DIR)/bin/pytest --cov -rfsxEX --cov-report term-missing
+	$(VENV_DIR)/bin/pytest --cov -r a --cov-report term-missing
 
 .PHONY: test-notebooks
 test-notebooks: $(VENV_DIR)  ## test the notebooks
-	$(VENV_DIR)/bin/pytest -r a --nbval-lax $(NOTEBOOKS_DIR) --sanitize $(NOTEBOOKS_SANITIZE_FILE)
+	$(VENV_DIR)/bin/pytest -r a --nbval-lax $(NOTEBOOKS_DIR) --sanitize-with $(NOTEBOOKS_SANITIZE_FILE)
 
 .PHONY: format-notebooks
 format-notebooks: $(VENV_DIR)  ## format the notebooks
