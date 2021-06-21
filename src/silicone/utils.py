@@ -530,7 +530,7 @@ def _construct_consistent_values(aggregate_name, components, db_to_generate):
 def _make_weighting_series(df, weights):
     """
     Makes a complete list of weights for all scenarios from a dictionary of only
-    unusual weights.
+    specific weights.
     Parameters
     ----------
     df: pd.DataFrame
