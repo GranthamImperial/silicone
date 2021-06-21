@@ -364,8 +364,9 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         )
         test_downscale_df = self._adjust_time_style_to_match(
             test_downscale_df, test_db
-        ).filter(year=[2010, 2015])
+        ).filter(year=[2010, 2015]).data
         test_downscale_df["value"] = test_downscale_df["value"] * input_sign
+        test_downscale_df = IamDataFrame(test_downscale_df)
         if match_sign and input_sign < 0:
             with pytest.raises(ValueError):
                 filler(test_downscale_df)

@@ -3,6 +3,7 @@ Module for the database cruncher that uses the rms closest extension method
 """
 import logging
 
+import numpy as np
 import pandas as pd
 from pyam import IamDataFrame
 
@@ -133,7 +134,7 @@ class ExtendRMSClosest:
         return filler
 
     def _get_iamdf_variable(self, variable):
-        if variable not in self._db.variables().to_list():
+        if variable not in self._db.variable:
             error_msg = "No data for `variable`({}) in database".format(variable)
             raise ValueError(error_msg)
 
@@ -146,7 +147,7 @@ def _select_closest(to_search_df, target_df):
             "Target array does not match the size of the searchable arrays"
         )
 
-    rms = pd.Series(index=to_search_df.index)
+    rms = pd.Series(index=to_search_df.index, dtype=np.float64)
     target_for_var = {}
     for var in to_search_df.index.get_level_values("variable").unique():
         target_for_var[var] = target_df[

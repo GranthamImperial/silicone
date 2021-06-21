@@ -146,7 +146,7 @@ class ExtendLatestTimeQuantile:
         return filler
 
     def _get_iamdf_variable(self, variable):
-        if variable not in self._db.variables().tolist():
+        if variable not in self._db.variable:
             error_msg = "No data for `variable` ({}) in database".format(variable)
             raise ValueError(error_msg)
 

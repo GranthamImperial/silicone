@@ -210,9 +210,10 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
     @pytest.mark.parametrize("use_ratio", [True, False])
     def test_numerical_relationship(self, use_ratio):
         # Calculate the values using the cruncher for a fairly detailed dataset
-        larger_db = IamDataFrame(self.large_db)
+        larger_db = IamDataFrame(self.large_db).data
         larger_db["model"] = larger_db["model"] + "_2"
         larger_db["value"] = larger_db["value"] - 0.5
+        larger_db = IamDataFrame(larger_db)
         larger_db.append(IamDataFrame(self.large_db), inplace=True)
         larger_db = IamDataFrame(larger_db.data)
         tcruncher = self.tclass(larger_db)
@@ -473,8 +474,9 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         exp_units = test_db.filter(variable="Emissions|CO2")["unit"].iloc[0]
 
         wrong_unit = "t C/yr"
-        test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db)
+        test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db).data
         test_downscale_df["unit"] = wrong_unit
+        test_downscale_df = IamDataFrame(test_downscale_df)
 
         error_msg = re.escape(
             "Units of lead variable is meant to be `{}`, found `{}`".format(

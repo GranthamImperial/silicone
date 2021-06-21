@@ -63,12 +63,12 @@ def find_matching_scenarios(
 
     classify_scenarios : list[str]
         The names of scenarios or groups of scenarios that are possible matches.
-        This may have "\*"s to represent wild cards, hence multiple scenarios will have
+        This may have "\\*"s to represent wild cards, hence multiple scenarios will have
         all their data combined to make the interpolator.
 
     classify_models : list[str]
         The names of models or groups of models that are possible matches.
-        This may have "\*"s to represent wild cards, hence multiple models will have
+        This may have "\\*"s to represent wild cards, hence multiple models will have
         all their data combined to make the interpolator.
 
     return_all_info : bool
@@ -102,7 +102,7 @@ def find_matching_scenarios(
          `{dates we have}` but you passed in `{dates we need}`."
     """
     assert all(
-        x in options_df.variables().values
+        x in options_df.variable
         for x in [variable_follower] + variable_leaders
     ), "Not all required data is present in compared series"
     assert len(variable_leaders) == 1, "This is only calibrated to work with one leader"
@@ -270,7 +270,7 @@ def return_cases_which_consistently_split(
 ):
     """
     Returns model-scenario tuples which correctly split up the to_split into the various
-    components. Components may contain wildcard "\*"s to match several variables.
+    components. Components may contain wildcard "\\*"s to match several variables.
 
     Parameters
     ----------
@@ -503,7 +503,7 @@ def _construct_consistent_values(aggregate_name, components, db_to_generate):
         Consistently calculated aggregate data.
     """
     assert (
-        aggregate_name not in db_to_generate.variables().values
+        aggregate_name not in db_to_generate.variable
     ), "We already have a variable of this name"
     relevant_db = db_to_generate.filter(variable=components)
     units = relevant_db.data["unit"].drop_duplicates().sort_values()

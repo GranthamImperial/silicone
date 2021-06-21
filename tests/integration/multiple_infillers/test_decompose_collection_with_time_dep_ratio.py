@@ -161,7 +161,7 @@ class TestGasDecomposeTimeDepRatio:
         # The values returned should include only 1 entry per input entry, since there
         # is a single input component
         assert len(filled.data) == 4
-        assert all(y == components[0] for y in filled.variables())
+        assert all(y == components[0] for y in filled.variable)
         assert np.allclose(filled.data["value"], test_downscale_df.data["value"])
 
     def test_relationship_usage_works_inconsistent_data(self, test_db, unequal_df):
@@ -226,7 +226,9 @@ class TestGasDecomposeTimeDepRatio:
         # Make the variables work for our case
         components = ["Emissions|HFC|C5F12", "Emissions|HFC|C2F6"]
         aggregate = "Emissions|HFC"
+        test_downscale_df = test_downscale_df.data
         test_downscale_df["variable"] = aggregate
+        test_downscale_df = pyam.IamDataFrame(test_downscale_df)
         tcruncher = self.tclass(test_db)
         with pytest.raises(ValueError):
             filled = tcruncher.infill_components(
@@ -236,7 +238,7 @@ class TestGasDecomposeTimeDepRatio:
         filled = tcruncher.infill_components(aggregate, components, test_downscale_df)
         # The value returned should be a dataframe with 2 entries per original entry (4)
         assert len(filled.data) == 8
-        assert all(y in filled.variables().values for y in components)
+        assert all(y in filled.variable for y in components)
         # We also expect the amount of the variables to be conserved
         if test_db.time_col == "year":
             assert np.allclose(
@@ -259,7 +261,9 @@ class TestGasDecomposeTimeDepRatio:
         # There are optional extra columns on the DataFrame objects. This test ensures
         # that an error is thrown if we add together different sorts of DataFrame.
         aggregate = "Emissions|KyotoTotal"
+        test_db = test_db.data
         test_db["variable"] = aggregate
+        test_db = pyam.IamDataFrame(test_db)
         # larger_df has an extra column, "meta1"
         larger_df = _adjust_time_style_to_match(larger_df, test_db)
         tcruncher = self.tclass(larger_df)

@@ -177,7 +177,7 @@ def calc_all_emissions_correlations(emms_df, years, output_dir):
     "time_variance_rank_correlation_{}_to_{}.csv" : The variance over time in the rank
      correlation values above.
     """
-    assert len(emms_df.regions()) == 1, "Calculation is for only one region"
+    assert len(emms_df.region) == 1, "Calculation is for only one region"
     # Obtain the list of gases to examine
     df_gases = (
         emms_df.filter(level=1)

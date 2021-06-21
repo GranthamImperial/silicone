@@ -198,7 +198,7 @@ class TestSplitCollectionWithRemainderEmissions:
         # The values returned should include only 1 entry per input entry, since there
         # is a single input component
         assert len(filled.data) == 8
-        assert all([y in components + [remainder] for y in filled.variables()])
+        assert all([y in components + [remainder] for y in filled.variable])
         assert np.allclose(
             filled.filter(variable=remainder)["value"].values
             + filled.filter(variable=components)["value"].values,
@@ -219,9 +219,10 @@ class TestSplitCollectionWithRemainderEmissions:
         # Make the variables work for our case
         neg_component = "Emissions|HFC|CF4"
         pos_component = "Emissions|HFC|C2F6"
-        add_to_test_db = test_db.filter(variable=pos_component)
+        add_to_test_db = test_db.filter(variable=pos_component).data
         add_to_test_db["value"] = -add_to_test_db["value"]
         add_to_test_db["variable"] = neg_component
+        add_to_test_db = pyam.IamDataFrame(add_to_test_db)
         test_db.append(add_to_test_db, inplace=True)
         components = ["Emissions|HFC|C2F6", neg_component]
         aggregate = "Emissions|HFC"
@@ -235,8 +236,8 @@ class TestSplitCollectionWithRemainderEmissions:
         )
         # The value returned should be a dataframe with 3 entries per original entry (4)
         assert len(filled.data) == 12
-        assert all(y in filled.variables().values for y in components)
-        assert all(y in components + [remainder] for y in filled.variables().values)
+        assert all(y in filled.variable for y in components)
+        assert all(y in components + [remainder] for y in filled.variable)
         # We also expect the amount of the variables to be conserved
         if test_db.time_col == "year":
             assert np.allclose(
