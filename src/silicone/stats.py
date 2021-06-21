@@ -121,12 +121,12 @@ def calc_quantiles_of_data(
         values which we will compare to the distribution, if ``False``, these are the
         quantiles which we want to find.
     smoothing : float or string
-        By default, no smoothing is done on the distribution. If an argument is used,
-        it is fed into scipy.stats.gaussian_kde. If a float is input, we
-        fit a Gaussian kernel density estimator with that width to the points and return
-        the quantiles of that distribution. If a string is used, it must be either
-        "scott" or "silverman", after those two methods of determining the best kernel
-        bandwidth. 
+        By default, no smoothing is done on the distribution. If a value is
+        provided, it is fed into :func:`scipy.stats.gaussian_kde` - see full
+        documentation there. In short, if a float is input, we fit a Gaussian kernel
+        density estimator with that width to the points. If a string is used, it
+        must be either "scott" or "silverman", after those two methods of
+        determining the best kernel bandwidth.
     weighting : None or Series
         If a series, must have the same indices as distribution, giving the
         relative weights of each point.
@@ -138,7 +138,7 @@ def calc_quantiles_of_data(
     Returns
     -------
     :obj:`np.ndarray`
-        an array of width 1 and the same length as points_to_quant, containing the
+        An array with one row and a column for each entry in points_to_quant, containing the
         quantiles of these points in order. Or, if to_quantile is ``False``, containing the
         values corresponding to the quantiles points_to_quant.
     """
@@ -147,12 +147,12 @@ def calc_quantiles_of_data(
             [i <= 1 and i >= 0 for i in points_to_quant]
         ), "Quantiles are not defined outside the range 0-1"
     if weighting is None:
-        weighting = pd.Series(
-            np.ones_like(distribution), index=distribution.index
-        )
+        weighting = pd.Series(np.ones_like(distribution), index=distribution.index)
     else:
 
-        assert isinstance(weighting, pd.Series), "The weighting variable should be a Series"
+        assert isinstance(
+            weighting, pd.Series
+        ), "The weighting variable should be a Series"
         assert len(weighting) == len(distribution), (
             "There must be the same number of weights as entries in the database. "
             "We have len {} in weights and len {} in distribution.".format(

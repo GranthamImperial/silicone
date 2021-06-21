@@ -531,6 +531,7 @@ def _make_weighting_series(df, weights):
     """
     Makes a complete list of weights for all scenarios from a dictionary of only
     specific weights.
+
     Parameters
     ----------
     df: :obj:`pd.DataFrame`
@@ -548,8 +549,7 @@ def _make_weighting_series(df, weights):
         corresponding to the weights.
 
     """
-    all_mod_scen = [(i[0], i[1]) for i in df.index]
-    all_mod_scen = list(set(all_mod_scen))
+    all_mod_scen = [(i[0], i[1]) for i in df.index.drop_duplicates()]
 
     if any([key not in all_mod_scen for key in weights.keys()]):
         raise ValueError(

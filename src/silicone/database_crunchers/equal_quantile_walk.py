@@ -38,12 +38,12 @@ class EqualQuantileWalk(_DatabaseCruncher):
             ``variable_follower`` (e.g. ``["Emissions|CO2"]``).
 
         smoothing : float or string
-            By default, no smoothing is done on the distribution. If an argument is
-            used, it is fed into scipy.stats.gaussian_kde. If a float is input, we
-            fit a Gaussian kernel density estimator with that width to the points and
-            return the quantiles of that distribution. If a string is used, it must be
-            either "scott" or "silverman", after those two methods of determining the
-            best kernel bandwidth.
+            By default, no smoothing is done on the distribution. If a value is
+            provided, it is fed into :func:`scipy.stats.gaussian_kde` - see full
+            documentation there. In short, if a float is input, we fit a Gaussian kernel
+            density estimator with that width to the points. If a string is used, it
+            must be either "scott" or "silverman", after those two methods of
+            determining the best kernel bandwidth.
 
         weighting: Dict{(str, str) : float}
             The dictionary, mapping the (mode, scenario) tuple onto the weight (relative
