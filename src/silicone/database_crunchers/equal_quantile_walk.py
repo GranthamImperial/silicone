@@ -46,7 +46,7 @@ class EqualQuantileWalk(_DatabaseCruncher):
             best kernel bandwidth.
 
         weighting: Dict{(str, str) : float}
-            The dictionary, mapping the (model and scenario) tuple onto the weight (relative
+            The dictionary, mapping the (mode, scenario) tuple onto the weight (relative
             to a weight of 1 for the default). This does not have to include all scenarios
             in df, but cannot include scenarios not in df.
 
