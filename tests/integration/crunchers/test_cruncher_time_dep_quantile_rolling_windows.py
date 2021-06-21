@@ -118,9 +118,10 @@ class TestDatabaseTimeDepCruncherRollingWindows:
             ],
             columns=_msrvu + dates,
         )
-        regular_data = IamDataFrame(regular_db)
+        regular_data = IamDataFrame(regular_db).data
         regular_data["variable"] = _ech4
         regular_data["value"] = 1
+        regular_data = IamDataFrame(regular_data)
         regular_data.append(IamDataFrame(regular_db), inplace=True)
         regular_data = IamDataFrame(regular_data.data)
         tcruncher = self.tclass(regular_data)

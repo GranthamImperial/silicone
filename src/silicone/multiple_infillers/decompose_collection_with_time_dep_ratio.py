@@ -48,7 +48,7 @@ class DecomposeCollectionTimeDepRatio:
             Consistently calculated aggregate data.
         """
         assert (
-            aggregate_name not in db_to_generate.variables().values
+            aggregate_name not in db_to_generate.variable
         ), "We already have a variable of this name"
         relevant_db = db_to_generate.filter(variable=components)
         units = relevant_db.data["unit"].drop_duplicates().sort_values()
@@ -139,10 +139,10 @@ class DecomposeCollectionTimeDepRatio:
             database.
         """
         assert (
-            aggregate in to_infill_df.variables().values
+            aggregate in to_infill_df.variable
         ), "The database to infill does not have the aggregate variable"
         assert all(
-            y not in components for y in to_infill_df.variables().values
+            y not in components for y in to_infill_df.variable
         ), "The database to infill already has some component variables"
         assert len(to_infill_df.data.columns) == len(self._db.data.columns) and all(
             to_infill_df.data.columns == self._db.data.columns
@@ -179,8 +179,8 @@ class DecomposeCollectionTimeDepRatio:
             model, scenario, region = combinations.iloc[ind]
             found_vars = self._filtered_db.filter(
                 model=model, scenario=scenario, region=region
-            ).variables()
-            if any(comp not in found_vars.values for comp in components):
+            ).variable
+            if any(comp not in found_vars for comp in components):
                 self._filtered_db.filter(
                     model=model, scenario=scenario, keep=False, inplace=True
                 )

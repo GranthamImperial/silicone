@@ -125,7 +125,7 @@ def infill_all_required_variables(
             {
                 "variable": {
                     var: var.replace(to_fill_old_prefix + "|", "")
-                    for var in to_fill.variables()
+                    for var in to_fill.variable
                 }
             },
             inplace=True,
@@ -139,10 +139,10 @@ def infill_all_required_variables(
                 "This data already contains values with the expected final "
                 "prefix. This suggests that some of it has already been infilled."
             )
-    assert len(to_fill.regions()) == 1, "There are {} regions in the data.".format(
-        len(to_fill.regions())
+    assert len(to_fill.region) == 1, "There are {} regions in the data.".format(
+        len(to_fill.region)
     )
-    assert len(database.regions()) == 1
+    assert len(database.region) == 1
     assert (
         to_fill.data["region"].iloc[0] == database.data["region"].iloc[0]
     ), "The cruncher data and the infilled data have different regions."
@@ -154,9 +154,9 @@ def infill_all_required_variables(
     to_fill_times_missing = to_fill.timeseries().isna().sum() > 0
     for time in output_timesteps:
         if time not in database[timecol].tolist() or df_times_missing[time]:
-            database.interpolate(time)
+            database = database.interpolate(time, inplace=False)
         if time not in to_fill[timecol].tolist() or to_fill_times_missing[time]:
-            to_fill.interpolate(time)
+            to_fill = to_fill.interpolate(time, inplace=False)
     # Nans in additional columns break pyam, so we overwrite them
     database.data[database.extra_cols] = database.data[database.extra_cols].fillna(0)
     to_fill.data[to_fill.extra_cols] = to_fill.data[to_fill.extra_cols].fillna(0)
@@ -173,7 +173,7 @@ def infill_all_required_variables(
     unavailable_variables = [
         variab
         for variab in required_variables_list
-        if variab not in database.variables().values
+        if variab not in database.variable
     ]
     if unavailable_variables:
         warnings.warn(
@@ -217,7 +217,7 @@ def infill_all_required_variables(
         to_fill.rename(
             {
                 "variable": {
-                    var: infilled_data_prefix + "|" + var for var in to_fill.variables()
+                    var: infilled_data_prefix + "|" + var for var in to_fill.variable
                 }
             },
             inplace=True,
@@ -306,10 +306,10 @@ def _perform_crunch_and_check(
 
     # Check no data was overwritten by accident
     for model in tqdm.tqdm(
-        to_fill_orig.models(), desc="Consistency with original model data checks"
+        to_fill_orig.model, desc="Consistency with original model data checks"
     ):
         mdf = to_fill_orig.filter(model=model, variable=leaders + required_variables)
-        for scenario in mdf.scenarios():
+        for scenario in mdf.scenario:
             msdf = mdf.filter(scenario=scenario)
             msdf_filled = to_fill.filter(
                 model=model, scenario=scenario, variable=msdf["variable"].unique()

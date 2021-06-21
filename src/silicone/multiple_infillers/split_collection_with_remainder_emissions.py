@@ -144,10 +144,10 @@ class SplitCollectionWithRemainderEmissions:
             The infilled data resulting from the calculation.
         """
         assert (
-            aggregate in to_infill_df.variables().values
+            aggregate in to_infill_df.variable
         ), "The database to infill does not have the aggregate variable"
         assert all(
-            y not in [remainder] + components for y in to_infill_df.variables().values
+            y not in [remainder] + components for y in to_infill_df.variable
         ), "The database to infill already has some component variables"
         assert len(to_infill_df.data.columns) == len(self._db.data.columns) and all(
             to_infill_df.data.columns == self._db.data.columns
@@ -171,7 +171,7 @@ class SplitCollectionWithRemainderEmissions:
         )
         cruncher = cruncher_class(db_to_generate)
         unavailable_comp = [
-            var for var in components if var not in relevant_df.variables().values
+            var for var in components if var not in relevant_df.variable
         ]
         if unavailable_comp:
             logger.warning("No data found for {}".format(unavailable_comp))

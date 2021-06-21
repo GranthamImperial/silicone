@@ -501,18 +501,18 @@ def test_get_files_and_use_them():
             "Emissions|CH4",
             "Emissions|F-Gases",
         ]
-        variables_in_result = sr15_data.variables()
-        assert all([y in variables_in_result.values for y in min_expected_var])
+        variables_in_result = sr15_data.variable
+        assert all([y in variables_in_result for y in min_expected_var])
         assert os.path.isfile(SR15_SCENARIOS)
         # Now check that the function works correctly again
         variables_in_result_2 = download_or_load_sr15(
             SR15_SCENARIOS, valid_model_ids
-        ).variables()
-        assert all(variables_in_result_2 == variables_in_result)
+        ).variable
+        assert variables_in_result_2 == variables_in_result
         blank_variables = download_or_load_sr15(
             SR15_SCENARIOS, ["bad_model"]
-        ).variables()
-        assert all([y not in blank_variables.values for y in min_expected_var])
+        ).variable
+        assert all([y not in blank_variables for y in min_expected_var])
         os.remove(SR15_SCENARIOS)
     except (ConnectionError, RuntimeError) as e:
         pytest.skip("Could not connect to the IIASA database: {}".format(e))
@@ -521,7 +521,7 @@ def test_get_files_and_use_them():
 def test__construct_consistent_values():
     test_db_co2 = convert_units_to_MtCO2_equiv(test_db)
     aggregate_name = "agg"
-    assert aggregate_name not in test_db_co2.variables().values
+    assert aggregate_name not in test_db_co2.variable
     component_ratio = ["Emissions|HFC|C2F6", "Emissions|HFC|C5F12"]
     consistent_vals = _construct_consistent_values(
         aggregate_name, component_ratio, test_db_co2
@@ -544,7 +544,7 @@ def test__construct_consistent_values_with_equiv():
     test_db_co2 = convert_units_to_MtCO2_equiv(test_db)
     test_db_co2.data["unit"].loc[0:1] = "Mt CO2/yr"
     aggregate_name = "agg"
-    assert aggregate_name not in test_db_co2.variables().values
+    assert aggregate_name not in test_db_co2.variable
     component_ratio = ["Emissions|HFC|C2F6", "Emissions|HFC|C5F12"]
     consistent_vals = _construct_consistent_values(
         aggregate_name, component_ratio, test_db_co2

@@ -101,7 +101,7 @@ class TestGasDecomposeTimeDepRatio:
             {
                 "variable": {
                     var: var.replace(infilled_data_prefix + "|", "")
-                    for var in modified_test_db.variables()
+                    for var in modified_test_db.variable
                 }
             },
             inplace=True,
@@ -128,7 +128,7 @@ class TestGasDecomposeTimeDepRatio:
             {
                 "variable": {
                     var: var.replace(infilled_data_prefix + "|", "")
-                    for var in modified_test_db.variables()
+                    for var in modified_test_db.variable
                 }
             },
             inplace=True,
@@ -157,7 +157,7 @@ class TestGasDecomposeTimeDepRatio:
             {
                 "variable": {
                     var: var.replace(infilled_data_prefix + "|", "")
-                    for var in modified_test_db.variables()
+                    for var in modified_test_db.variable
                 }
             },
             inplace=True,
@@ -188,7 +188,7 @@ class TestGasDecomposeTimeDepRatio:
             {
                 "variable": {
                     var: var.replace(infilled_data_prefix + "|", "")
-                    for var in modified_test_db.variables()
+                    for var in modified_test_db.variable
                 }
             },
             inplace=True,
@@ -224,7 +224,7 @@ class TestGasDecomposeTimeDepRatio:
             {
                 "variable": {
                     var: var.replace(infilled_data_prefix + "|", "")
-                    for var in modified_test_db.variables()
+                    for var in modified_test_db.variable
                 }
             },
             inplace=True,
@@ -255,7 +255,7 @@ class TestGasDecomposeTimeDepRatio:
             {
                 "variable": {
                     var: var.replace(infilled_data_prefix + "|", "")
-                    for var in modified_test_db.variables()
+                    for var in modified_test_db.variable
                 }
             },
             inplace=True,

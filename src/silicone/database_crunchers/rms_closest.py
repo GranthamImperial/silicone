@@ -3,6 +3,7 @@ Module for the database cruncher which uses the 'closest RMS' technique.
 """
 import warnings
 
+import numpy as np
 import pandas as pd
 import pyam
 
@@ -23,7 +24,7 @@ class RMSClosest(_DatabaseCruncher):
     combination minimises
 
     .. math::
-        RMS error = \sum_l w_l \\left ( \\frac{1}{n} \\sum_{t=0}^n (E_l(t) - e_l(t))^2 \\right )^{1/2}
+        RMS error = \\sum_l w_l \\left ( \\frac{1}{n} \\sum_{t=0}^n (E_l(t) - e_l(t))^2 \\right )^{1/2}
 
     where :math:`l` is a lead gas, :math:`w_l` is a weighting for that lead gas,
     :math:`n` is the total number of timesteps in all lead gas timeseries,
@@ -204,7 +205,7 @@ class RMSClosest(_DatabaseCruncher):
         return filler
 
     def _check_iamdf_lead(self, variable_leaders):
-        if not all([v in self._db.variables().tolist() for v in variable_leaders]):
+        if not all([v in self._db.variable for v in variable_leaders]):
             error_msg = "No data for `variable_leaders` ({}) in database".format(
                 variable_leaders
             )
@@ -261,7 +262,7 @@ def _select_closest(to_search_df, target_df, weighting):
         raise ValueError("No variable overlap between target and infiller databases.")
     if any(col not in target_df.columns for col in to_search_df.columns):
         raise ValueError("Time values mismatch between target and infiller databases.")
-    rms = pd.Series(index=to_search_df.index)
+    rms = pd.Series(index=to_search_df.index, dtype=np.float64)
     target_for_var = {}
     for var in to_search_df.index.get_level_values("variable").unique():
         target_for_var[var] = target_df[
