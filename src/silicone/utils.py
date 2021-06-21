@@ -533,7 +533,7 @@ def _make_weighting_series(df, weights):
     specific weights.
     Parameters
     ----------
-    df: pd.DataFrame
+    df: :obj:`pd.DataFrame`
         The timseries with the full set of models and scenarios whose weights
         should be returned
     weights: Dict{(str, str) : float}
@@ -543,7 +543,7 @@ def _make_weighting_series(df, weights):
 
     Returns
     -------
-    Series
+    :obj:`pd.Series`
         A series with index corresponding to the timeseries of the dataframe and values
         corresponding to the weights.
 
