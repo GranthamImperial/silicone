@@ -606,6 +606,7 @@ def test_select_closest_index_mismatch():
     weights = {1: 1}
 
     with pytest.raises(
-        ValueError, match="Time values mismatch between target and infiller databases.",
+        ValueError,
+        match="Time values mismatch between target and infiller databases.",
     ):
         _select_closest(to_search, target, weights)

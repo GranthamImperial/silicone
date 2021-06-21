@@ -14,16 +14,16 @@ class ExtendRMSClosest:
     """
     Time projector which extends the timeseries of a variable with
     future timesteps infilled using the values from the 'closest'
-    pathway in the infilling database. 
+    pathway in the infilling database.
 
     We define the closest pathway as the pathway with the smallest
-    time-averaged (over the reported time steps) root mean squared 
-    difference 
+    time-averaged (over the reported time steps) root mean squared
+    difference
     """
 
     def __init__(self, db):
         """
-        Initialise the time projector with a database that contains 
+        Initialise the time projector with a database that contains
         the range of times you wish to see in the output.
 
         Parameters
@@ -62,7 +62,7 @@ class ExtendRMSClosest:
 
         def filler(in_iamdf):
             """
-            Filler function 
+            Filler function
 
             Parameters
             ----------

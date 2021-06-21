@@ -148,7 +148,9 @@ class LatestTimeRatio(_DatabaseCruncher):
                         )
                     )
                     raise ValueError(error_msg)
-                lead_var = lead_var.interpolate(data_follower_key_timepoint, inplace=False)
+                lead_var = lead_var.interpolate(
+                    data_follower_key_timepoint, inplace=False
+                )
                 lead_var_val_in_key_timepoint = get_values_in_key_timepoint(lead_var)
                 lead_var.filter(**key_timepoint_filter, keep=False, inplace=True)
 

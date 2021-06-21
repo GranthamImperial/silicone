@@ -442,7 +442,12 @@ def test_convert_units_to_MtCO2_equiv_works(check_aggregate_df, ARoption, expect
 
 
 @pytest.mark.parametrize(
-    "unit_start", ("kt CF4-equiv/yr", "kt CF4 equiv/yr", "kt CF4equiv/yr",),
+    "unit_start",
+    (
+        "kt CF4-equiv/yr",
+        "kt CF4 equiv/yr",
+        "kt CF4equiv/yr",
+    ),
 )
 def test_convert_units_to_MtCO2_equiv_equiv_start(check_aggregate_df, unit_start):
     limited_check_agg = check_aggregate_df.filter(
@@ -509,9 +514,7 @@ def test_get_files_and_use_them():
             SR15_SCENARIOS, valid_model_ids
         ).variable
         assert variables_in_result_2 == variables_in_result
-        blank_variables = download_or_load_sr15(
-            SR15_SCENARIOS, ["bad_model"]
-        ).variable
+        blank_variables = download_or_load_sr15(SR15_SCENARIOS, ["bad_model"]).variable
         assert all([y not in blank_variables for y in min_expected_var])
         os.remove(SR15_SCENARIOS)
     except (ConnectionError, RuntimeError) as e:

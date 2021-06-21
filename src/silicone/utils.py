@@ -102,8 +102,7 @@ def find_matching_scenarios(
          `{dates we have}` but you passed in `{dates we need}`."
     """
     assert all(
-        x in options_df.variable
-        for x in [variable_follower] + variable_leaders
+        x in options_df.variable for x in [variable_follower] + variable_leaders
     ), "Not all required data is present in compared series"
     assert len(variable_leaders) == 1, "This is only calibrated to work with one leader"
     time_col = options_df.time_col

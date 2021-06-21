@@ -137,7 +137,10 @@ class ExtendLatestTimeQuantile:
             output_ts = target_df.timeseries()
             iamdf_ts = iamdf.timeseries()
             for time in later_times:
-                output_ts[time] = np.nanquantile(iamdf_ts[time], quantiles,)
+                output_ts[time] = np.nanquantile(
+                    iamdf_ts[time],
+                    quantiles,
+                )
             for col in output_ts.columns:
                 if col not in later_times:
                     del output_ts[col]

@@ -102,7 +102,7 @@ class SplitCollectionWithRemainderEmissions:
         to_infill_df,
         cruncher_class=QuantileRollingWindows,
         metric_name="AR5GWP100",
-        **kwargs
+        **kwargs,
     ):
         """
         Derive the relationship between the composite variables and their sum, then use

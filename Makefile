@@ -48,7 +48,7 @@ flake8: $(VENV_DIR)  ## check compliance with pep8
 
 .PHONY: isort
 isort: $(VENV_DIR)  ## format the imports in the source and tests
-	$(VENV_DIR)/bin/isort -y --recursive $(FILES_TO_FORMAT_PYTHON)
+	$(VENV_DIR)/bin/isort $(FILES_TO_FORMAT_PYTHON)
 
 .PHONY: black
 black: $(VENV_DIR)  ## use black to autoformat code

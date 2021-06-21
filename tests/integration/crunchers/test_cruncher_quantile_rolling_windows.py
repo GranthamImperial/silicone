@@ -186,7 +186,8 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
             (quant - 5 / 12) * 2,
         )
         assert np.isclose(
-            result_2.filter(scenario="scen_b", year=2010)["value"].iloc[0], 1,
+            result_2.filter(scenario="scen_b", year=2010)["value"].iloc[0],
+            1,
         )
         assert all(result_2.filter(year=2030)["value"] == 1000)
         assert all(result_2.filter(year=2050)["value"] == 5000)
@@ -231,7 +232,8 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
             ys = ys / xs
         quantile_expected = silicone.stats.rolling_window_find_quantiles(xs, ys, [0.5])
         interpolate_fn = scipy.interpolate.interp1d(
-            np.array(quantile_expected.index), quantile_expected.values.squeeze(),
+            np.array(quantile_expected.index),
+            quantile_expected.values.squeeze(),
         )
         xs_to_interp = to_find.filter(variable="Emissions|CO2")["value"].values
         if use_ratio:
@@ -474,7 +476,9 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         exp_units = test_db.filter(variable="Emissions|CO2")["unit"].iloc[0]
 
         wrong_unit = "t C/yr"
-        test_downscale_df = self._adjust_time_style_to_match(test_downscale_df, test_db).data
+        test_downscale_df = self._adjust_time_style_to_match(
+            test_downscale_df, test_db
+        ).data
         test_downscale_df["unit"] = wrong_unit
         test_downscale_df = IamDataFrame(test_downscale_df)
 

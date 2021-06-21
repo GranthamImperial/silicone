@@ -191,7 +191,10 @@ class TestGasDecomposeTimeDepRatio:
             **{unequal_df.time_col: unequal_df[unequal_df.time_col].iloc[0]},
         )
         equal_df.filter(
-            variable=components[0], scenario="scen_a", keep=False, inplace=True,
+            variable=components[0],
+            scenario="scen_a",
+            keep=False,
+            inplace=True,
         )
         uneq_results = self.tclass(unequal_df).infill_components(
             aggregate, components, to_infill
