@@ -151,7 +151,7 @@ class DecomposeCollectionTimeDepRatio:
             "which will prevent adding the data together properly."
         )
         self._filtered_db = self._db.filter(
-            variable=components,
+            variable=components
         )
         if self._filtered_db.empty:
             raise ValueError(
