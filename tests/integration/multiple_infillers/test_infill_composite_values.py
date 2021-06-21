@@ -53,7 +53,16 @@ class TestInfillCompositeValues:
             ],
             ["model_D", "scen_F", "World", "Emissions|CH4", "Mt CH4/yr", 2, 2, 2],
         ],
-        columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2050,],
+        columns=[
+            "model",
+            "scenario",
+            "region",
+            "variable",
+            "unit",
+            2010,
+            2015,
+            2050,
+        ],
     )
 
     def test_infill_composite_values_warns(self, larger_df, caplog):

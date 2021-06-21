@@ -171,9 +171,7 @@ def infill_all_required_variables(
     assert not database.data.isnull().any().any()
     assert not to_fill.data.isnull().any().any()
     unavailable_variables = [
-        variab
-        for variab in required_variables_list
-        if variab not in database.variable
+        variab for variab in required_variables_list if variab not in database.variable
     ]
     if unavailable_variables:
         warnings.warn(

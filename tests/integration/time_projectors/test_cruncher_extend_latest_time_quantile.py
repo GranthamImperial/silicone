@@ -86,7 +86,8 @@ class TestDatabaseCruncherExtendLatestTimeQuantile:
         # test that crunching fails if there's no data for the gas to downscale to in
         # the database
         test_downscale_df = test_downscale_df.filter(
-            variable="Emissions|HFC|C5F12", keep=False,
+            variable="Emissions|HFC|C5F12",
+            keep=False,
         )
         tcruncher = self.tclass(test_db)
         variable = "Emissions|HFC|C5F12"

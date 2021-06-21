@@ -150,7 +150,9 @@ class DecomposeCollectionTimeDepRatio:
             "The database and to_infill_db fed into this have inconsistent columns, "
             "which will prevent adding the data together properly."
         )
-        self._filtered_db = self._db.filter(variable=components,)
+        self._filtered_db = self._db.filter(
+            variable=components,
+        )
         if self._filtered_db.empty:
             raise ValueError(
                 "Attempting to construct a consistent {} but none of the components "

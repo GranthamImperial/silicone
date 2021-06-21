@@ -362,9 +362,11 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         filler = tcruncher.derive_relationship(
             "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"], match_sign
         )
-        test_downscale_df = self._adjust_time_style_to_match(
-            test_downscale_df, test_db
-        ).filter(year=[2010, 2015]).data
+        test_downscale_df = (
+            self._adjust_time_style_to_match(test_downscale_df, test_db)
+            .filter(year=[2010, 2015])
+            .data
+        )
         test_downscale_df["value"] = test_downscale_df["value"] * input_sign
         test_downscale_df = IamDataFrame(test_downscale_df)
         if match_sign and input_sign < 0:
