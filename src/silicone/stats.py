@@ -131,7 +131,7 @@ def calc_quantiles_of_data(
         If a series, must have the same indices as distribution, giving the
         relative weights of each point.
     to_quantile : Bool
-        If true, we return the quantiles of the data in points_to_quant. If False, we
+        If ``True``, we return the quantiles of the data in points_to_quant. If ``False``, we
         instead treat points_to_quant as the quantiles themselves (they must all be 0-1)
         and return the values in distribution that occur at these quantiles.
 
@@ -139,20 +139,20 @@ def calc_quantiles_of_data(
     -------
     :obj:`np.ndarray`
         an array of width 1 and the same length as points_to_quant, containing the
-        quantiles of these points in order. Or, if to_quantile is false, containing the
+        quantiles of these points in order. Or, if to_quantile is ``False``, containing the
         values corresponding to the quantiles points_to_quant.
     """
     if not to_quantile:
         assert all(
             [i <= 1 and i >= 0 for i in points_to_quant]
         ), "Quantiles are not defined outside the range 0-1"
-    if isinstance(weighting, type(None)):
+    if weighting is None:
         weighting = pd.Series(
-            [1 for i in range(len(distribution))], index=distribution.index
+            np.ones_like(distribution), index=distribution.index
         )
     else:
 
-        assert type(weighting) == pd.Series, "The weighting variable should be a Series"
+        assert isinstance(weighting, pd.Series), "The weighting variable should be a Series"
         assert len(weighting) == len(distribution), (
             "There must be the same number of weights as entries in the database. "
             "We have len {} in weights and len {} in distribution.".format(
