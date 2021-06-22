@@ -158,14 +158,8 @@ class ExtendLatestTimeQuantile:
             output_ts = target_df.timeseries()
             iamdf_ts = iamdf.timeseries()
             for time in later_times:
-<<<<<<< HEAD
-                output_ts[time] = np.nanquantile(
-                    iamdf_ts[time],
-                    quantiles,
-=======
                 output_ts[time] = calc_quantiles_of_data(
                     iamdf_ts[time], quantiles, smoothing, weighting, to_quantile=False
->>>>>>> Working tests for weighting, no limit tests
                 )
             for col in output_ts.columns:
                 if col not in later_times:

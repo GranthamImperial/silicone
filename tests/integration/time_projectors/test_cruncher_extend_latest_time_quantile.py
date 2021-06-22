@@ -319,7 +319,9 @@ class TestDatabaseCruncherExtendLatestTimeQuantile:
         )(to_infill)
         weight_1 = {(_ma, "sc_5"): 1, (_ma, "sc_6"): 1}
         norm_weight_results = tcruncher.derive_relationship(
-            variable=variable, weighting=weight_1, smoothing=smoothing,
+            variable=variable,
+            weighting=weight_1,
+            smoothing=smoothing,
         )(to_infill)
         assert normal_results.equals(norm_weight_results)
 
@@ -332,14 +334,19 @@ class TestDatabaseCruncherExtendLatestTimeQuantile:
         tcruncher_dup = self.tclass(larger_db)
         weights = {(_ma, duplicated_scen): 0.5, (_ma, new_scen): 0.5}
         weighted_results = tcruncher_dup.derive_relationship(
-            variable=variable, weighting=weights, smoothing=smoothing,
+            variable=variable,
+            weighting=weights,
+            smoothing=smoothing,
         )(to_infill)
         np.allclose(normal_results.data.value, weighted_results.data.value)
         # Also check that the duplication changes the results!
         duplicate_results = tcruncher_dup.derive_relationship(
             variable=variable, smoothing=smoothing
         )(to_infill)
-        assert not np.allclose(normal_results.data.value, duplicate_results.data.value,)
+        assert not np.allclose(
+            normal_results.data.value,
+            duplicate_results.data.value,
+        )
 
     @pytest.mark.parametrize("smoothing", [True, False])
     def test_weighting_at_limits(self, sparse_df, range_df, smoothing):
