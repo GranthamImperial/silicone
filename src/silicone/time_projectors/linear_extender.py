@@ -165,10 +165,3 @@ class LinearExtender:
             return IamDataFrame(output_ts)
 
         return filler
-
-    def _get_iamdf_variable(self, variable):
-        if variable not in self._db.variable:
-            error_msg = "No data for `variable` ({}) in database".format(variable)
-            raise ValueError(error_msg)
-
-        return self._db.filter(variable=variable)
