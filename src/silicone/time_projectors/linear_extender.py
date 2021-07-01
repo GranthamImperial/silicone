@@ -121,11 +121,11 @@ class LinearExtender:
             last_time = max(target_df.data[infiller_time_col])
             try:
                 later_times = [time for time in times if time > last_time]
-            except TypeError:
-                raise ValueError(
+            except TypeError as exc:
+                raise TypeError(
                     "The times requested must be in the same format as the time column "
                     "in the input database"
-                )
+                ) from exc
 
             if not later_times:
                 raise ValueError(
