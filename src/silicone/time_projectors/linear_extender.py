@@ -4,7 +4,7 @@ Module for the database cruncher which extends using a linear trend
 import logging
 import warnings
 
-import numpy as np
+import datetime
 from pyam import IamDataFrame
 
 logger = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ class LinearExtender:
 
     def derive_relationship(self, variable, gradient=None, year_value=None, times=None):
         """
-
+        Derives the function to return a linear trend following from the last datapoint
 
         Parameters
         ----------
@@ -42,10 +42,11 @@ class LinearExtender:
             ``"Emissions|CO2"``).
 
         gradient : float or None
-            The gradient of the variable after its last available datapoint. If not
-            provided, year_value must be provided instead.
+            The gradient of the variable after its last available datapoint, in the
+            emissions units per year. If not provided, year_value must be provided
+            instead.
 
-        year_value : None or (int or datetime, float)
+        year_value : None or tuple(int or datetime, float)
             The value of the variable at a given future time, e.g. (2050, 0) to extend
             the data to net zero in 2050. If not provided, gradient must be provided
             instead.
@@ -69,14 +70,22 @@ class LinearExtender:
             There is no data for ``variable`` in the database.
 
         """
-        if not times:
-            assert self._db, "This function must either be given a list of times or a " \
-                       "database of completed scenarios"
+        if times is None:
+            if not self._db:
+                raise ValueError(
+                    "This function must either be given a list of times or a "
+                    "database of completed scenarios"
+                )
             times = self._db[self._db.time_col].unique()
         if gradient and (year_value != None):
-            raise ValueError(
-                "Provide only one of a year_value OR gradient"
-            )
+            raise ValueError("Provide only one of a year_value OR gradient")
+        if (gradient == None) and (year_value == None):
+            raise ValueError("Provide either a year_value OR gradient")
+        if year_value:
+            if (not isinstance(year_value, tuple)) or (len(year_value) != 2):
+                raise ValueError(
+                    "year_value should be a tuple of the year and the value that year."
+                )
 
         def filler(in_iamdf):
             """
@@ -105,22 +114,20 @@ class LinearExtender:
                     variable
                 )
                 raise ValueError(error_msg)
-            infiller_time_col = target_df.time_column
+            infiller_time_col = target_df.time_col
             last_time = max(target_df.data[infiller_time_col])
-            if not times.isinstance(type(target_df[infiller_time_col])):
+            try:
+                later_times = [time for time in times if time > last_time]
+            except TypeError:
                 raise ValueError(
                     "The times requested must be in the same format as the time column "
                     "in the input database"
                 )
-            later_times = [time for time in times if time > last_time]
+
             if not later_times:
                 raise ValueError(
                     "No times requested are later than the times already in "
-                    "the database")
-            if infiller_time_col != in_iamdf.time_col:
-                raise ValueError(
-                    "`in_iamdf` time column must be the same as the time column used "
-                    "to generate this filler function (`{}`)".format(infiller_time_col)
+                    "the database"
                 )
             key_timepoint_filter = {infiller_time_col: last_time}
 
@@ -140,10 +147,18 @@ class LinearExtender:
             target_at_key_time = get_values_in_key_timepoint(target_df)
 
             output_ts = target_df.timeseries()
+            nonlocal gradient
+            one_year = (
+                1 if (infiller_time_col == "year") else datetime.timedelta(days=365)
+            )
             if year_value:
-                gradient = (year_value[1] - target_at_key_time) / float(year_value[0] - last_time)
+                gradient = (year_value[1] - target_at_key_time) / (
+                    (year_value[0] - last_time) / one_year
+                )
             for time in later_times:
-                output_ts[time] = target_at_key_time + gradient * float(time - last_time)
+                output_ts[time] = target_at_key_time + gradient * (
+                    (time - last_time) / one_year
+                )
             for col in output_ts.columns:
                 if col not in later_times:
                     del output_ts[col]
