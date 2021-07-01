@@ -1,7 +1,7 @@
+import datetime
 import datetime as dt
 import re
 
-import datetime
 import numpy as np
 import pandas as pd
 import pytest
