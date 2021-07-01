@@ -1,10 +1,10 @@
 """
 Module for the database cruncher which extends using a linear trend
 """
+import datetime
 import logging
 import warnings
 
-import datetime
 from pyam import IamDataFrame
 
 logger = logging.getLogger(__name__)
