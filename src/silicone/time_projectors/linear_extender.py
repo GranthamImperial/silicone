@@ -77,10 +77,13 @@ class LinearExtender:
                     "database of completed scenarios"
                 )
             times = self._db[self._db.time_col].unique()
-        if gradient and (year_value != None):
+
+        if gradient and (year_value is not None):
             raise ValueError("Provide only one of a year_value OR gradient")
-        if (gradient == None) and (year_value == None):
+
+        if (gradient is None) and (year_value is None):
             raise ValueError("Provide either a year_value OR gradient")
+
         if year_value:
             if (not isinstance(year_value, tuple)) or (len(year_value) != 2):
                 raise ValueError(
@@ -147,21 +150,26 @@ class LinearExtender:
             target_at_key_time = get_values_in_key_timepoint(target_df)
 
             output_ts = target_df.timeseries()
-            nonlocal gradient
+            # one_year required so type conversion works properly
             one_year = (
                 1 if (infiller_time_col == "year") else datetime.timedelta(days=365)
             )
             if year_value:
-                gradient = (year_value[1] - target_at_key_time) / (
+                gradient_to_use = (year_value[1] - target_at_key_time) / (
                     (year_value[0] - last_time) / one_year
                 )
+            else:
+                gradient_to_use = gradient
+
             for time in later_times:
-                output_ts[time] = target_at_key_time + gradient * (
+                output_ts[time] = target_at_key_time + gradient_to_use * (
                     (time - last_time) / one_year
                 )
+
             for col in output_ts.columns:
                 if col not in later_times:
                     del output_ts[col]
+
             return IamDataFrame(output_ts)
 
         return filler
