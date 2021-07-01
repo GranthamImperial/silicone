@@ -145,7 +145,27 @@ class TestDatabaseCruncherExtendLatestTimeQuantile:
             "database of completed scenarios"
         )
         with pytest.raises(ValueError, match=error_msg):
-            filler = tcruncher.derive_relationship(variable, gradient=-1)
+            tcruncher.derive_relationship(variable, gradient=-1)
+
+    def test_derive_relationship_error_overspecif_gradient(self):
+        tcruncher = self.tclass()
+        variable = "Emissions|HFC|C5F12"
+        error_msg = "Provide only one of a year_value OR gradient"
+        with pytest.raises(ValueError, match=error_msg):
+            tcruncher.derive_relationship(
+                variable, gradient=-1, year_value=(2050, 0), times=[2050]
+            )
+
+    def test_no_data_error(self, test_downscale_df):
+        tcruncher = self.tclass()
+        variable = "not_present"
+        error_msg = re.escape(
+            "No data for `variable` ({}) in target database".format(variable)
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            tcruncher.derive_relationship(variable, gradient=-1, times=[2050])(
+                test_downscale_df
+            )
 
     def test_derive_relationship_single_line(self, test_db):
         # We test that the formula produces the correct answer when there is only one
