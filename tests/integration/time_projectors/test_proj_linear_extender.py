@@ -1,13 +1,13 @@
 import datetime as dt
 import re
 
+import datetime
 import numpy as np
 import pandas as pd
 import pytest
 from pyam import IamDataFrame
 
-from silicone.time_projectors import ExtendLatestTimeQuantile
-from silicone.utils import _adjust_time_style_to_match
+from silicone.time_projectors import LinearExtender
 
 _msa = ["model_a", "scen_a"]
 _mb = "model_b"
@@ -15,7 +15,7 @@ _ma = "model_a"
 
 
 class TestDatabaseCruncherExtendLatestTimeQuantile:
-    tclass = ExtendLatestTimeQuantile
+    tclass = LinearExtender
     tdb = pd.DataFrame(
         [
             _msa + ["World", "Emissions|HFC|C5F12", "kt C5F12/yr", "", np.nan, 3.14],
@@ -95,17 +95,17 @@ class TestDatabaseCruncherExtendLatestTimeQuantile:
 
     def test_derive_relationship(self, test_db):
         tcruncher = self.tclass(test_db)
-        res = tcruncher.derive_relationship("Emissions|HFC|C5F12")
+        res = tcruncher.derive_relationship("Emissions|HFC|C5F12", gradient=-1)
         assert callable(res)
 
     def test_derive_relationship_error_time_col_mismatch(self, test_db):
         tcruncher = self.tclass(test_db)
         infiller_time_col = test_db.time_col
         error_msg = re.escape(
-            "`in_iamdf` time column must be the same as the time column used "
-            "to generate this filler function (`{}`)".format(infiller_time_col)
+            "The times requested must be in the same format as the time column in the "
+            "input database"
         )
-        filler = tcruncher.derive_relationship("Emissions|HFC|C5F12")
+        filler = tcruncher.derive_relationship("Emissions|HFC|C5F12", gradient=-1)
         test_2 = test_db.timeseries()
         if infiller_time_col == "year":
             test_2.columns = test_2.columns.map(lambda x: dt.datetime(x, 1, 1))
@@ -116,272 +116,127 @@ class TestDatabaseCruncherExtendLatestTimeQuantile:
         with pytest.raises(ValueError, match=error_msg):
             filler(test_2)
 
-    def test_derive_relationship_error_no_info_leader(self, test_db):
-        # test that crunching fails if there's no data about the lead gas in the
-        # database
+    @pytest.mark.parametrize("times", [None, [2010, 2015]])
+    def test_derive_relationship_works_no_info_leader(self, test_db, times):
+        # test that crunching works even if there's no data about the lead gas in the
+        # database, provided it's given a gradient or correctly formatted year_value
         variable = "Emissions|HFC|C2F6"
-        tcruncher = self.tclass(test_db.filter(variable=variable, keep=False))
-
-        error_msg = re.escape(
-            "No data for `variable` ({}) in database".format(variable)
-        )
+        if times:
+            tcruncher = self.tclass()
+        else:
+            tcruncher = self.tclass(test_db.filter(variable=variable, keep=False))
+        error_msg = "Provide either a year_value OR gradient"
         with pytest.raises(ValueError, match=error_msg):
-            tcruncher.derive_relationship(variable)
+            tcruncher.derive_relationship(variable, times=times)
+        tcruncher.derive_relationship(variable, gradient=-1, times=times)
+        tcruncher.derive_relationship(variable, year_value=(2090, 0), times=times)
+        error_msg = "year_value should be a tuple of the year and the value that year."
+        with pytest.raises(ValueError, match=error_msg):
+            tcruncher.derive_relationship(variable, year_value=(1, 1, 1), times=times)
+        with pytest.raises(ValueError, match=error_msg):
+            tcruncher.derive_relationship(variable, year_value=7, times=times)
 
     def test_derive_relationship_error_no_info(self, test_db, test_downscale_df):
-        # test that crunching fails if there's no data for the gas to downscale to in
-        # the database
-        test_downscale_df = test_downscale_df.filter(
-            variable="Emissions|HFC|C5F12",
-            keep=False,
-        )
-        tcruncher = self.tclass(test_db)
+        # test that crunching fails if there's no data for the timescale
+        tcruncher = self.tclass()
         variable = "Emissions|HFC|C5F12"
-        error_msg = re.escape(
-            "No data for `variable` ({}) in target database".format(variable)
+        error_msg = (
+            "This function must either be given a list of times or a "
+            "database of completed scenarios"
         )
-        filler = tcruncher.derive_relationship(variable)
         with pytest.raises(ValueError, match=error_msg):
-            filler(test_downscale_df)
+            filler = tcruncher.derive_relationship(variable, gradient=-1)
 
-    @pytest.mark.parametrize(
-        "extra_info",
-        (
-            pd.DataFrame(
-                [
-                    [
-                        "ma",
-                        "sb",
-                        "World",
-                        "Emissions|HFC|C2F6",
-                        "kt C2F6/yr",
-                        "",
-                        5,
-                        2,
-                        3,
-                    ]
-                ],
-                columns=[
-                    "model",
-                    "scenario",
-                    "region",
-                    "variable",
-                    "unit",
-                    "meta1",
-                    2015,
-                    2020,
-                    2030,
-                ],
-            ),
-            pd.DataFrame(
-                [
-                    [
-                        "ma",
-                        "sa",
-                        "World",
-                        "Emissions|HFC|C2F6",
-                        "kt C2F6/yr",
-                        "",
-                        1,
-                        1,
-                        2,
-                    ],
-                    [
-                        "ma",
-                        "sb",
-                        "World",
-                        "Emissions|HFC|C2F6",
-                        "kt C2F6/yr",
-                        "",
-                        2,
-                        3,
-                        3,
-                    ],
-                ],
-                columns=[
-                    "model",
-                    "scenario",
-                    "region",
-                    "variable",
-                    "unit",
-                    "meta1",
-                    2015,
-                    2020,
-                    2030,
-                ],
-            ),
-        ),
-    )
-    def test_derive_relationship_single_line(self, test_db, extra_info):
+    def test_derive_relationship_single_line(self, test_db):
         # We test that the formula produces the correct answer when there is only one
         # value in the target dataframe
         variable = "Emissions|HFC|C2F6"
-        infiller_df = test_db.append(
-            _adjust_time_style_to_match(IamDataFrame(extra_info), test_db)
-        )
-        tcruncher = self.tclass(infiller_df)
-        cruncher = tcruncher.derive_relationship(variable)
-        infill_df = test_db.filter(
-            **{test_db.time_col: test_db[test_db.time_col][0]}, keep=False
-        )
+
+        tcruncher = self.tclass(test_db)
+        # We choose a value of the gradient that makes it return the original answer
+        cruncher = tcruncher.derive_relationship(variable, gradient=0.3 / 5)
+        infill_df = test_db.filter(**{test_db.time_col: test_db[test_db.time_col][0]})
         infilled_filt = cruncher(infill_df)
-        infilled_test = cruncher(test_db)
-        assert infilled_filt.equals(infilled_test)
-        times = [
-            time
-            for time in infiller_df[infiller_df.time_col].unique()
-            if time > max(infill_df[infill_df.time_col])
-        ]
-        assert all(infilled_filt[infilled_filt.time_col].unique() == times)
-        if len(extra_info) == 1:
-            # If there is only one row in the infiller dataframe, we return that row.
-            expected = IamDataFrame(extra_info).filter(year=[2020, 2030]).data["value"]
+        if test_db.time_col == "year":
+            assert infilled_filt.equals(test_db.filter(year=2015, variable=variable))
+            times = [2013]
         else:
-            # If there are multiple, we must consider where we lie in between them.
-            # With values 1, and 2 in 2015 the input value, 1.5, is halfway through the
-            # data. We therefore expect values 2/3rds between the values
-            # at each time.
-            expected = [1 + (3 - 1) / 2, 2 + (3 - 2) / 2]
-        assert np.allclose(infilled_filt.data["value"], expected)
-        # Test that the result can be appended without problems.
-        infill_df.append(infilled_filt, inplace=True)
-        assert infill_df.filter(
-            variable=variable, **{infill_df.time_col: times}
-        ).equals(infilled_filt)
+            # A leapyear slightly distorts the calculation
+            assert np.allclose(
+                infilled_filt["value"],
+                test_db.filter(variable=variable)["value"].iloc[1],
+                atol=0.0005,
+            )
+            times = [
+                test_db["time"][0] + 3 / 5 * (test_db["time"][1] - test_db["time"][0])
+            ]
+        # Test that years overwrites the database and we can calculate the values for
+        # an intermediate point
+        cruncher = tcruncher.derive_relationship(variable, gradient=1, times=times)
+        infilled_filt = cruncher(infill_df)
+        assert np.allclose(infilled_filt["value"], test_db["value"][0] + 3, atol=0.002)
 
-    @pytest.mark.parametrize("add_col", [None, "extra_col"])
-    def test_relationship_usage(self, range_df, sparse_df, add_col):
+    @pytest.mark.parametrize("grad", ["gradient", "year_val"])
+    def test_relationship_usage(self, range_df, sparse_df, grad):
         variable = "Emissions|CO2"
-        if add_col:
-            add_col_val = "blah"
-            sparse_df = sparse_df.data
-            sparse_df[add_col] = add_col_val
-        target_df = IamDataFrame(sparse_df)
         tcruncher = self.tclass(range_df)
-
-        filler = tcruncher.derive_relationship(variable)
-        res = filler(target_df)
-
+        if grad == "gradient":
+            filler = tcruncher.derive_relationship(variable, gradient=1)
+        else:
+            filler = tcruncher.derive_relationship(variable, year_value=(2050, 0))
+        res = filler(sparse_df)
         # Test it comes back on input timepoints
         np.testing.assert_array_equal(
             res.timeseries().columns.values.squeeze(), [2020, 2050]
         )
         # Test that we can append the output to the input
-        append_df = target_df.filter(variable=variable).append(res)
-        if add_col:
-            assert all(append_df[add_col] == add_col_val)
+        append_df = sparse_df.filter(variable=variable).append(res)
         append_ts = append_df.timeseries()
         # And has the correct results
-        np.testing.assert_array_almost_equal(
-            append_ts[2020], [min(n + 1, 101) for n in append_ts[2015]]
-        )
-        np.testing.assert_array_almost_equal(
-            append_ts[2050], [min(n + 2, 102) for n in append_ts[2015]]
-        )
+        if grad == "gradient":
+            np.testing.assert_array_almost_equal(
+                append_ts[2020], [n + 5 for n in append_ts[2015]]
+            )
+            np.testing.assert_array_almost_equal(
+                append_ts[2050], [n + 35 for n in append_ts[2015]]
+            )
+        else:
+            np.testing.assert_array_almost_equal(
+                append_ts[2020], append_ts[2015] * 30 / 35
+            )
+            np.testing.assert_array_almost_equal(append_ts[2050], 0 * append_ts[2050])
 
     def test_time_val_warning(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db)
         variable = "Emissions|HFC|C2F6"
-        filler = tcruncher.derive_relationship(variable=variable)
+        filler = tcruncher.derive_relationship(variable=variable, gradient=1)
         error_msg = re.escape(
-            "The infiller database does not extend in time past the target "
-            "database, so no infilling can occur."
+            "No times requested are later than the times already in the database"
         )
         with pytest.raises(ValueError, match=error_msg):
             filler(test_db)
-        restricted_test = test_db.filter(
-            **{test_db.time_col: min(test_db[test_db.time_col])}
+        tcruncher_timed = self.tclass()
+        times = test_db[test_db.time_col].unique()
+        filler_timed = tcruncher_timed.derive_relationship(
+            variable=variable, times=times, gradient=1
         )
-        reconstruct = filler(restricted_test)
-        assert (
-            reconstruct.append(restricted_test)
-            .filter(variable=variable)
-            .equals(test_db.filter(variable=variable))
-        )
-
-    @pytest.mark.parametrize("smoothing", [True, False])
-    def test_weighting_results(self, sparse_df, range_df, smoothing):
-        # Ensure that duplicating data and giving it a weight of 1/2 makes little
-        # difference to the results
-
-        # First check that giving a weight of 1 does nothing.
-        to_infill = range_df.filter(
-            **{range_df.time_col: range_df[range_df.time_col][0]}
-        )
-        sparse_df = sparse_df.data
-        sparse_df.value[0::4] *= 5
-        sparse_df.value[3::4] += -1
-        sparse_df = IamDataFrame(sparse_df)
-        variable = "Emissions|CO2"
-        tcruncher = self.tclass(sparse_df)
-        normal_results = tcruncher.derive_relationship(
-            variable=variable, smoothing=smoothing
-        )(to_infill)
-        weight_1 = {(_ma, "sc_5"): 1, (_ma, "sc_6"): 1}
-        norm_weight_results = tcruncher.derive_relationship(
-            variable=variable,
-            weighting=weight_1,
-            smoothing=smoothing,
-        )(to_infill)
-        assert normal_results.equals(norm_weight_results)
-
-        # Compare these with a run where we have a duplicated datapoint.
-        new_scen = "new_scen"
-        duplicated_scen = "sc_6"
-        duplicate = sparse_df.filter(model=_ma, scenario=duplicated_scen)
-        duplicate.rename({"scenario": {duplicated_scen: new_scen}}, inplace=True)
-        larger_db = sparse_df.append(duplicate)
-        tcruncher_dup = self.tclass(larger_db)
-        weights = {(_ma, duplicated_scen): 0.5, (_ma, new_scen): 0.5}
-        weighted_results = tcruncher_dup.derive_relationship(
-            variable=variable,
-            weighting=weights,
-            smoothing=smoothing,
-        )(to_infill)
-        np.allclose(normal_results.data.value, weighted_results.data.value)
-        # Also check that the duplication changes the results!
-        duplicate_results = tcruncher_dup.derive_relationship(
-            variable=variable, smoothing=smoothing
-        )(to_infill)
-        assert not np.allclose(
-            normal_results.data.value,
-            duplicate_results.data.value,
-        )
-
-    @pytest.mark.parametrize("smoothing", [True, False])
-    def test_weighting_at_limits(self, sparse_df, range_df, smoothing):
-        # We should get sensible results when infilling results well outside the limit
-        # of the input data
-        to_infill = range_df.filter(
-            **{range_df.time_col: range_df[range_df.time_col][0]}
-        )
-        # Adjust the data to have a lowest value well below the normal range
-        to_infill = to_infill.data
-        to_infill.value.iloc[0] = -100
-        to_infill = IamDataFrame(to_infill)
-
-        variable = "Emissions|CO2"
-        tcruncher = self.tclass(sparse_df)
-        weight = {(_ma, "sc_5"): 1, (_ma, "sc_6"): 2}
-        results = tcruncher.derive_relationship(
-            variable=variable, smoothing=smoothing, weighting=weight
-        )(to_infill)
-        assert all(np.isfinite(results.data.value))
-        if smoothing:
-            # If we do smoothing, we limit the results in a fuzzy way, so that the
-            # values must be within one range-distance outside the range of values. The
-            # lower point of the range is at 0.
-            assert (
-                max(results.data.value)
-                < max(sparse_df.filter(year=2015).data.value) * 2
-            )
-            assert min(results.data.value) > -max(
-                sparse_df.filter(year=2015).data.value
-            )
+        with pytest.raises(ValueError, match=error_msg):
+            filler_timed(test_db)
+        # Then test that it does work with longer times
+        if test_db.time_col == "year":
+            times = [2500, 4000, 3000]
         else:
-            assert max(results.data.value) == max(
-                sparse_df.filter(year=2015).data.value
-            )
-            assert min(results.data.value) == min(
-                sparse_df.filter(year=2015).data.value
-            )
+            times = [
+                datetime.datetime(year=2100, month=1, day=1),
+                datetime.datetime(year=2200, month=1, day=1),
+                datetime.datetime(year=2250, month=1, day=1),
+            ]
+        filler_timed = tcruncher_timed.derive_relationship(
+            variable=variable, times=times, gradient=0
+        )
+        res = filler_timed(test_db)
+        res_ts = res.timeseries()
+        test_ts = test_db.filter(variable=variable).timeseries()
+        expected = test_ts[test_ts.columns[-1]]
+        for col in res_ts:
+            assert np.allclose(res_ts[col], expected)
