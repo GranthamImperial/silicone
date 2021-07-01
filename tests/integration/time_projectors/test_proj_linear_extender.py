@@ -56,7 +56,7 @@ class TestDatabaseCruncherExtendLatestTimeQuantile:
                     "scen_" + str(n),
                     "World",
                     "Emissions|CO2",
-                    "kt C2F6/yr",
+                    "kt CO2/yr",
                     n,
                     1 + n,
                     2 + n,
@@ -84,7 +84,7 @@ class TestDatabaseCruncherExtendLatestTimeQuantile:
                 "sc_" + str(n),
                 "World",
                 "Emissions|CO2",
-                "kt C2F6/yr",
+                "kt CO2/yr",
                 n,
                 10 + 10 * n,
             ]
@@ -113,7 +113,7 @@ class TestDatabaseCruncherExtendLatestTimeQuantile:
         else:
             test_2.columns = test_2.columns.map(lambda x: int(x.year))
             test_2 = IamDataFrame(test_2)
-        with pytest.raises(ValueError, match=error_msg):
+        with pytest.raises(TypeError, match=error_msg):
             filler(test_2)
 
     @pytest.mark.parametrize("times", [None, [2010, 2015]])
@@ -224,7 +224,7 @@ class TestDatabaseCruncherExtendLatestTimeQuantile:
             np.testing.assert_array_almost_equal(
                 append_ts[2020], append_ts[2015] * 30 / 35
             )
-            np.testing.assert_array_almost_equal(append_ts[2050], 0 * append_ts[2050])
+            np.testing.assert_array_almost_equal(append_ts[2050], 0 * append_ts[2020])
 
     def test_time_val_warning(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db)
