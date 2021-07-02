@@ -78,7 +78,7 @@ class LinearExtender:
                 )
             times = self._db[self._db.time_col].unique()
 
-        if gradient and (year_value is not None):
+        if (gradient is not None) and (year_value is not None):
             raise ValueError("Provide only one of a year_value OR gradient")
 
         if (gradient is None) and (year_value is None):

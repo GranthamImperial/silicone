@@ -128,7 +128,8 @@ class TestDatabaseCruncherExtendLatestTimeQuantile:
         error_msg = "Provide either a year_value OR gradient"
         with pytest.raises(ValueError, match=error_msg):
             tcruncher.derive_relationship(variable, times=times)
-        tcruncher.derive_relationship(variable, gradient=-1, times=times)
+        tcruncher.derive_relationship(variable, gradient=0, times=times)
+        tcruncher.derive_relationship(variable, gradient=1, times=times)
         tcruncher.derive_relationship(variable, year_value=(2090, 0), times=times)
         error_msg = "year_value should be a tuple of the year and the value that year."
         with pytest.raises(ValueError, match=error_msg):
@@ -154,6 +155,9 @@ class TestDatabaseCruncherExtendLatestTimeQuantile:
         with pytest.raises(ValueError, match=error_msg):
             tcruncher.derive_relationship(
                 variable, gradient=-1, year_value=(2050, 0), times=[2050]
+            )
+            tcruncher.derive_relationship(
+                variable, gradient=0, year_value=(2050, 0), times=[2050]
             )
 
     def test_no_data_error(self, test_downscale_df):
