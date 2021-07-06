@@ -339,7 +339,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
 
         # Increase the maximum values
         modify_extreme_db = large_db.filter(variable="Emissions|CO2").copy()
-        ind = modify_extreme_db["value"].idxmax
+        ind = modify_extreme_db["value"].idxmax()
         modify_extreme_db["value"].loc[ind] += 10
         extreme_crunched = res(modify_extreme_db)
         # Check results are the same

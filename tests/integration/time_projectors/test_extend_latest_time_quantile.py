@@ -309,8 +309,8 @@ class TestDatabaseCruncherExtendLatestTimeQuantile:
             **{range_df.time_col: range_df[range_df.time_col][0]}
         )
         sparse_df = sparse_df.data
-        sparse_df.value[0::4] *= 5
-        sparse_df.value[3::4] += -1
+        sparse_df.loc[0::4, "value"] *= 5
+        sparse_df.loc[3::4, "value"] += -1
         sparse_df = IamDataFrame(sparse_df)
         variable = "Emissions|CO2"
         tcruncher = self.tclass(sparse_df)
