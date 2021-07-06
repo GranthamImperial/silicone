@@ -90,7 +90,7 @@ class RMSClosest(_DatabaseCruncher):
 
         leader_var_unit = {
             var["variable"]: var["unit"]
-            for _, var in iamdf_lead.variables(True).iterrows()
+            for _, var in iamdf_lead[["variable", "unit"]].drop_duplicates().iterrows()
         }
 
         def filler(in_iamdf):
@@ -116,13 +116,8 @@ class RMSClosest(_DatabaseCruncher):
             """
             lead_var = in_iamdf.filter(variable=variable_leaders)
 
-            var_units = lead_var.variables(True)
-            if any(
-                [
-                    key not in var_units["variable"].tolist()
-                    for key in leader_var_unit.keys()
-                ]
-            ):
+            var_units = lead_var[["variable", "unit"]].drop_duplicates()
+            if any([key not in lead_var.variable for key in leader_var_unit.keys()]):
                 raise ValueError(
                     "Not all required variables are present in the infillee database"
                 )

@@ -355,9 +355,11 @@ def convert_units_to_MtCO2_equiv(df, metric_name="AR5GWP100"):
         return df
 
     to_convert_df = df.copy()
-    to_convert_var = to_convert_df.filter(
-        unit=[convert_to_str, convert_to_str_clean], keep=False
-    ).variables(True)
+    to_convert_var = (
+        to_convert_df.filter(unit=[convert_to_str, convert_to_str_clean], keep=False)
+        .data[["variable", "unit"]]
+        .drop_duplicates()
+    )
     to_convert_units = to_convert_var["unit"]
     to_convert_units_clean = {
         unit: unit.replace("-equiv", "").replace("equiv", "")

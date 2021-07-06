@@ -107,10 +107,10 @@ class EqualQuantileWalk(_DatabaseCruncher):
                 Not all required timepoints are present in the database we crunched...
             """
             lead_in = in_iamdf.filter(variable=variable_leaders)
-            if not all(lead_in.variables(True)["unit"] == lead_unit):
+            if not all([unit == lead_unit for unit in lead_in.unit]):
                 raise ValueError(
                     "Units of lead variable is meant to be `{}`, found `{}`".format(
-                        lead_unit, lead_in.variables(True)["unit"].tolist()
+                        lead_unit, lead_in.unit
                     )
                 )
 

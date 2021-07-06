@@ -67,7 +67,7 @@ class SplitCollectionWithRemainderEmissions:
             to make them consistent.
         """
         all_var = [aggregate, remainder] + components
-        all_units = relevant_df.variables(True)
+        all_units = relevant_df.data[["variable", "unit"]].drop_duplicates()
         if not all(var in all_units["variable"].values for var in all_var):
             logger.warning(
                 "Some variables missing from database when performing "
@@ -159,7 +159,7 @@ class SplitCollectionWithRemainderEmissions:
         assert (
             len(to_infill_df["unit"].unique()) == 1
         ), "Multiple units in the aggregate data"
-        to_infill_ag_units = to_infill_df.variables(True)["unit"].values[0]
+        to_infill_ag_units = to_infill_df.unit[0]
         all_var = [aggregate, remainder] + components
         relevant_df = self._db.filter(variable=all_var)
         db_to_generate, aggregate_unit = self._check_and_return_desired_unit(
