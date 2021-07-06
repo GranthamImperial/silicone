@@ -12,6 +12,7 @@ Added
 
 Changed
 ~~~~~~~
+- (`#133 <https://github.com/GranthamImperial/silicone/pull/133>`_) More fixes to allow compatibility with pyam updates.
 - (`#131 <https://github.com/GranthamImperial/silicone/pull/131>`_) Updated to allow compatibility with latest versions of pyam, openscm-units, coverage, pytest and black
 
 Fixed

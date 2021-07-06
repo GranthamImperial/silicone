@@ -347,7 +347,7 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         min_scen = modify_extreme_db["scenario"].loc[
             modify_extreme_db["value"] == min(modify_extreme_db["value"])
         ]
-        ind = modify_extreme_db["value"].idxmin
+        ind = modify_extreme_db["value"].idxmin()
         modify_extreme_db = modify_extreme_db.data
         modify_extreme_db["value"].loc[ind] -= 10
         modify_extreme_db = IamDataFrame(modify_extreme_db)

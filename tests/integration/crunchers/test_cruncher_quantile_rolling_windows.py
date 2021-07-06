@@ -345,7 +345,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         # Check results are the same
         assert all(crunched["value"] == extreme_crunched["value"])
         # Repeat with reducing the minimum value
-        ind = modify_extreme_db["value"].idxmin
+        ind = modify_extreme_db["value"].idxmin()
         modify_extreme_db["value"].loc[ind] -= 10
         extreme_crunched = res(modify_extreme_db)
         assert all(crunched["value"] == extreme_crunched["value"])
