@@ -325,13 +325,12 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         crunched = res(large_db_int)
 
         # Increase the maximum values
-        modify_extreme_db = large_db_int.filter(variable="Emissions|CO2").copy()
-        max_scen = modify_extreme_db["scenario"].loc[
-            modify_extreme_db["value"] == max(modify_extreme_db["value"])
+        modify_extreme_db = large_db_int.filter(variable="Emissions|CO2").copy().data
+        max_scen = modify_extreme_db.loc[
+            modify_extreme_db["value"] == max(modify_extreme_db["value"]), "scenario"
         ]
         ind = modify_extreme_db["value"].idxmax()
-        modify_extreme_db = modify_extreme_db.data
-        modify_extreme_db["value"].loc[ind] += 10
+        modify_extreme_db.loc[ind, "value"] += 10
         modify_extreme_db = IamDataFrame(modify_extreme_db)
         extreme_crunched = res(modify_extreme_db)
         # Check results are the same
@@ -344,12 +343,12 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         # Repeat with reducing the minimum value. This works differently because the
         # minimum point is doubled. This modification causes the cruncher to pick the
         # lower value.
-        min_scen = modify_extreme_db["scenario"].loc[
-            modify_extreme_db["value"] == min(modify_extreme_db["value"])
+        min_scen = modify_extreme_db.data.loc[
+            modify_extreme_db["value"] == min(modify_extreme_db["value"]), "scenario"
         ]
         ind = modify_extreme_db["value"].idxmin()
         modify_extreme_db = modify_extreme_db.data
-        modify_extreme_db["value"].loc[ind] -= 10
+        modify_extreme_db.loc[ind, "value"] -= 10
         modify_extreme_db = IamDataFrame(modify_extreme_db)
         extreme_crunched = res(modify_extreme_db)
         assert crunched.filter(scenario=min_scen)["value"].iloc[0] != min(

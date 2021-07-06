@@ -52,8 +52,8 @@ tdb = pd.DataFrame(
 test_db = pyam.IamDataFrame(tdb)
 
 df_low = simple_df.copy().data
-df_low["scenario"].loc[df_low["scenario"] == "scen_a"] = "right_scenario"
-df_low["scenario"].loc[df_low["scenario"] == "scen_b"] = "wrong_scenario"
+df_low.loc[df_low["scenario"] == "scen_a", "scenario"] = "right_scenario"
+df_low.loc[df_low["scenario"] == "scen_b", "scenario"] = "wrong_scenario"
 df_high = df_low.copy()
 df_high["model"] = "high_model"
 df_low["value"] = df_low["value"] - 10
@@ -80,7 +80,7 @@ def test_find_matching_scenarios_matched(half_val, expected):
     # 2) and 1st option used if it's closer,
     # 3) But not if it's further away
     half_simple_df = simple_df.filter(scenario="scen_a").data
-    half_simple_df["value"].loc[0] = half_val
+    half_simple_df.loc[0, "value"] = half_val
     half_simple_df = pyam.IamDataFrame(half_simple_df)
     scenarios = find_matching_scenarios(
         simple_df,
@@ -95,7 +95,7 @@ def test_find_matching_scenarios_matched(half_val, expected):
 def test_find_matching_scenarios_no_data_for_time():
     time_col = simple_df.time_col
     half_simple_df = simple_df.filter(scenario="scen_a").data
-    half_simple_df[time_col].loc[0] = 0
+    half_simple_df.loc[0, time_col] = 0
     half_simple_df = pyam.IamDataFrame(half_simple_df)
     with pytest.raises(ValueError):
         find_matching_scenarios(
@@ -545,8 +545,9 @@ def test__construct_consistent_values():
 
 
 def test__construct_consistent_values_with_equiv():
-    test_db_co2 = convert_units_to_MtCO2_equiv(test_db)
-    test_db_co2.data["unit"].loc[0:1] = "Mt CO2/yr"
+    test_db_co2 = convert_units_to_MtCO2_equiv(test_db).data
+    test_db_co2.loc[0:1, "unit"] = "Mt CO2/yr"
+    test_db_co2 = pyam.IamDataFrame(test_db_co2)
     aggregate_name = "agg"
     assert aggregate_name not in test_db_co2.variable
     component_ratio = ["Emissions|HFC|C2F6", "Emissions|HFC|C5F12"]

@@ -137,7 +137,7 @@ class TestDatabaseCruncherLatestTimeRatio(_DataBaseCruncherTester):
         lead_db_time = lead_db.data[lead_db.time_col]
         latest_time = lead_db_time == max(lead_db_time)
         expected = (
-            2 * lead_db.data["value"] / lead_db.data["value"].loc[latest_time].values
+            2 * lead_db.data["value"] / lead_db.data.loc[latest_time, "value"].values
         )
         assert np.allclose(infilled.data["value"], expected)
         # Test that the result can be appended without problems.

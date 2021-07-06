@@ -454,7 +454,7 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         # database
         variable_leaders = ["Emissions|HFC|C2F6"]
         db_no_overlap_m = test_db.copy().data
-        db_no_overlap_m["model"].loc[2] = "different model"
+        db_no_overlap_m.loc[2, "model"] = "different model"
         db_no_overlap_m = IamDataFrame(db_no_overlap_m)
         tcruncher = self.tclass(db_no_overlap_m)
         error_msg = re.escape(

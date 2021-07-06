@@ -318,8 +318,8 @@ def return_cases_which_consistently_split(
         if all(
             [
                 np.isclose(
-                    sum_all["value"].loc[time],
-                    sum_to_split["value"].loc[time] * 2,
+                    sum_all.loc[time, "value"],
+                    sum_to_split.loc[time, "value"] * 2,
                     **how_close,
                 )
                 for time in sum_to_split.index

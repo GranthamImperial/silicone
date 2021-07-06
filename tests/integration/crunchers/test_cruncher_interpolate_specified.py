@@ -220,9 +220,10 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         crunched = res(large_db)
 
         # Increase the maximum values
-        modify_extreme_db = large_db.filter(variable="Emissions|CO2").copy()
-        ind = modify_extreme_db["value"].idxmax
-        modify_extreme_db["value"].loc[ind] += 10
+        modify_extreme_db = large_db.filter(variable="Emissions|CO2").copy().data
+        ind = modify_extreme_db["value"].idxmax()
+        modify_extreme_db.loc[ind, "value"] += 10
+        modify_extreme_db = IamDataFrame(modify_extreme_db)
         extreme_crunched = res(modify_extreme_db)
         # Check results are the same
         assert all(crunched["value"] == extreme_crunched["value"])
@@ -230,8 +231,10 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         assert crunched["value"][crunched["scenario"] == "scen_b"].iloc[0] == 170
 
         # Repeat with reducing the minimum value
+        modify_extreme_db = modify_extreme_db.data
         ind = modify_extreme_db["value"].idxmin()
-        modify_extreme_db["value"].loc[ind] -= 10
+        modify_extreme_db.loc[ind, "value"] -= 10
+        modify_extreme_db = IamDataFrame(modify_extreme_db)
         extreme_crunched = res(modify_extreme_db)
         assert all(crunched["value"] == extreme_crunched["value"])
         # There are two smallest points, so we expect to see them equal the mean of the
