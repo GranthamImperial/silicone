@@ -388,7 +388,7 @@ def test_convert_units_to_mtco2_equiv_fails_with_month_units(check_aggregate_df)
         convert_units_to_MtCO2_equiv(limited_check_agg)
 
 
-def test_convert_units_to_mtco2_equiv_fails_with_oom_units(check_aggregate_df):
+def test_convert_units_to_mtco2_equiv_fails_with_unknown_units(check_aggregate_df):
     limited_check_agg = check_aggregate_df.filter(
         variable="Primary Energy*", keep=False
     ).data

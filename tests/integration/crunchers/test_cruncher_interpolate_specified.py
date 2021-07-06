@@ -230,7 +230,7 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         assert crunched["value"][crunched["scenario"] == "scen_b"].iloc[0] == 170
 
         # Repeat with reducing the minimum value
-        ind = modify_extreme_db["value"].idxmin
+        ind = modify_extreme_db["value"].idxmin()
         modify_extreme_db["value"].loc[ind] -= 10
         extreme_crunched = res(modify_extreme_db)
         assert all(crunched["value"] == extreme_crunched["value"])
