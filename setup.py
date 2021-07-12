@@ -10,6 +10,7 @@ AUTHORS = [
     ("Robin Lamboll", "r.lamboll@imperial.ac.uk"),
     ("Zebedee Nicholls", "zebedee.nicholls@climate-energy-college.org"),
     ("Jarmo Kikstra", "kikstra@iiasa.ac.at"),
+    ("Gaurav Ganti", "gaurav.ganti@climateanalytics.org"),
 ]
 URL = "https://github.com/GranthamImperial/silicone"
 PROJECT_URLS = {
