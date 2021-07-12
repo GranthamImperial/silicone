@@ -1,8 +1,8 @@
 Changelog
 =========
 
-[v1.1.0]
---------
+[v1.1.0] - 12 July 2021
+-----------------------
 Added
 ~~~~~
 - (`#134 <https://github.com/GranthamImperial/silicone/pull/134>`_) Added Gaurav to author list.
