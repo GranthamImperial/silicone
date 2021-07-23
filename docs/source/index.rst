@@ -28,6 +28,7 @@ Silicone
 
     database-crunchers
     multiple-infillers
+    time-projectors
     stats
     utils
 
