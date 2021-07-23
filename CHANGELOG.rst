@@ -1,6 +1,14 @@
 Changelog
 =========
 
+
+Work in progress
+----------------
+
+Added
+~~~~~
+- (`#135 <https://github.com/GranthamImperial/silicone/pull/135>`_) Added html documentation of the time projectors
+
 [v1.1.0] - 12 July 2021
 -----------------------
 Added
