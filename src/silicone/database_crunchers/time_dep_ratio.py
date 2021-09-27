@@ -183,7 +183,7 @@ class TimeDepRatio(_DatabaseCruncher):
                         data_follower_time_col
                     )
                 )
-            if any(lead_var["value"] < 0):
+            if any(lead_var.data["value"] < 0):
                 warn_str = (
                     "Note that the lead variable {} goes negative. The time dependent "
                     "ratio cruncher can produce unexpected results in this case.".format(

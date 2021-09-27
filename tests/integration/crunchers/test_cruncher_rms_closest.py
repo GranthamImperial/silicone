@@ -278,7 +278,7 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         filler = tcruncher.derive_relationship("Emissions|HFC|C5F12", lead)
         leader_var_unit = {
             var[1]["variable"]: var[1]["unit"]
-            for var in bad_units_df[["variable", "unit"]].iterrows()
+            for var in bad_units_df.data[["variable", "unit"]].iterrows()
         }
         error_msg = "Units of lead variable is meant to be {}, found {}".format(
             leader_var_unit, multiple_units_df.filter(variable=lead).unit

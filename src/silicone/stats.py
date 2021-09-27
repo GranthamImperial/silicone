@@ -269,7 +269,7 @@ def calc_all_emissions_correlations(emms_df, years, output_dir):
         emms_df.filter(level=1)
         .filter(variable="Emissions|*")
         .filter(variable="Emissions|Kyoto*", keep=False)
-        .append(emms_df.filter(level=2).filter(variable="Emissions|CO2*"))[
+        .append(emms_df.filter(level=2).filter(variable="Emissions|CO2*")).data[
             ["variable", "unit"]
         ]
         .drop_duplicates()

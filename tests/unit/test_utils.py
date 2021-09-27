@@ -427,18 +427,18 @@ def test_convert_units_to_MtCO2_equiv_works(check_aggregate_df, ARoption, expect
     converted_units = convert_units_to_MtCO2_equiv(limited_check_agg, ARoption)
     assert all(y[:6] == "Mt CO2" for y in converted_units.data["unit"].unique())
     assert np.allclose(
-        converted_units.filter(variable="*CO2*")["value"],
-        limited_check_agg.filter(variable="*CO2*")["value"],
+        converted_units.filter(variable="*CO2*").data["value"],
+        limited_check_agg.filter(variable="*CO2*").data["value"],
     )
     # Methane is in Mt methane, rate 28* higher in AR5
     assert np.allclose(
-        converted_units.filter(variable="*CH4*")["value"],
-        limited_check_agg.filter(variable="*CH4*")["value"] * expected[0],
+        converted_units.filter(variable="*CH4*").data["value"],
+        limited_check_agg.filter(variable="*CH4*").data["value"] * expected[0],
     )
     # CF4 is in kt, 6630 times more effective/kg but / 1000 for k -> G
     assert np.allclose(
         converted_units.filter(variable="*CF4*").data["value"],
-        limited_check_agg.filter(variable="*CF4*")["value"] * expected[1],
+        limited_check_agg.filter(variable="*CF4*").data["value"] * expected[1],
     )
 
 

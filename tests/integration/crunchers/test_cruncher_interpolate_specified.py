@@ -163,20 +163,20 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
             assert simple_df.extra_cols[0] == add_col
 
         expect_00 = res(simple_df)
-        assert expect_00.filter(scenario="scen_a", year=2010)["value"].iloc[0] == 0
-        assert expect_00.filter(scenario="scen_b", year=2010)["value"].iloc[0] == 0
-        assert all(expect_00.filter(year=2030)["value"] == 1000)
-        assert all(expect_00.filter(year=2050)["value"] == 5000)
+        assert expect_00.filter(scenario="scen_a", year=2010).data["value"].iloc[0] == 0
+        assert expect_00.filter(scenario="scen_b", year=2010).data["value"].iloc[0] == 0
+        assert all(expect_00.filter(year=2030).data["value"] == 1000)
+        assert all(expect_00.filter(year=2050).data["value"] == 5000)
 
         # If we include data from scen_b, we then get a slightly different answer
         res = tcruncher.derive_relationship(
             "Emissions|CO2", ["Emissions|CH4"], required_scenario=["scen_a", "scen_b"]
         )
         expect_01 = res(simple_df)
-        assert expect_01.filter(scenario="scen_a", year=2010)["value"].iloc[0] == 0
-        assert expect_01.filter(scenario="scen_b", year=2010)["value"].iloc[0] == 1
-        assert all(expect_01.filter(year=2030)["value"] == 1000)
-        assert all(expect_01.filter(year=2050)["value"] == 5000)
+        assert expect_01.filter(scenario="scen_a", year=2010).data["value"].iloc[0] == 0
+        assert expect_01.filter(scenario="scen_b", year=2010).data["value"].iloc[0] == 1
+        assert all(expect_01.filter(year=2030).data["value"] == 1000)
+        assert all(expect_01.filter(year=2050).data["value"] == 5000)
 
         # Test we can append our answer
         append_df = simple_df.filter(variable=lead).append(expect_01)
@@ -197,15 +197,15 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         crunched = res(to_find)
 
         # Calculate the same values numerically
-        xs = large_db.filter(variable="Emissions|CO2")["value"].values
-        ys = large_db.filter(variable="Emissions|CH4")["value"].values
+        xs = large_db.filter(variable="Emissions|CO2").data["value"].values
+        ys = large_db.filter(variable="Emissions|CH4").data["value"].values
         ys = [np.mean(ys[xs == x]) for x in xs]
         interpolate_fn = scipy.interpolate.interp1d(xs, ys)
-        xs_to_interp = to_find.filter(variable="Emissions|CO2")["value"].values
+        xs_to_interp = to_find.filter(variable="Emissions|CO2").data["value"].values
 
         expected = interpolate_fn(xs_to_interp)
 
-        assert all(crunched["value"].values == expected)
+        assert all(crunched.data["value"].values == expected)
 
     def test_extreme_values_relationship(self):
         # Our cruncher has a closest-point extrapolation algorithm and therefore
@@ -226,9 +226,9 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         modify_extreme_db = IamDataFrame(modify_extreme_db)
         extreme_crunched = res(modify_extreme_db)
         # Check results are the same
-        assert all(crunched["value"] == extreme_crunched["value"])
+        assert all(crunched.data["value"] == extreme_crunched.data["value"])
         # Also check that the results are correct
-        assert crunched["value"][crunched["scenario"] == "scen_b"].iloc[0] == 170
+        assert crunched.data["value"][crunched["scenario"] == "scen_b"].iloc[0] == 170
 
         # Repeat with reducing the minimum value
         modify_extreme_db = modify_extreme_db.data
@@ -236,10 +236,10 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         modify_extreme_db.loc[ind, "value"] -= 10
         modify_extreme_db = IamDataFrame(modify_extreme_db)
         extreme_crunched = res(modify_extreme_db)
-        assert all(crunched["value"] == extreme_crunched["value"])
+        assert all(crunched.data["value"] == extreme_crunched.data["value"])
         # There are two smallest points, so we expect to see them equal the mean of the
         # input values for these points
-        assert crunched["value"][crunched["scenario"] == "scen_e"].iloc[0] == 185
+        assert crunched.data["value"][crunched["scenario"] == "scen_e"].iloc[0] == 185
 
     def test_derive_relationship_same_gas(self, test_db, test_downscale_df):
         # Given only a single data series, we recreate the original pattern
@@ -250,8 +250,8 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         crunched = res(test_db)
         assert all(
             abs(
-                crunched["value"].reset_index()
-                - test_db.filter(variable="Emissions|CO2")["value"].reset_index()
+                crunched.data["value"].reset_index()
+                - test_db.filter(variable="Emissions|CO2").data["value"].reset_index()
             )
             < 1e15
         )

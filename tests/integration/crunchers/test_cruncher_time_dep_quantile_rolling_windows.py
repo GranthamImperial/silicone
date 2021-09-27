@@ -142,9 +142,9 @@ class TestDatabaseTimeDepCruncherRollingWindows:
         returned = res(to_infill)
         for time, quantile in quant.items():
             if timecol == "year":
-                filtered_ans = returned.filter(year=time)["value"]
+                filtered_ans = returned.filter(year=time).data["value"]
             else:
-                filtered_ans = returned.filter(time=time)["value"]
+                filtered_ans = returned.filter(time=time).data["value"]
             assert np.allclose(filtered_ans, 11 * (quantile - 1 / 22))
 
     def test_derive_relationship_same_gas(self, test_db):
@@ -161,7 +161,7 @@ class TestDatabaseTimeDepCruncherRollingWindows:
         )
         crunched = res(test_db_redux)
         assert np.allclose(
-            crunched["value"], test_db_redux.filter(variable="Emissions|CO2")["value"]
+            crunched.data["value"], test_db_redux.filter(variable="Emissions|CO2").data["value"]
         )
 
     def test_derive_relationship_int_years(self):
@@ -184,6 +184,6 @@ class TestDatabaseTimeDepCruncherRollingWindows:
             quantile_dict,
         )
         crunched = res(regular_db)
-        assert len(crunched["value"]) == len(
-            regular_db.filter(variable="Emissions|CO2")["value"]
+        assert len(crunched.data["value"]) == len(
+            regular_db.filter(variable="Emissions|CO2").data["value"]
         )

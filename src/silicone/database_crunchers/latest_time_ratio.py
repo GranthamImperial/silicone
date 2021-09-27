@@ -84,7 +84,7 @@ class LatestTimeRatio(_DatabaseCruncher):
         data_follower_key_timepoint = max(data_follower[data_follower_time_col])
         key_timepoint_filter = {data_follower_time_col: [data_follower_key_timepoint]}
         data_follower_key_year_val = np.nanmean(
-            iamdf_follower.filter(**key_timepoint_filter)["value"].values
+            iamdf_follower.filter(**key_timepoint_filter).data["value"].values
         )
         data_follower_unit = data_follower["unit"].values[0]
 
@@ -124,7 +124,7 @@ class LatestTimeRatio(_DatabaseCruncher):
                         data_follower_time_col
                     )
                 )
-            if any(lead_var["value"] < 0):
+            if any(lead_var.data["value"] < 0):
                 warn_str = "Note that the lead variable {} goes negative.".format(
                     variable_leaders
                 )
