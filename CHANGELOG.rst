@@ -3,14 +3,19 @@ Changelog
 
 
 master
-----------------
+------
 
 Added
 ~~~~~
 - (`#135 <https://github.com/GranthamImperial/silicone/pull/135>`_) Added html documentation of the time projectors
 
+Fixed
+~~~~~
+- (`#138 <https://github.com/GranthamImperial/silicone/pull/138>`_) Improve speed of :func:`silicone.multiple_infillers.infill_all_required_emissions_for_openscm` by removing multiple loops
+
 [v1.1.0] - 12 July 2021
 -----------------------
+
 Added
 ~~~~~
 - (`#134 <https://github.com/GranthamImperial/silicone/pull/134>`_) Added Gaurav to author list.
