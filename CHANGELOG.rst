@@ -12,11 +12,9 @@ Added
 
 Changed
 ~~~~~~~
-- (`#138 <https://github.com/GranthamImperial/silicone/pull/138>`_) Drop Python3.6 support
+- (`#138 <https://github.com/GranthamImperial/silicone/pull/138>`_) Remove Python3.6 support
+- (`#138 <https://github.com/GranthamImperial/silicone/pull/138>`_) Improved speed of :func:`silicone.multiple_infillers.infill_all_required_emissions_for_openscm` by removing multiple loops (note that API did not change)
 
-Fixed
-~~~~~
-- (`#138 <https://github.com/GranthamImperial/silicone/pull/138>`_) Improve speed of :func:`silicone.multiple_infillers.infill_all_required_emissions_for_openscm` by removing multiple loops
 
 [v1.1.0] - 12 July 2021
 -----------------------
