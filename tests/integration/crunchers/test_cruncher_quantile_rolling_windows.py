@@ -135,7 +135,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
             # We have a 0/0*0 in the calculation, so error message happens and 0 is
             # infilled.
             assert len(caplog.record_tuples) == 1
-            assert returned.filter(scenario="scen_a", year=2010)["value"].iloc[0] == 0
+            assert returned.filter(scenario="scen_a", year=2010).data["value"].iloc[0] == 0
         else:
             assert len(caplog.record_tuples) == 0
             # For the window centre at lead value of 0, given that default
@@ -151,7 +151,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
             # follower value - quantile space) = (1 - 0) / (5/12 - 11/12) = 2
             # thus our relationship is (quant - 5/12) * 2
             assert np.isclose(
-                returned.filter(scenario="scen_a", year=2010)["value"].iloc[0],
+                returned.filter(scenario="scen_a", year=2010).data["value"].iloc[0],
                 (quant - 5 / 12) * 2,
             )
 
@@ -168,11 +168,11 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         # follower value - quantile space) = (1 - 0) / (7/12 - 1/12) = 2
         # thus our relationship is (quant - 1/12) * 2
         assert np.isclose(
-            returned.filter(scenario="scen_b", year=2010)["value"].iloc[0],
+            returned.filter(scenario="scen_b", year=2010).data["value"].iloc[0],
             (quant - 1 / 12) * 2,
         )
-        assert all(returned.filter(year=2030)["value"] == 1000)
-        assert all(returned.filter(year=2050)["value"] == 5000)
+        assert all(returned.filter(year=2030).data["value"] == 1000)
+        assert all(returned.filter(year=2050).data["value"] == 5000)
 
         # Now repeat with a higher quantile. This time we are too high in the second
         # case.
@@ -182,15 +182,15 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         )
         result_2 = res(simple_df)
         assert np.isclose(
-            result_2.filter(scenario="scen_a", year=2010)["value"].iloc[0],
+            result_2.filter(scenario="scen_a", year=2010).data["value"].iloc[0],
             (quant - 5 / 12) * 2,
         )
         assert np.isclose(
-            result_2.filter(scenario="scen_b", year=2010)["value"].iloc[0],
+            result_2.filter(scenario="scen_b", year=2010).data["value"].iloc[0],
             1,
         )
-        assert all(result_2.filter(year=2030)["value"] == 1000)
-        assert all(result_2.filter(year=2050)["value"] == 5000)
+        assert all(result_2.filter(year=2030).data["value"] == 1000)
+        assert all(result_2.filter(year=2050).data["value"] == 5000)
 
         # Similarly quantiles below 1/12 are 0.
         res = tcruncher.derive_relationship(
@@ -203,10 +203,10 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
             assert len(caplog.record_tuples) == 1
         else:
             assert len(caplog.record_tuples) == 0
-        assert expect_00.filter(scenario="scen_a", year=2010)["value"].iloc[0] == 0
-        assert expect_00.filter(scenario="scen_b", year=2010)["value"].iloc[0] == 0
-        assert all(expect_00.filter(year=2030)["value"] == 1000)
-        assert all(expect_00.filter(year=2050)["value"] == 5000)
+        assert expect_00.filter(scenario="scen_a", year=2010).data["value"].iloc[0] == 0
+        assert expect_00.filter(scenario="scen_b", year=2010).data["value"].iloc[0] == 0
+        assert all(expect_00.filter(year=2030).data["value"] == 1000)
+        assert all(expect_00.filter(year=2050).data["value"] == 5000)
 
     @pytest.mark.parametrize("use_ratio", [True, False])
     def test_numerical_relationship(self, use_ratio):
@@ -226,8 +226,8 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         crunched = res(to_find)
 
         # Calculate the same values numerically
-        xs = larger_db.filter(variable="Emissions|CO2")["value"].values
-        ys = larger_db.filter(variable="Emissions|CH4")["value"].values
+        xs = larger_db.filter(variable="Emissions|CO2").data["value"].values
+        ys = larger_db.filter(variable="Emissions|CH4").data["value"].values
         if use_ratio:
             ys = ys / xs
         quantile_expected = silicone.stats.rolling_window_find_quantiles(xs, ys, [0.5])
@@ -235,12 +235,12 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
             np.array(quantile_expected.index),
             quantile_expected.values.squeeze(),
         )
-        xs_to_interp = to_find.filter(variable="Emissions|CO2")["value"].values
+        xs_to_interp = to_find.filter(variable="Emissions|CO2").data["value"].values
         if use_ratio:
             expected = interpolate_fn(xs_to_interp) * xs_to_interp
         else:
             expected = interpolate_fn(xs_to_interp)
-        assert all(crunched["value"].values == expected)
+        assert all(crunched.data["value"].values == expected)
 
     def test_reordering_values_produces_no_change(self, test_db):
         # We ensure that re-ordering does not change the data. We construct a df
@@ -265,8 +265,8 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
                 columns=_msrvu + [time],
             )
         )
-        test_db["value"][test_db["value"] > 50] = (
-            test_db["value"][test_db["value"] > 50] / 100
+        test_db.data["value"][test_db.data["value"] > 50] = (
+            test_db.data["value"][test_db.data["value"] > 50] / 100
         )
         if test_db.time_col == "year":
             test_db.filter(year=int(time), inplace=True)
@@ -314,7 +314,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         nearly_same_res = nearly_same_cruncher.derive_relationship(_ech4, [_eco2])(
             single_date_df
         )
-        assert np.allclose(same_res["value"], nearly_same_res["value"], rtol=5e-4)
+        assert np.allclose(same_res.data["value"], nearly_same_res.data["value"], rtol=5e-4)
 
     @pytest.mark.parametrize("add_col", [None, "extra_col"])
     def test_extreme_values_relationship(self, add_col):
@@ -344,14 +344,14 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         modify_extreme_db = IamDataFrame(modify_extreme_db)
         extreme_crunched = res(modify_extreme_db)
         # Check results are the same
-        assert all(crunched["value"] == extreme_crunched["value"])
+        assert all(crunched.data["value"] == extreme_crunched.data["value"])
         # Repeat with reducing the minimum value
         modify_extreme_db = modify_extreme_db.data
         ind = modify_extreme_db["value"].idxmin()
         modify_extreme_db.loc[ind, "value"] -= 10
         modify_extreme_db = IamDataFrame(modify_extreme_db)
         extreme_crunched = res(modify_extreme_db)
-        assert all(crunched["value"] == extreme_crunched["value"])
+        assert all(crunched.data["value"] == extreme_crunched.data["value"])
 
         # Check that we can append the answer
         appended_df = large_db.filter(variable=lead).append(crunched)
@@ -366,8 +366,8 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         crunched = res(test_db)
         assert all(
             abs(
-                crunched["value"].reset_index()
-                - test_db.filter(variable="Emissions|CO2")["value"].reset_index()
+                crunched.data["value"].reset_index()
+                - test_db.filter(variable="Emissions|CO2").data["value"].reset_index()
             )
             < 1e15
         )

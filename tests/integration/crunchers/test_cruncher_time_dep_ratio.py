@@ -283,8 +283,8 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             assert 2010 in res.data["year"].values
             # The nan'd data is ignored in these cases, so the ratio in 2010 is 1:9
             assert np.allclose(
-                res.filter(year=2010)["value"],
-                test_downscale_df.filter(year=2010)["value"] * 9,
+                res.filter(year=2010).data["value"],
+                test_downscale_df.filter(year=2010).data["value"] * 9,
             )
         else:
             err_msg = re.escape(
@@ -348,8 +348,8 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         else:
             res = filler(test_downscale_df)
             assert np.allclose(
-                res.filter(year=2010)["value"],
-                test_downscale_df.filter(year=2010)["value"] * -1,
+                res.filter(year=2010).data["value"],
+                test_downscale_df.filter(year=2010).data["value"] * -1,
             )
 
     @pytest.mark.parametrize(

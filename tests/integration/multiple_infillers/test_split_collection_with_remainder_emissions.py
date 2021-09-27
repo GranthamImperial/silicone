@@ -203,9 +203,9 @@ class TestSplitCollectionWithRemainderEmissions:
         assert len(filled.data) == 8
         assert all([y in components + [remainder] for y in filled.variable])
         assert np.allclose(
-            filled.filter(variable=remainder)["value"].values
-            + filled.filter(variable=components)["value"].values,
-            test_downscale_df.filter(variable=aggregate)["value"].values,
+            filled.filter(variable=remainder).data["value"].values
+            + filled.filter(variable=components).data["value"].values,
+            test_downscale_df.filter(variable=aggregate).data["value"].values,
         )
 
     def test_relationship_usage_works_multiple(self, test_db, test_downscale_df):
@@ -253,10 +253,10 @@ class TestSplitCollectionWithRemainderEmissions:
                 filled.data.groupby("time").sum()["value"].values,
             )
         assert np.allclose(
-            filled.filter(variable=neg_component)["value"].values,
-            -filled.filter(variable=pos_component)["value"].values,
+            filled.filter(variable=neg_component).data["value"].values,
+            -filled.filter(variable=pos_component).data["value"].values,
         )
-        assert all(filled.filter(variable=neg_component)["value"].values < 0)
+        assert all(filled.filter(variable=neg_component).data["value"].values < 0)
 
     def test_relationship_rejects_inconsistent_columns(self, larger_df, test_db):
         # There are optional extra columns on the DataFrame objects. This test ensures

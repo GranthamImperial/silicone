@@ -187,8 +187,8 @@ class TestDatabaseCruncherExtendLatestTimeQuantile:
         else:
             # A leapyear slightly distorts the calculation
             assert np.allclose(
-                infilled_filt["value"],
-                test_db.filter(variable=variable)["value"].iloc[1],
+                infilled_filt.data["value"],
+                test_db.filter(variable=variable).data["value"].iloc[1],
                 atol=0.0005,
             )
             times = [
@@ -198,7 +198,7 @@ class TestDatabaseCruncherExtendLatestTimeQuantile:
         # an intermediate point
         cruncher = tcruncher.derive_relationship(variable, gradient=1, times=times)
         infilled_filt = cruncher(infill_df)
-        assert np.allclose(infilled_filt["value"], test_db["value"][0] + 3, atol=0.002)
+        assert np.allclose(infilled_filt.data["value"], test_db.data["value"][0] + 3, atol=0.002)
 
     @pytest.mark.parametrize("grad", ["gradient", "year_val"])
     def test_relationship_usage(self, range_df, sparse_df, grad):

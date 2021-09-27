@@ -134,11 +134,12 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         # lower limit on the first, in the middle on the second scenario. At later times
         # we are always above the highest value.
         time_filter = {infilled.time_col: [infilled[infilled.time_col][0]]}
+
         sorted_follow_t0 = np.sort(
-            test_db.filter(variable=follow, **time_filter)["value"].values
+            test_db.filter(variable=follow, **time_filter).data["value"].values
         )
         assert np.allclose(
-            infilled.filter(**time_filter)["value"].values,
+            infilled.filter(**time_filter).data["value"].values,
             [
                 sorted_follow_t0[0],
                 sorted_follow_t0[1],
@@ -147,10 +148,10 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         for time_ind in range(1, 3):
             time_filter = {infilled.time_col: [infilled[infilled.time_col][time_ind]]}
             assert np.allclose(
-                infilled.filter(**time_filter)["value"].values,
+                infilled.filter(**time_filter).data["value"].values,
                 max(
                     test_db.filter(variable=follow)
-                    .filter(**time_filter)["value"]
+                    .filter(**time_filter).data["value"]
                     .values
                 ),
             )
@@ -181,16 +182,16 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         crunched = res(to_find)
 
         # Calculate the same values numerically
-        xs = np.sort(large_db.filter(variable="Emissions|CO2")["value"].values)
-        ys = np.sort(large_db.filter(variable="Emissions|CH4")["value"].values)
+        xs = np.sort(large_db.filter(variable="Emissions|CO2").data["value"].values)
+        ys = np.sort(large_db.filter(variable="Emissions|CH4").data["value"].values)
         quantiles_of_x = np.arange(len(xs)) / (len(xs) - 1)
         quant_of_y = scipy.interpolate.interp1d(
             xs, quantiles_of_x, bounds_error=False, fill_value=(0, 1)
-        )(to_find.filter(variable=lead)["value"].values)
+        )(to_find.filter(variable=lead).data["value"].values)
 
         expected = np.quantile(ys, quant_of_y)
 
-        assert np.allclose(crunched["value"].values, expected)
+        assert np.allclose(crunched.data["value"].values, expected)
 
     @pytest.mark.parametrize("smoothing", [True, False])
     def test_weighting_results(self, test_db, smoothing):
@@ -269,11 +270,11 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         res = tcruncher.derive_relationship(follow, lead)
         infilled = res(test_db)
         assert np.allclose(
-            infilled.filter(scenario=_sa)["value"]._values,
-            infilled.filter(scenario=_sb)["value"]._values,
+            infilled.filter(scenario=_sa).data["value"].values,
+            infilled.filter(scenario=_sb).data["value"].values,
         )
         # We expect the specific values to equal the means of the two follow scenarios
-        assert np.allclose(infilled.filter(scenario=_sa)["value"], [1, 2, 2.5, 2.5])
+        assert np.allclose(infilled.filter(scenario=_sa).data["value"], [1, 2, 2.5, 2.5])
 
     def test_uneven_lead_timeseries(self, test_db):
         # In the event that some of the data is missing at one time, we get nans in a
@@ -291,7 +292,7 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         res = tcruncher.derive_relationship(follow, lead)
         infilled = res(test_db)
 
-        assert all(~np.isnan(infilled["value"]))
+        assert all(~np.isnan(infilled.data["value"]))
 
     def test_with_one_value_in_infiller_db(self, test_db, caplog):
         # The calculation is different with only one entry in the infiller db, as in the
@@ -307,8 +308,8 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         res = tcruncher.derive_relationship(follow, lead)
         infilled = res(test_db)
         assert np.allclose(
-            infilled["value"],
-            one_entry_db.filter(variable=follow)["value"].to_list() * 4,
+            infilled.data["value"],
+            one_entry_db.filter(variable=follow).data["value"].to_list() * 4,
         )
 
     def test_extreme_values_relationship(self):
@@ -336,26 +337,26 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         # Check results are the same
         assert crunched.equals(extreme_crunched)
         # Also check that the results are correct
-        assert crunched.filter(scenario=max_scen)["value"].iloc[0] == max(
-            large_db_int.filter(variable=follow)["value"].values
+        assert crunched.filter(scenario=max_scen).data["value"].iloc[0] == max(
+            large_db_int.filter(variable=follow).data["value"].values
         )
 
         # Repeat with reducing the minimum value. This works differently because the
         # minimum point is doubled. This modification causes the cruncher to pick the
         # lower value.
         min_scen = modify_extreme_db.data.loc[
-            modify_extreme_db["value"] == min(modify_extreme_db["value"]), "scenario"
+            modify_extreme_db.data["value"] == min(modify_extreme_db.data["value"]), "scenario"
         ]
-        ind = modify_extreme_db["value"].idxmin()
+        ind = modify_extreme_db.data["value"].idxmin()
         modify_extreme_db = modify_extreme_db.data
         modify_extreme_db.loc[ind, "value"] -= 10
         modify_extreme_db = IamDataFrame(modify_extreme_db)
         extreme_crunched = res(modify_extreme_db)
-        assert crunched.filter(scenario=min_scen)["value"].iloc[0] != min(
-            large_db_int.filter(variable=follow)["value"].values
+        assert crunched.filter(scenario=min_scen).data["value"].iloc[0] != min(
+            large_db_int.filter(variable=follow).data["value"].values
         )
-        assert extreme_crunched.filter(scenario=min_scen)["value"].iloc[0] == min(
-            large_db_int.filter(variable=follow)["value"].values
+        assert extreme_crunched.filter(scenario=min_scen).data["value"].iloc[0] == min(
+            large_db_int.filter(variable=follow).data["value"].values
         )
 
     def test_derive_relationship_same_gas(self, test_db, test_downscale_df):
@@ -364,8 +365,8 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CO2"])
         crunched = res(test_db)
         assert np.allclose(
-            crunched["value"].reset_index(drop=True),
-            test_db.filter(variable="Emissions|CO2")["value"].reset_index(drop=True),
+            crunched.data["value"].reset_index(drop=True),
+            test_db.filter(variable="Emissions|CO2").data["value"].reset_index(drop=True),
         )
 
     def test_derive_relationship_error_no_info_leader(self, test_db):
@@ -418,7 +419,7 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         tcruncher = self.tclass(test_db)
         res = tcruncher.derive_relationship("Emissions|CO2", ["Emissions|CO2"])
 
-        exp_units = test_db.filter(variable="Emissions|CO2")["unit"].iloc[0]
+        exp_units = test_db.filter(variable="Emissions|CO2").data["unit"].iloc[0]
 
         wrong_unit = "t C/yr"
         test_downscale_df = self._adjust_time_style_to_match(

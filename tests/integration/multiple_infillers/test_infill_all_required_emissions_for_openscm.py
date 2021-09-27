@@ -81,7 +81,7 @@ class TestGasDecomposeTimeDepRatio:
                 output_timesteps=output_times,
                 required_variables_list=required_variables_list,
             )
-        assert all(output_df.filter(variable=leader, keep=False)["value"] == 0)
+        assert all(output_df.filter(variable=leader, keep=False).data["value"] == 0)
         # We should also get the same warning if we do not set an explicit
         # required_variables_list
         with pytest.warns(UserWarning):
@@ -335,8 +335,8 @@ class TestGasDecomposeTimeDepRatio:
             **kwargs,
         )
         assert np.allclose(
-            output_df.filter(variable=required_variables_list)["value"].values,
-            output_df.filter(variable=leader)["value"].values,
+            output_df.filter(variable=required_variables_list).data["value"].values,
+            output_df.filter(variable=leader).data["value"].values,
         )
         assert (
             output_df.filter(variable=required_variables_list)["unit"].values
