@@ -135,7 +135,9 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
             # We have a 0/0*0 in the calculation, so error message happens and 0 is
             # infilled.
             assert len(caplog.record_tuples) == 1
-            assert returned.filter(scenario="scen_a", year=2010).data["value"].iloc[0] == 0
+            assert (
+                returned.filter(scenario="scen_a", year=2010).data["value"].iloc[0] == 0
+            )
         else:
             assert len(caplog.record_tuples) == 0
             # For the window centre at lead value of 0, given that default
@@ -314,7 +316,9 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         nearly_same_res = nearly_same_cruncher.derive_relationship(_ech4, [_eco2])(
             single_date_df
         )
-        assert np.allclose(same_res.data["value"], nearly_same_res.data["value"], rtol=5e-4)
+        assert np.allclose(
+            same_res.data["value"], nearly_same_res.data["value"], rtol=5e-4
+        )
 
     @pytest.mark.parametrize("add_col", [None, "extra_col"])
     def test_extreme_values_relationship(self, add_col):

@@ -161,7 +161,8 @@ class TestDatabaseTimeDepCruncherRollingWindows:
         )
         crunched = res(test_db_redux)
         assert np.allclose(
-            crunched.data["value"], test_db_redux.filter(variable="Emissions|CO2").data["value"]
+            crunched.data["value"],
+            test_db_redux.filter(variable="Emissions|CO2").data["value"],
         )
 
     def test_derive_relationship_int_years(self):
