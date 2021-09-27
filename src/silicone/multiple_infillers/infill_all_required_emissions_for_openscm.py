@@ -307,7 +307,9 @@ def _perform_crunch_and_check(
     if filled.time_col == "year":
         assert all(y in check_ts.columns for y in output_timesteps), missing_time_error
     else:
-        assert all(pd.to_datetime(t) in check_ts.columns for t in output_timesteps), missing_time_error
+        assert all(
+            pd.to_datetime(t) in check_ts.columns for t in output_timesteps
+        ), missing_time_error
 
     # Check no data was overwritten by accident
     orig_ts = to_fill_orig.timeseries()
@@ -357,7 +359,9 @@ def _infill_variable(cruncher_i, req_variable, leader_i, to_fill_i, **kwargs):
 
     mod_scens_already_full = to_fill_i.meta.copy()
     mod_scens_already_full["already_filled"] = False
-    mod_scens_already_full.loc[to_fill_i.filter(variable=req_variable).meta.index, "already_filled"] = True
+    mod_scens_already_full.loc[
+        to_fill_i.filter(variable=req_variable).meta.index, "already_filled"
+    ] = True
     to_fill_i.set_meta(mod_scens_already_full["already_filled"])
     to_fill_var = to_fill_i.filter(already_filled=False)
 

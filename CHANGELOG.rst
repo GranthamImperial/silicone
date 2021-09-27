@@ -9,6 +9,10 @@ Added
 ~~~~~
 - (`#135 <https://github.com/GranthamImperial/silicone/pull/135>`_) Added html documentation of the time projectors
 
+Changed
+~~~~~~~
+- (`#138 <https://github.com/GranthamImperial/silicone/pull/138>`_) Drop Python3.6 support
+
 Fixed
 ~~~~~
 - (`#138 <https://github.com/GranthamImperial/silicone/pull/138>`_) Improve speed of :func:`silicone.multiple_infillers.infill_all_required_emissions_for_openscm` by removing multiple loops
