@@ -151,7 +151,8 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
                 infilled.filter(**time_filter).data["value"].values,
                 max(
                     test_db.filter(variable=follow)
-                    .filter(**time_filter).data["value"]
+                    .filter(**time_filter)
+                    .data["value"]
                     .values
                 ),
             )
@@ -274,7 +275,9 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
             infilled.filter(scenario=_sb).data["value"].values,
         )
         # We expect the specific values to equal the means of the two follow scenarios
-        assert np.allclose(infilled.filter(scenario=_sa).data["value"], [1, 2, 2.5, 2.5])
+        assert np.allclose(
+            infilled.filter(scenario=_sa).data["value"], [1, 2, 2.5, 2.5]
+        )
 
     def test_uneven_lead_timeseries(self, test_db):
         # In the event that some of the data is missing at one time, we get nans in a
@@ -345,7 +348,8 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         # minimum point is doubled. This modification causes the cruncher to pick the
         # lower value.
         min_scen = modify_extreme_db.data.loc[
-            modify_extreme_db.data["value"] == min(modify_extreme_db.data["value"]), "scenario"
+            modify_extreme_db.data["value"] == min(modify_extreme_db.data["value"]),
+            "scenario",
         ]
         ind = modify_extreme_db.data["value"].idxmin()
         modify_extreme_db = modify_extreme_db.data
@@ -366,7 +370,9 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         crunched = res(test_db)
         assert np.allclose(
             crunched.data["value"].reset_index(drop=True),
-            test_db.filter(variable="Emissions|CO2").data["value"].reset_index(drop=True),
+            test_db.filter(variable="Emissions|CO2")
+            .data["value"]
+            .reset_index(drop=True),
         )
 
     def test_derive_relationship_error_no_info_leader(self, test_db):

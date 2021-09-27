@@ -141,7 +141,9 @@ class TestInfillCompositeValues:
             [2, 2, 2, 1, 1, 1, 2, 2, 2],
         )
         assert np.allclose(
-            half_industry_df.filter(variable="Emissions|CO2|Energy").data["value"].values,
+            half_industry_df.filter(variable="Emissions|CO2|Energy")
+            .data["value"]
+            .values,
             [0] * 9,
         )
 
@@ -166,4 +168,6 @@ class TestInfillCompositeValues:
         assert infilled.filter(model="model_C").data.equals(
             larger_df_copy.filter(variable=AFOLU).data.reset_index(drop=True)
         )
-        assert np.allclose(infilled.filter(model="model_C", keep=False).data["value"], 0)
+        assert np.allclose(
+            infilled.filter(model="model_C", keep=False).data["value"], 0
+        )

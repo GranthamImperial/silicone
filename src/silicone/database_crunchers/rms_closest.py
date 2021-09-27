@@ -90,7 +90,9 @@ class RMSClosest(_DatabaseCruncher):
 
         leader_var_unit = {
             var["variable"]: var["unit"]
-            for _, var in iamdf_lead.data[["variable", "unit"]].drop_duplicates().iterrows()
+            for _, var in iamdf_lead.data[["variable", "unit"]]
+            .drop_duplicates()
+            .iterrows()
         }
 
         def filler(in_iamdf):
