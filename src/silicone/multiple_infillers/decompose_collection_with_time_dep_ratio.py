@@ -97,6 +97,7 @@ class DecomposeCollectionTimeDepRatio:
         to_infill_df,
         metric_name="AR5GWP100",
         only_consistent_cases=True,
+        regional_split=False,
     ):
         """
         Derive the relationship between the composite variables and their sum, then use
@@ -126,6 +127,10 @@ class DecomposeCollectionTimeDepRatio:
             components have data at all times? This will reduce the risk of
             inconsistencies or unevenness in the results, but may reduce the amount of
             data.
+
+        regional_split : bool
+            Are we splitting a region into subregions rather than a variable into
+            subvariables? If so,
 
         Returns
         -------
@@ -196,7 +201,7 @@ class DecomposeCollectionTimeDepRatio:
         self._filtered_db.append(consistent_composite, inplace=True)
         cruncher = TimeDepRatio(self._filtered_db)
         if self._set_of_units_without_equiv(
-            to_infill_df
+            to_infill_df.filter(variable=aggregate)
         ) != self._set_of_units_without_equiv(consistent_composite):
             raise ValueError(
                 "The units of the aggregate variable are inconsistent between the "
