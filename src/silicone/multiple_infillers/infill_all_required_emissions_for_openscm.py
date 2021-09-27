@@ -1,6 +1,7 @@
 import logging
 import warnings
 
+import numpy as np
 import pandas as pd
 import pyam
 import tqdm
@@ -121,6 +122,7 @@ def infill_all_required_variables(
             != to_fill_old_prefix
         ):
             raise ValueError("Not all of the data begins with the expected prefix")
+
         to_fill.rename(
             {
                 "variable": {
@@ -130,6 +132,7 @@ def infill_all_required_variables(
             },
             inplace=True,
         )
+
     if infilled_data_prefix:
         if any(
             to_fill.data["variable"].map(lambda x: x[: len(infilled_data_prefix)])
@@ -139,6 +142,7 @@ def infill_all_required_variables(
                 "This data already contains values with the expected final "
                 "prefix. This suggests that some of it has already been infilled."
             )
+
     assert len(to_fill.region) == 1, "There are {} regions in the data.".format(
         len(to_fill.region)
     )
@@ -146,17 +150,23 @@ def infill_all_required_variables(
     assert (
         to_fill.data["region"].iloc[0] == database.data["region"].iloc[0]
     ), "The cruncher data and the infilled data have different regions."
+
     # Perform any interpolations required here
     to_fill_orig = to_fill.copy()
+
     timecol = database.time_col
     assert timecol == to_fill.time_col
-    df_times_missing = database.timeseries().isna().sum() > 0
-    to_fill_times_missing = to_fill.timeseries().isna().sum() > 0
-    for time in output_timesteps:
-        if time not in database[timecol].tolist() or df_times_missing[time]:
-            database = database.interpolate(time, inplace=False)
-        if time not in to_fill[timecol].tolist() or to_fill_times_missing[time]:
-            to_fill = to_fill.interpolate(time, inplace=False)
+
+    # ensure we have all required timesteps
+    if isinstance(output_timesteps, np.ndarray):
+        output_timesteps = list(output_timesteps)
+
+    if timecol == "year":
+        output_timesteps = [int(v) for v in output_timesteps]
+
+    database = database.interpolate(output_timesteps, inplace=False)
+    to_fill = to_fill.interpolate(output_timesteps, inplace=False)
+
     # Nans in additional columns break pyam, so we overwrite them
     database.data[database.extra_cols] = database.data[database.extra_cols].fillna(0)
     to_fill.data[to_fill.extra_cols] = to_fill.data[to_fill.extra_cols].fillna(0)
@@ -170,6 +180,7 @@ def infill_all_required_variables(
     # Infill unavailable data
     assert not database.data.isnull().any().any()
     assert not to_fill.data.isnull().any().any()
+
     unavailable_variables = [
         variab for variab in required_variables_list if variab not in database.variable
     ]
@@ -194,6 +205,7 @@ def infill_all_required_variables(
             check_data_returned=False,
             **kwarg_dict,
         )
+
     available_variables = [
         variab
         for variab in required_variables_list
@@ -211,6 +223,7 @@ def infill_all_required_variables(
             check_data_returned=check_data_returned,
             **kwargs,
         )
+
     if infilled_data_prefix:
         to_fill.rename(
             {
@@ -220,6 +233,7 @@ def infill_all_required_variables(
             },
             inplace=True,
         )
+
     return to_fill
 
 
@@ -273,58 +287,40 @@ def _perform_crunch_and_check(
         The infilled dataframe
     """
     cruncher = type_of_cruncher(df)
+    filled = [to_fill]
     for req_var in tqdm.tqdm(required_variables, desc="Filling required variables"):
-        interpolated = _infill_variable(cruncher, req_var, leaders, to_fill, **kwargs)
-        if interpolated:
-            to_fill = to_fill.append(interpolated)
+        infilled = _infill_variable(cruncher, req_var, leaders, to_fill, **kwargs)
+        if infilled:
+            filled.append(infilled)
+
+    filled = pyam.concat(filled)
+
     # Optionally check we have added all the required data
     if not check_data_returned:
-        return to_fill
-    for _, (model, scenario) in (
-        to_fill[["model", "scenario"]].drop_duplicates().iterrows()
-    ):
-        msdf = to_fill.filter(model=model, scenario=scenario)
-        for v in required_variables:
-            msvdf = msdf.filter(variable=v)
-            msvdf_data = msvdf.data
-            assert not msvdf_data.isnull().any().any()
-            assert not msvdf_data.empty
-            if df.time_col == "year":
-                assert all(
-                    [y in msvdf_data[df.time_col].values for y in output_timesteps]
-                ), "We do not have data for all required timesteps"
-            else:
-                output_timesteps_datetime = pd.to_datetime(output_timesteps)
-                assert all(
-                    [
-                        y in msvdf_data[df.time_col].values
-                        for y in output_timesteps_datetime.values
-                    ]
-                ), "We do not have data for all required timesteps"
+        return filled
+
+    assert not filled.empty
+    check_ts = filled.timeseries()
+    assert not check_ts.isnull().any().any()
+
+    missing_time_error = "We do not have data for all required timesteps"
+    if filled.time_col == "year":
+        assert all(y in check_ts.columns for y in output_timesteps), missing_time_error
+    else:
+        assert all(pd.to_datetime(t) in check_ts.columns for t in output_timesteps), missing_time_error
 
     # Check no data was overwritten by accident
-    for model in tqdm.tqdm(
-        to_fill_orig.model, desc="Consistency with original model data checks"
-    ):
-        mdf = to_fill_orig.filter(model=model, variable=leaders + required_variables)
-        for scenario in mdf.scenario:
-            msdf = mdf.filter(scenario=scenario)
-            msdf_filled = to_fill.filter(
-                model=model, scenario=scenario, variable=msdf["variable"].unique()
-            )
+    orig_ts = to_fill_orig.timeseries()
+    common_times = check_ts.columns.intersection(orig_ts.columns)
+    if not common_times.empty:
+        check_ts, orig_ts = check_ts.align(orig_ts, join="right")
+        pd.testing.assert_frame_equal(
+            check_ts[common_times],
+            orig_ts[common_times],
+            obj="Consistency with original model data checks",
+        )
 
-            common_times = set(msdf_filled[msdf.time_col]).intersection(
-                msdf[msdf.time_col]
-            )
-            if common_times:
-                if msdf.time_col == "year":
-                    msdf = msdf.filter(year=list(common_times))
-                    msdf_filled = msdf_filled.filter(year=list(common_times))
-                else:
-                    msdf = msdf.filter(time=list(common_times))
-                    msdf_filled = msdf_filled.filter(time=list(common_times))
-                assert pyam.compare(msdf, msdf_filled).empty
-    return to_fill
+    return filled
 
 
 def _infill_variable(cruncher_i, req_variable, leader_i, to_fill_i, **kwargs):
@@ -354,17 +350,21 @@ def _infill_variable(cruncher_i, req_variable, leader_i, to_fill_i, **kwargs):
         The infilled component of the dataframe (or None if no infilling done)
     """
     filler = cruncher_i.derive_relationship(req_variable, leader_i, **kwargs)
+
     # only fill for scenarios who don't have that variable
     # quieten logging about empty data frame as it doesn't matter here
     logging.getLogger("pyam.core").setLevel(logging.CRITICAL)
-    not_to_fill = to_fill_i.filter(variable=req_variable)
 
-    to_fill_var = to_fill_i.copy()
-    if not not_to_fill.data.empty:
-        for (model, scenario), _ in not_to_fill.data.groupby(["model", "scenario"]):
-            to_fill_var = to_fill_var.filter(model=model, scenario=scenario, keep=False)
+    mod_scens_already_full = to_fill_i.meta.copy()
+    mod_scens_already_full["already_filled"] = False
+    mod_scens_already_full.loc[to_fill_i.filter(variable=req_variable).meta.index, "already_filled"] = True
+    to_fill_i.set_meta(mod_scens_already_full["already_filled"])
+    to_fill_var = to_fill_i.filter(already_filled=False)
+
     if not to_fill_var.data.empty:
-        interpolated = filler(to_fill_var)
-        return interpolated
+        infilled = filler(to_fill_var)
+
+        return infilled
+
     logging.getLogger("pyam.core").setLevel(logging.WARNING)
     return None
