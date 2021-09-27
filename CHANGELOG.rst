@@ -7,6 +7,7 @@ master
 
 Added
 ~~~~~
+- (`#139 <https://github.com/GranthamImperial/silicone/pull/139>`_) Support for pyam-iamc>1.0
 - (`#135 <https://github.com/GranthamImperial/silicone/pull/135>`_) Added html documentation of the time projectors
 
 Changed
