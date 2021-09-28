@@ -63,15 +63,20 @@ jobs:
         pip install -e .[tests]
     - name: Test with pytest
       env:
-        MIN_COVERAGE: 70  # TODO: put this back up to 95 once we start writing
+        MIN_COVERAGE: 95
       run: |
-          pytest tests -r a --cov=silicone --cov-report=''
+          pytest tests -r a --cov=silicone --cov-report=xml
           if ! coverage report --fail-under=${MIN_COVERAGE} --show-missing
           then
               echo
               echo "Error: Test coverage has to be at least ${MIN_COVERAGE}"
               exit 1
           fi
+    - name: Upload coverage to Codecov
+      if: startsWith(runner.os, 'Linux') && matrix.python-version == 3.7
+      uses: codecov/codecov-action@v1
+      with:
+        file: ./coverage.xml
     - name: Install notebook dependencies
       run: |
         pip install -e .[tests,notebooks]
