@@ -65,7 +65,7 @@ jobs:
       env:
         MIN_COVERAGE: 95
       run: |
-          pytest tests -r a --cov=silicone --cov-report=xml
+          pytest tests -r a --cov=silicone --cov-report=xml --cov-fail-under=${MIN_COVERAGE}
           if ! coverage report --fail-under=${MIN_COVERAGE} --show-missing
           then
               echo
@@ -74,7 +74,7 @@ jobs:
           fi
     - name: Upload coverage to Codecov
       if: startsWith(runner.os, 'Linux') && matrix.python-version == 3.7
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v2
       with:
         file: ./coverage.xml
     - name: Install notebook dependencies
