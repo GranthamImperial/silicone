@@ -92,7 +92,7 @@ class QuantileRollingWindows(_DatabaseCruncher):
         variable_follower,
         variable_leaders,
         quantile=0.5,
-        nwindows=11,
+        nwindows=6,
         decay_length_factor=1,
         use_ratio=False,
     ):
