@@ -157,7 +157,7 @@ class RMSClosest(_DatabaseCruncher):
                 )
 
             lead_var_timeseries = lead_var_timeseries.loc[:, common_cols]
-            iamdf_lead_timeseries = iamdf_lead_timeseries.loc[:, common_cols]
+            iamdf_lead_timeseries = iamdf_lead_timeseries.loc[:, common_cols].dropna(axis=0)
 
             output_ts_list = []
             for _, (model, scenario) in (
