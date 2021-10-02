@@ -1,9 +1,9 @@
 import re
+import time
 
 import numpy as np
 import pandas as pd
 import pytest
-import time
 from base import _DataBaseCruncherTester
 from pyam import IamDataFrame, concat
 
