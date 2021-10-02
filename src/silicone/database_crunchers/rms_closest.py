@@ -90,7 +90,7 @@ class RMSClosest(_DatabaseCruncher):
 
         leader_var_unit = {
             var["variable"]: var["unit"]
-            for _, var in iamdf_lead.data[["variable", "unit"]]
+            for _, var in iamdf_lead[["variable", "unit"]]
             .drop_duplicates()
             .iterrows()
         }
@@ -141,33 +141,27 @@ class RMSClosest(_DatabaseCruncher):
                     )
                 )
 
-            key_timepoints_filter_iamdf = {
-                data_follower_time_col: list(set(lead_var[data_follower_time_col]))
-            }
-            key_timepoints_filter_lead = {
-                data_follower_time_col: list(set(iamdf_lead[data_follower_time_col]))
-            }
-
-            def get_values_at_key_timepoints(idf, time_filter):
-                # filter warning about empty data frame as we handle it ourselves
-                to_return = idf.filter(**time_filter)
-                if to_return.data.empty:
-                    raise ValueError(
-                        "No time series overlap between the original and unfilled data"
-                    )
-                return to_return
-
-            lead_var_filt = get_values_at_key_timepoints(
-                lead_var, key_timepoints_filter_lead
+            lead_var_timeseries = lead_var.timeseries()
+            iamdf_lead_timeseries = iamdf_lead.pivot(
+                index=[col for col in iamdf_lead.columns if col not in [data_follower_time_col, "value"]],
+                columns=data_follower_time_col,
+                values="value"
             )
-            lead_var_timeseries = lead_var_filt.timeseries()
-            iamdf_lead_timeseries = get_values_at_key_timepoints(
-                iamdf_lead, key_timepoints_filter_iamdf
-            ).timeseries()
+            common_cols = [
+                col for col in lead_var_timeseries.columns
+                if col in iamdf_lead_timeseries.columns
+            ]
+            if not common_cols:
+                raise ValueError(
+                    "No time series overlap between the original and unfilled data"
+                )
+
+            lead_var_timeseries = lead_var_timeseries.loc[:, common_cols]
+            iamdf_lead_timeseries = iamdf_lead_timeseries.loc[:, common_cols]
 
             output_ts_list = []
             for _, (model, scenario) in (
-                lead_var_filt.data[["model", "scenario"]].drop_duplicates().iterrows()
+                lead_var.data[["model", "scenario"]].drop_duplicates().iterrows()
             ):
                 lead_var_mod_scen = lead_var_timeseries[
                     (lead_var_timeseries.index.get_level_values("model") == model)
@@ -182,21 +176,22 @@ class RMSClosest(_DatabaseCruncher):
                         "{}. Only found {}.".format(model, scenario, lead_var_mod_scen)
                     )
                 closest_model, closest_scenario = _select_closest(
-                    iamdf_lead_timeseries, lead_var_mod_scen, weighting
+                    iamdf_lead_timeseries, lead_var_mod_scen, weighting, variable_leaders
                 )
 
                 # Filter to find the matching follow data for the same model, scenario
                 # and region
-                tmp = iamdf_follower.filter(
-                    model=closest_model, scenario=closest_scenario
-                ).data
+                tmp = iamdf_follower.loc[
+                    (iamdf_follower.model==closest_model) &
+                    (iamdf_follower.scenario==closest_scenario)
+                ]
 
                 # Update the model and scenario to match the elements of the input.
                 tmp["model"] = model
                 tmp["scenario"] = scenario
-                output_ts_list.append(tmp)
                 for col in in_iamdf.extra_cols:
                     tmp[col] = lead_var_mod_scen.index.get_level_values(col).tolist()[0]
+                output_ts_list.append(tmp)
             return pyam.concat(output_ts_list)
 
         return filler
@@ -224,7 +219,7 @@ class RMSClosest(_DatabaseCruncher):
         return iamdf_section
 
 
-def _select_closest(to_search_df, target_df, weighting):
+def _select_closest(to_search_df, target_df, weighting, variable_leaders):
     """
     Find model/scenario combo in ``to_search_df`` that is closest to that of the target.
 
@@ -248,20 +243,9 @@ def _select_closest(to_search_df, target_df, weighting):
         Index of the closest timeseries.
     """
 
-    if target_df.shape[1] != to_search_df.shape[1]:
-        raise ValueError(
-            "Target array does not match the size of the searchable arrays"
-        )
-    if any(
-        x not in target_df.index.get_level_values("variable")
-        for x in to_search_df.index.get_level_values("variable")
-    ):
-        raise ValueError("No variable overlap between target and infiller databases.")
-    if any(col not in target_df.columns for col in to_search_df.columns):
-        raise ValueError("Time values mismatch between target and infiller databases.")
     rms = pd.Series(index=to_search_df.index, dtype=np.float64)
     target_for_var = {}
-    for var in to_search_df.index.get_level_values("variable").unique():
+    for var in variable_leaders:
         target_for_var[var] = target_df[
             target_df.index.get_level_values("variable") == var
         ].squeeze()
@@ -310,5 +294,5 @@ def _filter_for_overlap(df1, df2, cols, leaders):
     if shared_indices:
         lead_data = lead_data.loc[shared_indices]
         follow_data = follow_data.loc[shared_indices]
-        return pyam.IamDataFrame(lead_data), pyam.IamDataFrame(follow_data)
+        return lead_data.reset_index(), follow_data.reset_index()
     raise ValueError("No model/scenario overlap between leader and follower data")
