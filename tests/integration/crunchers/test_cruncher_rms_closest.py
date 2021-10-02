@@ -374,24 +374,26 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
 
         # If there is a timepoint missing from one of the leads, it cannot be selected
         # as the correct scenario
-        missing_lead = larger_df.filter(**{
-            larger_df.time_col: larger_df[larger_df.time_col].iloc[0],
-            "variable": "Emissions|HFC|C2F6",
-            "scenario": "scen_b",
-            "keep": False,
-        })
+        missing_lead = larger_df.filter(
+            **{
+                larger_df.time_col: larger_df[larger_df.time_col].iloc[0],
+                "variable": "Emissions|HFC|C2F6",
+                "scenario": "scen_b",
+                "keep": False,
+            }
+        )
         filler = self.tclass(missing_lead).derive_relationship(follow, leads)
         res = filler(test_downscale_df.filter(scenario=bad_scenario, keep=False))
         np.testing.assert_allclose(
             res.filter(model="model_b", scenario="scen_b")
-                .timeseries()
-                .values.squeeze(),
+            .timeseries()
+            .values.squeeze(),
             [1.1, 2.2, 2.8],
         )
         np.testing.assert_allclose(
             res.filter(model="model_b", scenario="scen_c")
-                .timeseries()
-                .values.squeeze(),
+            .timeseries()
+            .values.squeeze(),
             [1.1, 2.2, 2.8],
         )
 
@@ -445,7 +447,6 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
             .values.squeeze(),
             [1.1, 2.2, 2.8],
         )
-
 
     def test_derive_relationship(self, test_db):
         tcruncher = self.tclass(test_db)
@@ -561,6 +562,7 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         with pytest.raises(ValueError, match=error_msg):
             filler(test_downscale_df)
 
+
 def test_select_closest():
     target = pd.DataFrame(
         [[1, 2, 3]],
@@ -586,4 +588,3 @@ def test_select_closest():
 
     assert closest_meta[0] == "red"
     assert closest_meta[1] == 1.6
-

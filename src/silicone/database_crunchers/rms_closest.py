@@ -90,9 +90,7 @@ class RMSClosest(_DatabaseCruncher):
 
         leader_var_unit = {
             var["variable"]: var["unit"]
-            for _, var in iamdf_lead[["variable", "unit"]]
-            .drop_duplicates()
-            .iterrows()
+            for _, var in iamdf_lead[["variable", "unit"]].drop_duplicates().iterrows()
         }
 
         def filler(in_iamdf):
@@ -143,12 +141,17 @@ class RMSClosest(_DatabaseCruncher):
 
             lead_var_timeseries = lead_var.timeseries()
             iamdf_lead_timeseries = iamdf_lead.pivot(
-                index=[col for col in iamdf_lead.columns if col not in [data_follower_time_col, "value"]],
+                index=[
+                    col
+                    for col in iamdf_lead.columns
+                    if col not in [data_follower_time_col, "value"]
+                ],
                 columns=data_follower_time_col,
-                values="value"
+                values="value",
             )
             common_cols = [
-                col for col in lead_var_timeseries.columns
+                col
+                for col in lead_var_timeseries.columns
                 if col in iamdf_lead_timeseries.columns
             ]
             if not common_cols:
@@ -157,7 +160,9 @@ class RMSClosest(_DatabaseCruncher):
                 )
 
             lead_var_timeseries = lead_var_timeseries.loc[:, common_cols]
-            iamdf_lead_timeseries = iamdf_lead_timeseries.loc[:, common_cols].dropna(axis=0)
+            iamdf_lead_timeseries = iamdf_lead_timeseries.loc[:, common_cols].dropna(
+                axis=0
+            )
 
             output_ts_list = []
             for _, (model, scenario) in (
@@ -176,14 +181,17 @@ class RMSClosest(_DatabaseCruncher):
                         "{}. Only found {}.".format(model, scenario, lead_var_mod_scen)
                     )
                 closest_model, closest_scenario = _select_closest(
-                    iamdf_lead_timeseries, lead_var_mod_scen, weighting, variable_leaders
+                    iamdf_lead_timeseries,
+                    lead_var_mod_scen,
+                    weighting,
+                    variable_leaders,
                 )
 
                 # Filter to find the matching follow data for the same model, scenario
                 # and region
                 tmp = iamdf_follower.loc[
-                    (iamdf_follower.model==closest_model) &
-                    (iamdf_follower.scenario==closest_scenario)
+                    (iamdf_follower.model == closest_model)
+                    & (iamdf_follower.scenario == closest_scenario)
                 ]
 
                 # Update the model and scenario to match the elements of the input.
@@ -249,8 +257,14 @@ def _select_closest(to_search_df, target_df, weighting, variable_leaders):
             target_df.index.get_level_values("variable") == var
         ].squeeze()
         rms = rms.add(
-            (to_search_df[to_search_df.index.get_level_values("variable") == var]
-             .subtract(target_for_var, axis=1) ** 2).mean(axis=1) ** 0.5 * weighting[var],
+            (
+                to_search_df[
+                    to_search_df.index.get_level_values("variable") == var
+                ].subtract(target_for_var, axis=1)
+                ** 2
+            ).mean(axis=1)
+            ** 0.5
+            * weighting[var],
             fill_value=0,
         )
     rmssums = rms.groupby(level=["model", "scenario"], sort=False).sum()

@@ -24,7 +24,7 @@ Changed
 - (`#138 <https://github.com/GranthamImperial/silicone/pull/138>`_) Improved speed of :func:`silicone.multiple_infillers.infill_all_required_emissions_for_openscm` by removing multiple loops (note that API did not change)
 
 
-[v1.1.0] - 1 July 2021
+[v1.1.0] - 12 July 2021
 -----------------------
 
 Added
