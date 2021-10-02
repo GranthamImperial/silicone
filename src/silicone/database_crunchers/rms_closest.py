@@ -243,18 +243,16 @@ def _select_closest(to_search_df, target_df, weighting, variable_leaders):
         Index of the closest timeseries.
     """
 
-    rms = pd.Series(index=to_search_df.index, dtype=np.float64)
-    target_for_var = {}
+    rms = pd.Series(0, index=to_search_df.index, dtype=np.float64)
     for var in variable_leaders:
-        target_for_var[var] = target_df[
+        target_for_var = target_df[
             target_df.index.get_level_values("variable") == var
         ].squeeze()
-    var_index = to_search_df.index.names.index("variable")
-    for label, row in to_search_df.iterrows():
-        varname = label[var_index]
-        rms.loc[label] = (
-            ((target_for_var[varname] - row) ** 2).mean()
-        ) ** 0.5 * weighting[varname]
+        rms = rms.add(
+            (to_search_df[to_search_df.index.get_level_values("variable") == var]
+             .subtract(target_for_var, axis=1) ** 2).mean(axis=1) ** 0.5 * weighting[var],
+            fill_value=0,
+        )
     rmssums = rms.groupby(level=["model", "scenario"], sort=False).sum()
     return rmssums.idxmin()
 
