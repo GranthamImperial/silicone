@@ -370,6 +370,38 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
             [1, 2, 3],
         )
 
+    def test_relationship_multi_lead_usage_timed(self, larger_df, test_downscale_df):
+        import time
+        t0 = time.time()
+        tcruncher = self.tclass(larger_df)
+        leads = ["Emissions|HFC|C2F6", "Emissions|HFC|CF4"]
+        filler = tcruncher.derive_relationship("Emissions|HFC|C5F12", leads)
+        bad_model = "model_b"
+        bad_scenario = "scen_d"
+        error_msg = (
+            "Insufficient variables are found to infill model {}, scenario {}."
+            " Only found {}."
+        ).format(bad_model, bad_scenario, "Emissions|HFC|C5F12")
+        with pytest.raises(ValueError, match=error_msg):
+            filler(test_downscale_df)
+        # If we remove the model/scenario case with insufficient data we get results.
+        res = filler(test_downscale_df.filter(scenario=bad_scenario, keep=False))
+        np.testing.assert_allclose(
+            res.filter(model="model_b", scenario="scen_b")
+            .timeseries()
+            .values.squeeze(),
+            [1.1, 2.2, 2.8],
+        )
+        np.testing.assert_allclose(
+            res.filter(model="model_b", scenario="scen_c")
+            .timeseries()
+            .values.squeeze(),
+            [1, 2, 3],
+        )
+        t1 = time.time()
+        timedif = t1 - t0
+        assert(timedif < 1)
+
     def test_relationship_weighted_multi_lead_usage(self, larger_df, test_downscale_df):
         # If we apply the weightings differently we can change the outcome
         tcruncher = self.tclass(larger_df)
@@ -563,50 +595,11 @@ def test_select_closest():
             names=("model", "scenario", "homogeneity", "variable"),
         ),
     )
-    error_msg = "No variable overlap between target and infiller databases."
     weighting = {1: 1}
-    with pytest.raises(ValueError, match=error_msg):
+    with pytest.raises(ValueError):
         _select_closest(possible_answers, bad_target, weighting)
     closest_meta = _select_closest(possible_answers, target, weighting)
 
     assert closest_meta[0] == "red"
     assert closest_meta[1] == 1.6
 
-
-def test_select_closest_wrong_shape_error():
-    # Ensures that find closest produces an error if target and lead do not have
-    # compatible shapes
-    to_search = pd.DataFrame([[1, 1, 1], [1, 2, 3.5], [1, 2, 3.5], [1, 2, 4]])
-    target = pd.DataFrame([[1, 1], [1, 2], [1, 2], [1, 2]])
-
-    with pytest.raises(
-        ValueError,
-        match="Target array does not match the size of the searchable arrays",
-    ):
-        _select_closest(to_search, target, {1: 1})
-
-
-def test_select_closest_index_mismatch():
-    # Ensures that the find closest produces an error if the column headings (dates) do
-    # not align between lead and target
-    to_search = pd.DataFrame(
-        {"A": [1, 1], "B": [1, 2]},
-        index=pd.MultiIndex.from_arrays(
-            [("chartreuse", "red"), (6, 7), (5, 8), (1, 1)],
-            names=("colour", "region", "homogeneity", "variable"),
-        ),
-    )
-    target = pd.DataFrame(
-        {"A": [1, 1], "C": [1, 2]},
-        index=pd.MultiIndex.from_arrays(
-            [("chartreuse", "red"), (6, 7), (5, 8), (1, 1)],
-            names=("colour", "region", "homogeneity", "variable"),
-        ),
-    )
-    weights = {1: 1}
-
-    with pytest.raises(
-        ValueError,
-        match="Time values mismatch between target and infiller databases.",
-    ):
-        _select_closest(to_search, target, weights)
