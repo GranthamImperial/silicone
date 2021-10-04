@@ -195,8 +195,8 @@ class RMSClosest(_DatabaseCruncher):
                 ]
 
                 # Update the model and scenario to match the elements of the input.
-                tmp["model"] = model
-                tmp["scenario"] = scenario
+                tmp.loc["model"] = model
+                tmp.loc["scenario"] = scenario
                 for col in in_iamdf.extra_cols:
                     tmp[col] = lead_var_mod_scen.index.get_level_values(col).tolist()[0]
                 output_ts_list.append(tmp)
