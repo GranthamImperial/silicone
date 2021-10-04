@@ -297,7 +297,9 @@ def _filter_for_overlap(df1, df2, cols, leaders):
     follow_data = df2.data.set_index(cols)
     # We only want to select model/scenario cases where we have data for all leaders
 
-    shared_indices = lead_data.index[lead_data.index.isin(follow_data.index)].value_counts()
+    shared_indices = lead_data.index[
+        lead_data.index.isin(follow_data.index)
+    ].value_counts()
     shared_indices = shared_indices[shared_indices == len(leaders)].index.tolist()
 
     if not shared_indices:
@@ -306,4 +308,3 @@ def _filter_for_overlap(df1, df2, cols, leaders):
     lead_data = lead_data.loc[shared_indices]
     follow_data = follow_data.loc[shared_indices]
     return lead_data.reset_index(), follow_data.reset_index()
-
