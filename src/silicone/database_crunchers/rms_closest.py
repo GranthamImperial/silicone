@@ -192,7 +192,7 @@ class RMSClosest(_DatabaseCruncher):
                 tmp = iamdf_follower.loc[
                     (iamdf_follower.model == closest_model)
                     & (iamdf_follower.scenario == closest_scenario)
-                ]
+                ].copy()
 
                 # Update the model and scenario to match the elements of the input.
                 tmp.loc[:, "model"] = model
