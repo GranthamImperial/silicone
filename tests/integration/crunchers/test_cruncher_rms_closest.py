@@ -336,7 +336,10 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
             res = filler(test_downscale_df)
 
         # check no copy warning was raised
-        assert not any(isinstance(w.message, pd.core.common.SettingWithCopyWarning) for w in record.list)
+        assert not any(
+            isinstance(w.message, pd.core.common.SettingWithCopyWarning)
+            for w in record.list
+        )
 
         np.testing.assert_allclose(
             res.filter(model="model_b", scenario="scen_b")
