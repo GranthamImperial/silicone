@@ -572,6 +572,56 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         with pytest.raises(ValueError, match=error_msg):
             filler(test_downscale_df)
 
+    def test_arbitrary_follower(self):
+        lead = "Emissions|CO2"
+        # 2 scenarios with lead
+        # 2 scenarios which have Emissions|CH4 --> pick closest
+        # 1 scenario has Emissions|N2O --> always pick the one scenario which has N2O
+        # No scenarios have Emissions|CF4 --> raise error if infilling requested
+        _msb = ["model_b", "scen_a"]
+
+        model_a_co2_emms = np.array([10, 10, 11, 10])
+        model_b_co2_emms = np.array([10, 10, 8, 5])
+        model_a_ch4_emms = np.array([300, 400, 400, 450])
+        model_b_ch4_emms = np.array([300, 300, 250, 200])
+        model_a_n2o_emms = np.array([14, 14, 15, 16])
+        database = pd.DataFrame(
+            [
+                _msa + ["World", "Emissions|CO2", "Gt C/yr"] + list(model_a_co2_emms),
+                _msb + ["World", "Emissions|CO2", "Gt C/yr"] + list(model_b_co2_emms),
+                _msa + ["World", "Emissions|CH4", "Mt CH4/yr"] + list(model_a_ch4_emms),
+                _msb + ["World", "Emissions|CH4", "Mt CH4/yr"] + list(model_b_ch4_emms),
+                _msa + ["World", "Emissions|N2O", "Mt N2O/yr"] + list(model_a_n2o_emms),
+            ],
+            columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2020, 2030],
+        )
+        database = IamDataFrame(database)
+
+        # 2 scenarios to infill
+        to_infill = pd.DataFrame(
+            [
+                ["model_c", "scen_a", "World", "Emissions|CO2", "Gt C/yr"] + list(model_a_co2_emms + 0.1),
+                ["model_d", "scen_a", "World", "Emissions|CO2", "Gt C/yr"] + list(model_b_co2_emms + 0.1),
+            ],
+            columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2020, 2030],
+        )
+        to_infill = IamDataFrame(to_infill)
+
+        to_infill_variables = ["Emissions|CH4", "Emissions|N2O"]
+        one_by_one = []
+        for v in to_infill_variables:
+            cruncher = self.tclass(database)
+            filler = cruncher.derive_relationship(v, [lead])
+            filled = filler(to_infill)
+            one_by_one.append(filled)
+
+        one_by_one = concat(one_by_one)
+
+        filler_arbitrary = cruncher.derive_arbitrary_filler([lead])
+        res = filler_arbitrary(to_infill_variables)
+
+        assert res.equals(one_by_one)
+
 
 def test_select_closest():
     target = pd.DataFrame(
