@@ -617,8 +617,9 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
 
         one_by_one = concat(one_by_one)
 
-        filler_arbitrary = cruncher.derive_arbitrary_filler([lead])
-        res = filler_arbitrary(to_infill_variables)
+        res = cruncher.infill_multiple(
+            to_infill, to_infill_variables, [lead]
+        )
 
         assert res.equals(one_by_one)
 
