@@ -9,6 +9,9 @@ Changed
 ~~~~~~~
 - (`#142 <https://github.com/GranthamImperial/silicone/pull/142>`_) Sped up RMS closest
 
+Fixed
+~~~~~
+- (`#144 <https://github.com/GranthamImperial/silicone/pull/144>`_) RMS closest no longer causes :class:`pd.core.common.SettingWithCopyWarning` to be raised
 
 [v1.2.0] - 28 Sept 2021
 -----------------------
