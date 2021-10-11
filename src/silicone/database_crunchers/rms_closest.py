@@ -152,15 +152,7 @@ class RMSClosest(_DatabaseCruncher):
                 columns=data_follower_time_col,
                 values="value",
             )
-            common_cols = [
-                col
-                for col in lead_var_timeseries.columns
-                if col in iamdf_lead_timeseries.columns
-            ]
-            if not common_cols:
-                raise ValueError(
-                    "No time series overlap between the original and unfilled data"
-                )
+            common_cols = _get_common_cols(lead_var_timeseries, iamdf_lead_timeseries)
 
             lead_var_timeseries = lead_var_timeseries.loc[:, common_cols]
             iamdf_lead_timeseries = iamdf_lead_timeseries.loc[:, common_cols].dropna(
@@ -261,23 +253,35 @@ class RMSClosest(_DatabaseCruncher):
             level=["model", "scenario"]
         )
 
+        common_cols = _get_common_cols(db_lead_ts, to_infill_lead_ts)
+        db_lead_ts = db_lead_ts[common_cols]
+        to_infill_lead_ts = to_infill_lead_ts[common_cols]
+
         db_lead_ts, to_infill_lead_ts = db_lead_ts.align(to_infill_lead_ts)
-        if weighting is not None:
-            raise NotImplementedError("weighting must be none")
 
         rms = ((db_lead_ts - to_infill_lead_ts) ** 2).mean(axis=1) ** 0.5
+        if weighting is not None:
+            raise NotImplementedError("weighting other than None")
         rms = rms.groupby(["model_lead", "scenario_lead", "model_db", "scenario_db"]).sum()
 
+        db_timeseries = self._db.filter(variable=variable_followers).timeseries()
+        db_timeseries = db_timeseries[common_cols]
+
         out = []
-        for _, (model, scenario) in to_infill_lead.data[["model", "scenario"]].drop_duplicates().iterrows():
-            rms_mod_scen = rms.loc[(model, scenario)].sort_values()
+        for (model, scenario), rms_mod_scen in rms.groupby(["model_lead", "scenario_lead"]):
             variable_followers_h = set(variable_followers)
 
-            for (model_db, scenario_db), _ in rms_mod_scen.sort_values().iteritems():
-                infill_timeseries = self._db.filter(model=model_db, scenario=scenario_db, variable=variable_followers_h)
-                variable_followers_h = variable_followers_h - set(infill_timeseries.variable)
+            for (model_db, scenario_db), _ in rms_mod_scen[(model, scenario)].sort_values().iteritems():
+                infill_timeseries = db_timeseries.loc[
+                    (db_timeseries.index.get_level_values("model") == model_db)
+                    & (db_timeseries.index.get_level_values("scenario") == scenario_db)
+                    & (db_timeseries.index.get_level_values("variable").isin(variable_followers_h)),
+                    :
+                ].copy()
 
-                infill_timeseries = infill_timeseries.timeseries().reset_index()
+                variable_followers_h = variable_followers_h - set(infill_timeseries.index.get_level_values("variable"))
+
+                infill_timeseries = infill_timeseries.reset_index()
                 infill_timeseries.loc[:, "model"] = model
                 infill_timeseries.loc[:, "scenario"] = scenario
                 # TODO: turn this back on
@@ -351,7 +355,6 @@ def _select_closest(to_search_df, target_df, weighting, variable_leaders):
     dict
         Index of the closest timeseries.
     """
-
     rms = pd.Series(0, index=to_search_df.index, dtype=np.float64)
     for var in variable_leaders:
         target_for_var = target_df[
@@ -368,7 +371,9 @@ def _select_closest(to_search_df, target_df, weighting, variable_leaders):
             * weighting[var],
             fill_value=0,
         )
+
     rmssums = rms.groupby(level=["model", "scenario"], sort=False).sum()
+
     return rmssums.idxmin()
 
 
@@ -412,3 +417,13 @@ def _filter_for_overlap(df1, df2, cols, leaders):
     follow_data = follow_data.loc[shared_indices]
 
     return lead_data.reset_index(), follow_data.reset_index()
+
+
+def _get_common_cols(lead, base):
+    common_cols = lead.columns.intersection(base.columns)
+    if common_cols.empty:
+        raise ValueError(
+            "No time series overlap between the original and unfilled data"
+        )
+
+    return common_cols
