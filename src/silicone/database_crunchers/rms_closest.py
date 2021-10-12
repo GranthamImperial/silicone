@@ -199,7 +199,9 @@ class RMSClosest(_DatabaseCruncher):
 
         return filler
 
-    def infill_multiple(self, to_infill, variable_followers, variable_leaders, weighting=None):
+    def infill_multiple(
+        self, to_infill, variable_followers, variable_leaders, weighting=None
+    ):
         """
         Infill multiple variables simultaneously
 
@@ -244,13 +246,11 @@ class RMSClosest(_DatabaseCruncher):
 
         db_lead_ts = db_lead.timeseries()
         db_lead_ts.index = db_lead_ts.index.rename(
-            ["model_db", "scenario_db"],
-            level=["model", "scenario"]
+            ["model_db", "scenario_db"], level=["model", "scenario"]
         )
         to_infill_lead_ts = to_infill_lead.timeseries()
         to_infill_lead_ts.index = to_infill_lead_ts.index.rename(
-            ["model_lead", "scenario_lead"],
-            level=["model", "scenario"]
+            ["model_lead", "scenario_lead"], level=["model", "scenario"]
         )
 
         common_cols = _get_common_cols(db_lead_ts, to_infill_lead_ts)
@@ -262,24 +262,36 @@ class RMSClosest(_DatabaseCruncher):
         rms = ((db_lead_ts - to_infill_lead_ts) ** 2).mean(axis=1) ** 0.5
         if weighting is not None:
             raise NotImplementedError("weighting other than None")
-        rms = rms.groupby(["model_lead", "scenario_lead", "model_db", "scenario_db"]).sum()
+        rms = rms.groupby(
+            ["model_lead", "scenario_lead", "model_db", "scenario_db"]
+        ).sum()
 
         db_timeseries = self._db.filter(variable=variable_followers).timeseries()
         db_timeseries = db_timeseries[common_cols]
 
         out = []
-        for (model, scenario), rms_mod_scen in rms.groupby(["model_lead", "scenario_lead"]):
+        for (model, scenario), rms_mod_scen in rms.groupby(
+            ["model_lead", "scenario_lead"]
+        ):
             variable_followers_h = set(variable_followers)
 
-            for (model_db, scenario_db), _ in rms_mod_scen[(model, scenario)].sort_values().iteritems():
+            for (model_db, scenario_db), _ in (
+                rms_mod_scen[(model, scenario)].sort_values().iteritems()
+            ):
                 infill_timeseries = db_timeseries.loc[
                     (db_timeseries.index.get_level_values("model") == model_db)
                     & (db_timeseries.index.get_level_values("scenario") == scenario_db)
-                    & (db_timeseries.index.get_level_values("variable").isin(variable_followers_h)),
-                    :
+                    & (
+                        db_timeseries.index.get_level_values("variable").isin(
+                            variable_followers_h
+                        )
+                    ),
+                    :,
                 ].copy()
 
-                variable_followers_h = variable_followers_h - set(infill_timeseries.index.get_level_values("variable"))
+                variable_followers_h = variable_followers_h - set(
+                    infill_timeseries.index.get_level_values("variable")
+                )
 
                 infill_timeseries = infill_timeseries.reset_index()
                 infill_timeseries.loc[:, "model"] = model

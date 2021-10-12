@@ -593,17 +593,39 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
                 _msb + ["World", "Emissions|CH4", "Mt CH4/yr"] + list(model_b_ch4_emms),
                 _msa + ["World", "Emissions|N2O", "Mt N2O/yr"] + list(model_a_n2o_emms),
             ],
-            columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2020, 2030],
+            columns=[
+                "model",
+                "scenario",
+                "region",
+                "variable",
+                "unit",
+                2010,
+                2015,
+                2020,
+                2030,
+            ],
         )
         database = IamDataFrame(database)
 
         # 2 scenarios to infill
         to_infill = pd.DataFrame(
             [
-                ["model_c", "scen_a", "World", "Emissions|CO2", "Gt C/yr"] + list(model_a_co2_emms + 0.1),
-                ["model_d", "scen_a", "World", "Emissions|CO2", "Gt C/yr"] + list(model_b_co2_emms + 0.1),
+                ["model_c", "scen_a", "World", "Emissions|CO2", "Gt C/yr"]
+                + list(model_a_co2_emms + 0.1),
+                ["model_d", "scen_a", "World", "Emissions|CO2", "Gt C/yr"]
+                + list(model_b_co2_emms + 0.1),
             ],
-            columns=["model", "scenario", "region", "variable", "unit", 2010, 2015, 2020, 2030],
+            columns=[
+                "model",
+                "scenario",
+                "region",
+                "variable",
+                "unit",
+                2010,
+                2015,
+                2020,
+                2030,
+            ],
         )
         to_infill = IamDataFrame(to_infill)
 
@@ -617,9 +639,7 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
 
         one_by_one = concat(one_by_one)
 
-        res = cruncher.infill_multiple(
-            to_infill, to_infill_variables, [lead]
-        )
+        res = cruncher.infill_multiple(to_infill, to_infill_variables, [lead])
 
         assert res.equals(one_by_one)
 
