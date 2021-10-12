@@ -292,7 +292,7 @@ class RMSClosest(_DatabaseCruncher):
                 if not variable_followers_h:
                     break
 
-        out = pyam.concat(out)
+        out = pyam.IamDataFrame(pd.concat(out))
 
         return out
 
