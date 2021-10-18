@@ -92,6 +92,7 @@ class RMSClosest(_DatabaseCruncher):
         )
 
         iamdf_lead_ts = pyam.IamDataFrame(iamdf_lead_data).timeseries()
+        iamdf_follower_ts = pyam.IamDataFrame(iamdf_follower_data).timeseries()
 
         leader_var_unit = {
             var["variable"]: var["unit"]
@@ -153,47 +154,23 @@ class RMSClosest(_DatabaseCruncher):
             ) = _get_common_timeseries_and_cols(
                 iamdf_lead_ts.copy(), lead_var.timeseries()
             )
+            iamdf_lead_ts_here = iamdf_lead_ts_here[common_cols]
+            lead_var_ts_here = lead_var_ts_here[common_cols]
 
             rms = _calculate_rms(
-                iamdf_lead_ts_here[common_cols],
-                lead_var_ts_here[common_cols],
+                iamdf_lead_ts_here,
+                lead_var_ts_here,
                 weighting,
             )
 
-            output_ts_list = []
-            for (model, scenario), lead_var_mod_scen in lead_var.data.groupby(
-                ["model", "scenario"]
-            ):
-                closest = rms[
-                    (rms.index.get_level_values("model_lead") == model)
-                    & (rms.index.get_level_values("scenario_lead") == scenario)
-                ].idxmin()
-                closest_ids = {k: v for k, v in zip(rms.index.names, closest)}
-                closest_model = closest_ids["model_db"]
-                closest_scenario = closest_ids["scenario_db"]
+            out = _combine_rms_and_database(
+                lead_var_ts_here,
+                iamdf_follower_ts,
+                rms,
+                [variable_follower],
+            )
 
-                # Filter to find the matching follow data for the same model, scenario
-                # and region
-                tmp = iamdf_follower_data.loc[
-                    (iamdf_follower_data.model == closest_model)
-                    & (iamdf_follower_data.scenario == closest_scenario)
-                ].copy()
-
-                # Update the model and scenario to match the elements of the input.
-                tmp.loc[:, "model"] = model
-                tmp.loc[:, "scenario"] = scenario
-                for col in in_iamdf.extra_cols:
-                    val_to_use = lead_var_mod_scen[col].unique()
-                    if len(val_to_use) != 1:
-                        raise AssertionError(
-                            f"Ambiguous value to use for column {col}, found {val_to_use}"
-                        )
-
-                    tmp[col] = val_to_use[0]
-
-                output_ts_list.append(tmp)
-
-            return pyam.concat(output_ts_list)
+            return out
 
         return filler
 
@@ -253,42 +230,7 @@ class RMSClosest(_DatabaseCruncher):
         db_timeseries = self._db.filter(variable=variable_followers).timeseries()
         db_timeseries = db_timeseries[common_cols]
 
-        out = []
-        for (model, scenario), rms_mod_scen in rms.groupby(
-            ["model_lead", "scenario_lead"]
-        ):
-            variable_followers_h = set(variable_followers)
-
-            for (model_db, scenario_db), _ in (
-                rms_mod_scen[(model, scenario)].sort_values().iteritems()
-            ):
-                infill_timeseries = db_timeseries.loc[
-                    (db_timeseries.index.get_level_values("model") == model_db)
-                    & (db_timeseries.index.get_level_values("scenario") == scenario_db)
-                    & (
-                        db_timeseries.index.get_level_values("variable").isin(
-                            variable_followers_h
-                        )
-                    ),
-                    :,
-                ].copy()
-
-                variable_followers_h = variable_followers_h - set(
-                    infill_timeseries.index.get_level_values("variable")
-                )
-
-                infill_timeseries = infill_timeseries.reset_index()
-                infill_timeseries.loc[:, "model"] = model
-                infill_timeseries.loc[:, "scenario"] = scenario
-                # TODO: turn this back on
-                # for col in db_lead.extra_cols:
-                #     infill_timeseries[col] = lead_var_mod_scen.index.get_level_values(col).tolist()[0]
-                out.append(infill_timeseries)
-
-                if not variable_followers_h:
-                    break
-
-        out = pyam.IamDataFrame(pd.concat(out))
+        out = _combine_rms_and_database(to_infill_lead_ts, db_timeseries, rms, variable_followers)
 
         return out
 
@@ -372,6 +314,63 @@ def _calculate_rms(db_lead_ts, to_infill_lead_ts, weighting):
     rms = rms.groupby(["model_lead", "scenario_lead", "model_db", "scenario_db"]).sum()
 
     return rms
+
+
+def _combine_rms_and_database(to_infill_lead_ts, db_timeseries, rms, variable_followers):
+    out = []
+    for (model, scenario), to_infill_lead_ts_mod_scen in to_infill_lead_ts.groupby(
+        ["model_lead", "scenario_lead"]
+    ):
+        variable_followers_h = set(variable_followers)
+
+        rms_mod_scen = rms.loc[
+            (rms.index.get_level_values("model_lead") == model)
+            & (rms.index.get_level_values("scenario_lead") == scenario)
+            ,
+            :
+        ]
+        for (model_db, scenario_db), _ in (
+            rms_mod_scen[(model, scenario)].sort_values().iteritems()
+        ):
+            infill_timeseries = db_timeseries.loc[
+                (db_timeseries.index.get_level_values("model") == model_db)
+                & (db_timeseries.index.get_level_values("scenario") == scenario_db)
+                & (
+                    db_timeseries.index.get_level_values("variable").isin(
+                        variable_followers_h
+                    )
+                ),
+                :,
+            ].copy()
+
+            variable_followers_h = variable_followers_h - set(
+                infill_timeseries.index.get_level_values("variable")
+            )
+
+            infill_timeseries = infill_timeseries.reset_index()
+            infill_timeseries.loc[:, "model"] = model
+            infill_timeseries.loc[:, "scenario"] = scenario
+
+            for idx_level in to_infill_lead_ts.index.names:
+                if idx_level in infill_timeseries or idx_level in ["model_lead", "scenario_lead"]:
+                    continue
+
+                val_to_use = to_infill_lead_ts_mod_scen.index.get_level_values(idx_level).unique()
+                if len(val_to_use) != 1:
+                    raise AssertionError(
+                        f"Ambiguous value to use for column {idx_level}, found {val_to_use}"
+                    )
+
+                infill_timeseries[idx_level] = val_to_use[0]
+
+            out.append(infill_timeseries)
+
+            if not variable_followers_h:
+                break
+
+    out = pyam.IamDataFrame(pd.concat(out))
+
+    return out
 
 
 def _filter_for_overlap(df1, df2, cols, leaders):
