@@ -95,7 +95,9 @@ class RMSClosest(_DatabaseCruncher):
 
         leader_var_unit = {
             var["variable"]: var["unit"]
-            for _, var in iamdf_lead_data[["variable", "unit"]].drop_duplicates().iterrows()
+            for _, var in iamdf_lead_data[["variable", "unit"]]
+            .drop_duplicates()
+            .iterrows()
         }
 
         def filler(in_iamdf):
@@ -144,15 +146,23 @@ class RMSClosest(_DatabaseCruncher):
                     )
                 )
 
-            iamdf_lead_ts_here, lead_var_ts_here, common_cols = _get_common_timeseries_and_cols(
+            (
+                iamdf_lead_ts_here,
+                lead_var_ts_here,
+                common_cols,
+            ) = _get_common_timeseries_and_cols(
                 iamdf_lead_ts.copy(), lead_var.timeseries()
             )
 
-            rms = _calculate_rms(iamdf_lead_ts_here[common_cols], lead_var_ts_here[common_cols], weighting)
+            rms = _calculate_rms(
+                iamdf_lead_ts_here[common_cols],
+                lead_var_ts_here[common_cols],
+                weighting,
+            )
 
             output_ts_list = []
-            for (model, scenario), lead_var_mod_scen in (
-                lead_var.data.groupby(["model", "scenario"])
+            for (model, scenario), lead_var_mod_scen in lead_var.data.groupby(
+                ["model", "scenario"]
             ):
                 closest = rms[
                     (rms.index.get_level_values("model_lead") == model)
@@ -175,7 +185,9 @@ class RMSClosest(_DatabaseCruncher):
                 for col in in_iamdf.extra_cols:
                     val_to_use = lead_var_mod_scen[col].unique()
                     if len(val_to_use) != 1:
-                        raise AssertionError(f"Ambiguous value to use for column {col}, found {val_to_use}")
+                        raise AssertionError(
+                            f"Ambiguous value to use for column {col}, found {val_to_use}"
+                        )
 
                     tmp[col] = val_to_use[0]
 
@@ -234,7 +246,9 @@ class RMSClosest(_DatabaseCruncher):
             db_lead.timeseries(), to_infill_lead.timeseries()
         )
 
-        rms = _calculate_rms(db_lead_ts[common_cols], to_infill_lead_ts[common_cols], weighting)
+        rms = _calculate_rms(
+            db_lead_ts[common_cols], to_infill_lead_ts[common_cols], weighting
+        )
 
         db_timeseries = self._db.filter(variable=variable_followers).timeseries()
         db_timeseries = db_timeseries[common_cols]
@@ -355,9 +369,7 @@ def _calculate_rms(db_lead_ts, to_infill_lead_ts, weighting):
 
         rms = rms.multiply(weighting)
 
-    rms = rms.groupby(
-        ["model_lead", "scenario_lead", "model_db", "scenario_db"]
-    ).sum()
+    rms = rms.groupby(["model_lead", "scenario_lead", "model_db", "scenario_db"]).sum()
 
     return rms
 
