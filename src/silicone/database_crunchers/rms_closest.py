@@ -84,16 +84,18 @@ class RMSClosest(_DatabaseCruncher):
         if any(var not in weighting.keys() for var in variable_leaders):
             raise ValueError("Weighting does not include all lead variables.")
 
-        iamdf_lead, iamdf_follower = _filter_for_overlap(
+        iamdf_lead_data, iamdf_follower_data = _filter_for_overlap(
             iamdf_lead,
             iamdf_follower,
             ["scenario", "model", data_follower_time_col],
             variable_leaders,
         )
 
+        iamdf_lead_ts = pyam.IamDataFrame(iamdf_lead_data).timeseries()
+
         leader_var_unit = {
             var["variable"]: var["unit"]
-            for _, var in iamdf_lead[["variable", "unit"]].drop_duplicates().iterrows()
+            for _, var in iamdf_lead_data[["variable", "unit"]].drop_duplicates().iterrows()
         }
 
         def filler(in_iamdf):
@@ -142,59 +144,43 @@ class RMSClosest(_DatabaseCruncher):
                     )
                 )
 
-            lead_var_timeseries = lead_var.timeseries()
-            iamdf_lead_timeseries = iamdf_lead.pivot(
-                index=[
-                    col
-                    for col in iamdf_lead.columns
-                    if col not in [data_follower_time_col, "value"]
-                ],
-                columns=data_follower_time_col,
-                values="value",
+            iamdf_lead_ts_here, lead_var_ts_here, common_cols = _get_common_timeseries_and_cols(
+                iamdf_lead_ts.copy(), lead_var.timeseries()
             )
-            common_cols = _get_common_cols(lead_var_timeseries, iamdf_lead_timeseries)
 
-            lead_var_timeseries = lead_var_timeseries.loc[:, common_cols]
-            iamdf_lead_timeseries = iamdf_lead_timeseries.loc[:, common_cols].dropna(
-                axis=0
-            )
+            rms = _calculate_rms(iamdf_lead_ts_here[common_cols], lead_var_ts_here[common_cols], weighting)
 
             output_ts_list = []
-            for _, (model, scenario) in (
-                lead_var.data[["model", "scenario"]].drop_duplicates().iterrows()
+            for (model, scenario), lead_var_mod_scen in (
+                lead_var.data.groupby(["model", "scenario"])
             ):
-                lead_var_mod_scen = lead_var_timeseries[
-                    (lead_var_timeseries.index.get_level_values("model") == model)
-                    & (
-                        lead_var_timeseries.index.get_level_values("scenario")
-                        == scenario
-                    )
-                ]
-                if len(lead_var_mod_scen) != len(variable_leaders):
-                    raise ValueError(
-                        "Insufficient variables are found to infill model {}, scenario "
-                        "{}. Only found {}.".format(model, scenario, lead_var_mod_scen)
-                    )
-                closest_model, closest_scenario = _select_closest(
-                    iamdf_lead_timeseries,
-                    lead_var_mod_scen,
-                    weighting,
-                    variable_leaders,
-                )
+                closest = rms[
+                    (rms.index.get_level_values("model_lead") == model)
+                    & (rms.index.get_level_values("scenario_lead") == scenario)
+                ].idxmin()
+                closest_ids = {k: v for k, v in zip(rms.index.names, closest)}
+                closest_model = closest_ids["model_db"]
+                closest_scenario = closest_ids["scenario_db"]
 
                 # Filter to find the matching follow data for the same model, scenario
                 # and region
-                tmp = iamdf_follower.loc[
-                    (iamdf_follower.model == closest_model)
-                    & (iamdf_follower.scenario == closest_scenario)
+                tmp = iamdf_follower_data.loc[
+                    (iamdf_follower_data.model == closest_model)
+                    & (iamdf_follower_data.scenario == closest_scenario)
                 ].copy()
 
                 # Update the model and scenario to match the elements of the input.
                 tmp.loc[:, "model"] = model
                 tmp.loc[:, "scenario"] = scenario
                 for col in in_iamdf.extra_cols:
-                    tmp[col] = lead_var_mod_scen.index.get_level_values(col).tolist()[0]
+                    val_to_use = lead_var_mod_scen[col].unique()
+                    if len(val_to_use) != 1:
+                        raise AssertionError(f"Ambiguous value to use for column {col}, found {val_to_use}")
+
+                    tmp[col] = val_to_use[0]
+
                 output_ts_list.append(tmp)
+
             return pyam.concat(output_ts_list)
 
         return filler
@@ -245,7 +231,7 @@ class RMSClosest(_DatabaseCruncher):
         to_infill_lead = to_infill.filter(variable=variable_leaders)
 
         db_lead_ts, to_infill_lead_ts, common_cols = _get_common_timeseries_and_cols(
-            db_lead, to_infill_lead
+            db_lead.timeseries(), to_infill_lead.timeseries()
         )
 
         rms = _calculate_rms(db_lead_ts[common_cols], to_infill_lead_ts[common_cols], weighting)
@@ -329,78 +315,51 @@ class RMSClosest(_DatabaseCruncher):
 
 
 def _get_common_timeseries_and_cols(db_lead, to_infill_lead):
-    db_lead_ts = db_lead.timeseries()
-    db_lead_ts.index = db_lead_ts.index.rename(
+    db_lead.index = db_lead.index.rename(
         ["model_db", "scenario_db"], level=["model", "scenario"]
     )
-    to_infill_lead_ts = to_infill_lead.timeseries()
-    to_infill_lead_ts.index = to_infill_lead_ts.index.rename(
+
+    to_infill_lead.index = to_infill_lead.index.rename(
         ["model_lead", "scenario_lead"], level=["model", "scenario"]
     )
 
-    common_cols = _get_common_cols(db_lead_ts, to_infill_lead_ts)
+    common_cols = _get_common_cols(db_lead, to_infill_lead)
 
-    return db_lead_ts, to_infill_lead_ts, common_cols
+    return db_lead, to_infill_lead, common_cols
 
 
 def _calculate_rms(db_lead_ts, to_infill_lead_ts, weighting):
+    # check variables first
+    ms_lead = ["model_lead", "scenario_lead"]
+
+    required_vars = set(db_lead_ts.index.get_level_values("variable").unique())
+    for (model, scenario), msdf in to_infill_lead_ts.groupby(ms_lead):
+        msdf_vars = set(msdf.index.get_level_values("variable").unique())
+        if msdf_vars != required_vars:
+            raise ValueError(
+                f"Insufficient variables are found to infill model {model}, scenario "
+                f"{scenario}. Only found {msdf}."
+            )
+
+    # remove any database timeseries which have nans
+    db_lead_ts = db_lead_ts.dropna()
+
+    # align
     db_lead_ts, to_infill_lead_ts = db_lead_ts.align(to_infill_lead_ts)
 
     rms = ((db_lead_ts - to_infill_lead_ts) ** 2).mean(axis=1) ** 0.5
+
     if weighting is not None:
-        raise NotImplementedError("weighting other than None")
+        weighting = pd.Series(weighting)
+        weighting.index.names = ["variable"]
+
+        rms = rms.multiply(weighting)
 
     rms = rms.groupby(
         ["model_lead", "scenario_lead", "model_db", "scenario_db"]
     ).sum()
 
     return rms
-
-
-
-def _select_closest(to_search_df, target_df, weighting, variable_leaders):
-    """
-    Find model/scenario combo in ``to_search_df`` that is closest to that of the target.
-
-    Here, 'closest' is in the root-mean squared sense. In the event that multiple model/
-    scenarios are equally close, returns first row.
-
-    Parameters
-    ----------
-    to_search_df : :obj:`pd.DataFrame`
-        The model/scenario combos to search for the closest case. A timeseries.
-
-    target_df : :obj:`pd.DataFrame`
-        The data to which we want to be close. A timeseries.
-
-    weighting : map{str: float}
-        Maps the variable name onto the weighting for that variable.
-
-    Returns
-    -------
-    dict
-        Index of the closest timeseries.
-    """
-    rms = pd.Series(0, index=to_search_df.index, dtype=np.float64)
-    for var in variable_leaders:
-        target_for_var = target_df[
-            target_df.index.get_level_values("variable") == var
-        ].squeeze()
-        rms = rms.add(
-            (
-                to_search_df[
-                    to_search_df.index.get_level_values("variable") == var
-                ].subtract(target_for_var, axis=1)
-                ** 2
-            ).mean(axis=1)
-            ** 0.5
-            * weighting[var],
-            fill_value=0,
-        )
-
-    rmssums = rms.groupby(level=["model", "scenario"], sort=False).sum()
-
-    return rmssums.idxmin()
 
 
 def _filter_for_overlap(df1, df2, cols, leaders):
