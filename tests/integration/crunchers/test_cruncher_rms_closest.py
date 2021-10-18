@@ -8,7 +8,6 @@ from base import _DataBaseCruncherTester
 from pyam import IamDataFrame, concat
 
 from silicone.database_crunchers import RMSClosest
-from silicone.database_crunchers.rms_closest import _select_closest
 
 _msa = ["model_a", "scen_a"]
 
@@ -642,30 +641,3 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         res = cruncher.infill_multiple(to_infill, to_infill_variables, [lead])
 
         assert res.equals(one_by_one)
-
-
-def test_select_closest():
-    target = pd.DataFrame(
-        [[1, 2, 3]],
-        index=pd.MultiIndex.from_arrays(
-            [("chartreuse",), (6,), (5,), (1,)],
-            names=("model", "scenario", "homogeneity", "variable"),
-        ),
-    )
-    possible_answers = pd.DataFrame(
-        [[1, 1, 3.1], [1, 2, 3.5], [1, 2, 3.5], [1, 2, 4]],
-        index=pd.MultiIndex.from_arrays(
-            [
-                ("blue", "red", "green", "yellow"),
-                (1.5, 1.6, 2, 0.4),
-                (1, 1, 1, 1),
-                (1, 1, 1, 1),
-            ],
-            names=("model", "scenario", "homogeneity", "variable"),
-        ),
-    )
-    weighting = {1: 1}
-    closest_meta = _select_closest(possible_answers, target, weighting, [1])
-
-    assert closest_meta[0] == "red"
-    assert closest_meta[1] == 1.6
