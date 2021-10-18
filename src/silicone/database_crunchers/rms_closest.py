@@ -230,7 +230,9 @@ class RMSClosest(_DatabaseCruncher):
         db_timeseries = self._db.filter(variable=variable_followers).timeseries()
         db_timeseries = db_timeseries[common_cols]
 
-        out = _combine_rms_and_database(to_infill_lead_ts, db_timeseries, rms, variable_followers)
+        out = _combine_rms_and_database(
+            to_infill_lead_ts, db_timeseries, rms, variable_followers
+        )
 
         return out
 
@@ -316,7 +318,9 @@ def _calculate_rms(db_lead_ts, to_infill_lead_ts, weighting):
     return rms
 
 
-def _combine_rms_and_database(to_infill_lead_ts, db_timeseries, rms, variable_followers):
+def _combine_rms_and_database(
+    to_infill_lead_ts, db_timeseries, rms, variable_followers
+):
     out = []
     for (model, scenario), to_infill_lead_ts_mod_scen in to_infill_lead_ts.groupby(
         ["model_lead", "scenario_lead"]
@@ -325,9 +329,8 @@ def _combine_rms_and_database(to_infill_lead_ts, db_timeseries, rms, variable_fo
 
         rms_mod_scen = rms.loc[
             (rms.index.get_level_values("model_lead") == model)
-            & (rms.index.get_level_values("scenario_lead") == scenario)
-            ,
-            :
+            & (rms.index.get_level_values("scenario_lead") == scenario),
+            :,
         ]
         for (model_db, scenario_db), _ in (
             rms_mod_scen[(model, scenario)].sort_values().iteritems()
@@ -352,10 +355,15 @@ def _combine_rms_and_database(to_infill_lead_ts, db_timeseries, rms, variable_fo
             infill_timeseries.loc[:, "scenario"] = scenario
 
             for idx_level in to_infill_lead_ts.index.names:
-                if idx_level in infill_timeseries or idx_level in ["model_lead", "scenario_lead"]:
+                if idx_level in infill_timeseries or idx_level in [
+                    "model_lead",
+                    "scenario_lead",
+                ]:
                     continue
 
-                val_to_use = to_infill_lead_ts_mod_scen.index.get_level_values(idx_level).unique()
+                val_to_use = to_infill_lead_ts_mod_scen.index.get_level_values(
+                    idx_level
+                ).unique()
                 if len(val_to_use) != 1:
                     raise AssertionError(
                         f"Ambiguous value to use for column {idx_level}, found {val_to_use}"
