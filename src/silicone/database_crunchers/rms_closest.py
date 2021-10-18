@@ -244,27 +244,11 @@ class RMSClosest(_DatabaseCruncher):
         db_lead = self._db.filter(variable=variable_leaders)
         to_infill_lead = to_infill.filter(variable=variable_leaders)
 
-        db_lead_ts = db_lead.timeseries()
-        db_lead_ts.index = db_lead_ts.index.rename(
-            ["model_db", "scenario_db"], level=["model", "scenario"]
-        )
-        to_infill_lead_ts = to_infill_lead.timeseries()
-        to_infill_lead_ts.index = to_infill_lead_ts.index.rename(
-            ["model_lead", "scenario_lead"], level=["model", "scenario"]
+        db_lead_ts, to_infill_lead_ts, common_cols = _get_common_timeseries_and_cols(
+            db_lead, to_infill_lead
         )
 
-        common_cols = _get_common_cols(db_lead_ts, to_infill_lead_ts)
-        db_lead_ts = db_lead_ts[common_cols]
-        to_infill_lead_ts = to_infill_lead_ts[common_cols]
-
-        db_lead_ts, to_infill_lead_ts = db_lead_ts.align(to_infill_lead_ts)
-
-        rms = ((db_lead_ts - to_infill_lead_ts) ** 2).mean(axis=1) ** 0.5
-        if weighting is not None:
-            raise NotImplementedError("weighting other than None")
-        rms = rms.groupby(
-            ["model_lead", "scenario_lead", "model_db", "scenario_db"]
-        ).sum()
+        rms = _calculate_rms(db_lead_ts[common_cols], to_infill_lead_ts[common_cols], weighting)
 
         db_timeseries = self._db.filter(variable=variable_followers).timeseries()
         db_timeseries = db_timeseries[common_cols]
@@ -342,6 +326,36 @@ class RMSClosest(_DatabaseCruncher):
                 variable_followers
             )
             raise ValueError(error_msg)
+
+
+def _get_common_timeseries_and_cols(db_lead, to_infill_lead):
+    db_lead_ts = db_lead.timeseries()
+    db_lead_ts.index = db_lead_ts.index.rename(
+        ["model_db", "scenario_db"], level=["model", "scenario"]
+    )
+    to_infill_lead_ts = to_infill_lead.timeseries()
+    to_infill_lead_ts.index = to_infill_lead_ts.index.rename(
+        ["model_lead", "scenario_lead"], level=["model", "scenario"]
+    )
+
+    common_cols = _get_common_cols(db_lead_ts, to_infill_lead_ts)
+
+    return db_lead_ts, to_infill_lead_ts, common_cols
+
+
+def _calculate_rms(db_lead_ts, to_infill_lead_ts, weighting):
+    db_lead_ts, to_infill_lead_ts = db_lead_ts.align(to_infill_lead_ts)
+
+    rms = ((db_lead_ts - to_infill_lead_ts) ** 2).mean(axis=1) ** 0.5
+    if weighting is not None:
+        raise NotImplementedError("weighting other than None")
+
+    rms = rms.groupby(
+        ["model_lead", "scenario_lead", "model_db", "scenario_db"]
+    ).sum()
+
+    return rms
+
 
 
 def _select_closest(to_search_df, target_df, weighting, variable_leaders):
