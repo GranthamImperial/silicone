@@ -256,7 +256,10 @@ def test_find_matching_scenarios_differential():
     assert all_data[0][1] == all_data[1][1]
 
 
-def test__make_interpolator():
+@pytest.mark.parametrize(
+    "kind,differs", [(None, 2.5), ("nearest-up", 2), ("nearest", 3)]
+)
+def test__make_interpolator(kind, differs):
     variable_leaders = "variable_leaders"
     variable_follower = "variable_follower"
     time_col = "years"
@@ -270,10 +273,15 @@ def test__make_interpolator():
     # Illustrate the expected relationship between the numbers above, mapping 1 to
     # the average of 6 and 4, i.e. 5.
     input = np.array([5, 4, 3, 2, 2.5, 1, 0])
-    expected_output = np.array([2, 2, 2, 3, 2.5, 5, 5])
-    interpolator = _make_interpolator(
-        variable_follower, variable_leaders, wide_db, time_col
-    )
+    expected_output = np.array([2, 2, 2, 3, differs, 5, 5])
+    if kind:
+        interpolator = _make_interpolator(
+            variable_follower, variable_leaders, wide_db, time_col, interpkind=kind
+        )
+    else:
+        interpolator = _make_interpolator(
+            variable_follower, variable_leaders, wide_db, time_col
+        )
     output = interpolator[1](input)
     np.testing.assert_allclose(output, expected_output, atol=1e-10)
 

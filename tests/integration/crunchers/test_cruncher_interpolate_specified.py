@@ -185,12 +185,16 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         if add_col:
             assert all(append_df[add_col] == add_col_val)
 
-    def test_numerical_relationship(self):
+    @pytest.mark.parametrize("interpkind", ["linear", "quadratic", "nearest"])
+    def test_numerical_relationship(self, interpkind):
         # Calculate the values using the cruncher for a fairly detailed dataset
         large_db = IamDataFrame(self.large_db.copy())
         tcruncher = self.tclass(large_db)
         res = tcruncher.derive_relationship(
-            "Emissions|CH4", ["Emissions|CO2"], required_scenario="*"
+            "Emissions|CH4",
+            ["Emissions|CO2"],
+            required_scenario="*",
+            interpkind=interpkind,
         )
         assert callable(res)
         to_find = IamDataFrame(self.small_db.copy())
@@ -200,7 +204,8 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         xs = large_db.filter(variable="Emissions|CO2").data["value"].values
         ys = large_db.filter(variable="Emissions|CH4").data["value"].values
         ys = [np.mean(ys[xs == x]) for x in xs]
-        interpolate_fn = scipy.interpolate.interp1d(xs, ys)
+        # We must remove the duplicate value from the lists
+        interpolate_fn = scipy.interpolate.interp1d(xs[:-1], ys[:-1], kind=interpkind)
         xs_to_interp = to_find.filter(variable="Emissions|CO2").data["value"].values
 
         expected = interpolate_fn(xs_to_interp)

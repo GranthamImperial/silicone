@@ -4,6 +4,9 @@ Changelog
 
 master
 ------
+Added
+~~~~~
+- (`#145 <https://github.com/GranthamImperial/silicone/pull/145>`_) Added the ability of linear_interpolation to use non-linear interpolation too
 
 Changed
 ~~~~~~~
