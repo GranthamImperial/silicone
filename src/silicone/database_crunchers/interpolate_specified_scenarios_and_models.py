@@ -15,6 +15,7 @@ class ScenarioAndModelSpecificInterpolate(_DatabaseCruncher):
         variable_leaders,
         required_scenario="*",
         required_model="*",
+        interpkind="linear",
     ):
         """
         Derive the relationship between two variables from the database.
@@ -36,6 +37,10 @@ class ScenarioAndModelSpecificInterpolate(_DatabaseCruncher):
         required_model : str or list[str]
             The string(s) which all relevant models are required to match. This may have
             *s to represent wild cards. It defaults to "*" to accept all models.
+
+        interpkind : str
+            The style of interpolation. By default, linear, but can also be any value
+            accepted as the "kind" option in scipy.interpolate.interp1d.
 
         Returns
         -------
@@ -59,4 +64,6 @@ class ScenarioAndModelSpecificInterpolate(_DatabaseCruncher):
                 " There may be a typo in the SSP option."
             )
         cruncher = LinearInterpolation(use_db)
-        return cruncher.derive_relationship(variable_follower, variable_leaders)
+        return cruncher.derive_relationship(
+            variable_follower, variable_leaders, interpkind=interpkind
+        )

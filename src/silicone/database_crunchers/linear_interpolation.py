@@ -12,9 +12,10 @@ class LinearInterpolation(_DatabaseCruncher):
     """
     Database cruncher which uses linear interpolation.
 
-    This cruncher derives the relationship between two variables by simply linearly
-    interpolating between values in the cruncher database. It does not do any smoothing
-    and is best-suited for smaller databases.
+    This cruncher derives the relationship between two variables by simply (usually
+    linearly) interpolating between values in the cruncher database. It does not do any
+    smoothing and is best-suited for smaller databases. Non-linear interpolation options
+    are also available.
 
     In the case where there is more than one value of the follower variable for a
     given value of the leader variable, the average will be used. For example, if
@@ -23,14 +24,16 @@ class LinearInterpolation(_DatabaseCruncher):
     of exactly 15 GtC/yr in 2020, the interpolation will use the average value from the
     two scenarios i.e. 15 Mt CH4/yr.
 
-    Beyond the bounds of input data, the linear interpolation is held constant.
+    Beyond the bounds of input data, the interpolation is held constant.
     For example, if the maximum CO2 emissions in 2020 in the database is
     25 GtC/yr, and CH4 emissions for this level of CO2 emissions are 15 MtCH4/yr,
     then even if we infill using a CO2 emissions value of 100 GtC/yr in 2020, the
     returned CH4 emissions will be 15 MtCH4/yr.
     """
 
-    def derive_relationship(self, variable_follower, variable_leaders):
+    def derive_relationship(
+        self, variable_follower, variable_leaders, interpkind="linear"
+    ):
         """
         Derive the relationship between two variables from the database.
 
@@ -43,6 +46,11 @@ class LinearInterpolation(_DatabaseCruncher):
         variable_leaders : list[str]
             The variable(s) we want to use in order to infer timeseries of
             ``variable_follower`` (e.g. ``["Emissions|CO2"]``).
+
+        interpkind : str
+            The style of interpolation. By default, linear (hence the name), but can
+            also be any value accepted as the "kind" option in
+            scipy.interpolate.interp1d.
 
         Returns
         -------
@@ -85,7 +93,11 @@ class LinearInterpolation(_DatabaseCruncher):
         use_db_time_col = use_db.time_col
         use_db = _make_wide_db(use_db)
         interpolators = _make_interpolator(
-            variable_follower, variable_leaders, use_db, use_db_time_col
+            variable_follower,
+            variable_leaders,
+            use_db,
+            use_db_time_col,
+            interpkind=interpkind,
         )
 
         def filler(in_iamdf):

@@ -181,7 +181,9 @@ def _remove_t0_from_wide_db(times_needed, _db):
             _db.loc[model, scenario, time] = _db.loc[model, scenario, time] - offset
 
 
-def _make_interpolator(variable_follower, variable_leader, wide_db, time_col):
+def _make_interpolator(
+    variable_follower, variable_leader, wide_db, time_col, interpkind="linear"
+):
     """
     Constructs a linear interpolator for variable_follower as a function of
     (one) variable_leader for each timestep in the data.
@@ -211,7 +213,12 @@ def _make_interpolator(variable_follower, variable_leader, wide_db, time_col):
             xs = np.append(xs, xs)
             ys = np.append(ys, ys)
         derived_relationships[db_time] = scipy.interpolate.interp1d(
-            xs, ys, bounds_error=False, fill_value=(ys[0], ys[-1]), assume_sorted=True
+            xs,
+            ys,
+            bounds_error=False,
+            fill_value=(ys[0], ys[-1]),
+            assume_sorted=True,
+            kind=interpkind,
         )
     return derived_relationships
 
