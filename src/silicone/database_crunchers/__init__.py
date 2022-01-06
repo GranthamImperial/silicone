@@ -12,9 +12,9 @@ from .equal_quantile_walk import EqualQuantileWalk  # noqa: F401
 from .interpolate_specified_scenarios_and_models import (  # noqa: F401
     ScenarioAndModelSpecificInterpolate,
 )
+from .interpolation import Interpolation  # noqa: F401
 from .latest_time_ratio import LatestTimeRatio  # noqa: F401
 from .linear_interpolation import LinearInterpolation  # noqa: F401
-from .interpolation import Interpolation  # noqa: F401
 from .quantile_rolling_windows import QuantileRollingWindows  # noqa: F401
 from .rms_closest import RMSClosest  # noqa: F401
 from .time_dep_quantile_rolling_windows import (  # noqa: F401
