@@ -2,8 +2,9 @@
 Module for the database cruncher which makes a linear interpolator between known values
 """
 
-from .interpolation import Interpolation
 from warnings import warn
+
+from .interpolation import Interpolation
 
 
 class LinearInterpolation(Interpolation):
