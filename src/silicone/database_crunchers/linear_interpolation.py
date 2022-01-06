@@ -31,11 +31,16 @@ class LinearInterpolation(Interpolation):
 
     def __init__(self, db):
         warn(
-            'This cruncher deprecated, please switch to the more generic interpolation cruncher, "Interpolation"', DeprecationWarning, stacklevel=2)
+            'This cruncher deprecated, please switch to the more generic interpolation cruncher, "Interpolation"',
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super().__init__(db)
 
     def derive_relationship(
-        self, variable_follower, variable_leaders,
+        self,
+        variable_follower,
+        variable_leaders,
     ):
         """
         Derive the relationship between two variables from the database.
@@ -64,5 +69,8 @@ class LinearInterpolation(Interpolation):
         ValueError
             There is no data of the appropriate type in the database.
         """
-        return super().derive_relationship(variable_follower=variable_follower, variable_leaders=variable_leaders, interpkind="linear")
-
+        return super().derive_relationship(
+            variable_follower=variable_follower,
+            variable_leaders=variable_leaders,
+            interpkind="linear",
+        )
