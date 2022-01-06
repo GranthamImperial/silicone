@@ -193,7 +193,9 @@ def _make_interpolator(
     def f_factory(ys):
         def f(x):
             return ys[0] * np.ones(np.size(x))
+
         return f
+
     for db_time, dbtdf in wide_db.groupby(time_col):
         xs = dbtdf[variable_leader].values.squeeze()
         ys = dbtdf[variable_follower].values.squeeze()
