@@ -6,11 +6,12 @@ master
 ------
 Added
 ~~~~~
-- (`#145 <https://github.com/GranthamImperial/silicone/pull/145>`_) Added the ability of linear_interpolation to use non-linear interpolation too
+- (`#145 <https://github.com/GranthamImperial/silicone/pull/145>`_) Added the ability to do non-linear interpolation.
 
 Changed
 ~~~~~~~
 - (`#142 <https://github.com/GranthamImperial/silicone/pull/142>`_) Sped up RMS closest
+- (`#145 <https://github.com/GranthamImperial/silicone/pull/145>`_) Deprecated the linear interpolator in favour of a generic interpolator. 
 
 Fixed
 ~~~~~

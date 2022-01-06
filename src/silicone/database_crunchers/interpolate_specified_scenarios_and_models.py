@@ -1,12 +1,12 @@
 from .base import _DatabaseCruncher
-from .linear_interpolation import LinearInterpolation
+from .interpolation import Interpolation
 
 
 class ScenarioAndModelSpecificInterpolate(_DatabaseCruncher):
     """
     Database cruncher which pre-filters to only use data from specific scenarios, then
-    runs the linear interpolator to return values from that set of scenarios. See the
-    documentation of LinearInterpolation for more details.
+    runs the interpolation cruncher to return values from that set of scenarios. See the
+    documentation of Interpolation for more details.
     """
 
     def derive_relationship(
@@ -39,8 +39,11 @@ class ScenarioAndModelSpecificInterpolate(_DatabaseCruncher):
             *s to represent wild cards. It defaults to "*" to accept all models.
 
         interpkind : str
-            The style of interpolation. By default, linear, but can also be any value
-            accepted as the "kind" option in scipy.interpolate.interp1d.
+            The style of interpolation. By default, linear, but can
+            also be any value accepted as the "kind" option in
+            scipy.interpolate.interp1d, or "PchipInterpolator", in which case
+            scipy.interpolate.PchipInterpolator is used. Care should be taken if using
+            non-default interp1d options, as they are either uneven or have "ringing"
 
         Returns
         -------
@@ -63,7 +66,7 @@ class ScenarioAndModelSpecificInterpolate(_DatabaseCruncher):
                 "There is no data of the appropriate type in the database."
                 " There may be a typo in the SSP option."
             )
-        cruncher = LinearInterpolation(use_db)
+        cruncher = Interpolation(use_db)
         return cruncher.derive_relationship(
             variable_follower, variable_leaders, interpkind=interpkind
         )
