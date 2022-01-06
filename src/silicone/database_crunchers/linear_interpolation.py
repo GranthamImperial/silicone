@@ -2,20 +2,18 @@
 Module for the database cruncher which makes a linear interpolator between known values
 """
 
-from pyam import IamDataFrame
-
-from ..utils import _get_unit_of_variable, _make_interpolator, _make_wide_db
-from .base import _DatabaseCruncher
+from .interpolation import Interpolation
+from warnings import warn
 
 
-class LinearInterpolation(_DatabaseCruncher):
+class LinearInterpolation(Interpolation):
     """
-    Database cruncher which uses linear interpolation.
+    Database cruncher which uses linear interpolation. This cruncher is deprecated; use
+    Interpolation instead.
 
-    This cruncher derives the relationship between two variables by simply (usually
-    linearly) interpolating between values in the cruncher database. It does not do any
-    smoothing and is best-suited for smaller databases. Non-linear interpolation options
-    are also available.
+    This cruncher derives the relationship between two variables by linearly
+    interpolating between values in the cruncher database. It does not do any
+    smoothing and is best-suited for smaller databases.
 
     In the case where there is more than one value of the follower variable for a
     given value of the leader variable, the average will be used. For example, if
@@ -31,8 +29,13 @@ class LinearInterpolation(_DatabaseCruncher):
     returned CH4 emissions will be 15 MtCH4/yr.
     """
 
+    def __init__(self, db):
+        warn(
+            'This cruncher deprecated, please switch to the more generic interpolation cruncher, "Interpolation"', DeprecationWarning, stacklevel=2)
+        super().__init__(db)
+
     def derive_relationship(
-        self, variable_follower, variable_leaders, interpkind="linear"
+        self, variable_follower, variable_leaders,
     ):
         """
         Derive the relationship between two variables from the database.
@@ -46,11 +49,6 @@ class LinearInterpolation(_DatabaseCruncher):
         variable_leaders : list[str]
             The variable(s) we want to use in order to infer timeseries of
             ``variable_follower`` (e.g. ``["Emissions|CO2"]``).
-
-        interpkind : str
-            The style of interpolation. By default, linear (hence the name), but can
-            also be any value accepted as the "kind" option in
-            scipy.interpolate.interp1d.
 
         Returns
         -------
@@ -66,98 +64,5 @@ class LinearInterpolation(_DatabaseCruncher):
         ValueError
             There is no data of the appropriate type in the database.
         """
-        if len(variable_leaders) != 1:
-            raise NotImplementedError(
-                "Having more than one `variable_leaders` is not yet implemented"
-            )
-        use_db = self._db.filter(variable=[variable_leaders[0], variable_follower])
-        if use_db.data.empty:
-            raise ValueError(
-                "There is no data of the appropriate type in the database."
-            )
-        leader_units = _get_unit_of_variable(use_db, variable_leaders)
-        follower_units = _get_unit_of_variable(use_db, variable_follower)
-        if len(leader_units) == 0:
-            raise ValueError(
-                "No data for `variable_leaders` ({}) in database".format(
-                    variable_leaders
-                )
-            )
-        if len(follower_units) == 0:
-            raise ValueError(
-                "No data for `variable_follower` ({}) in database".format(
-                    variable_follower
-                )
-            )
-        leader_units = leader_units[0]
-        use_db_time_col = use_db.time_col
-        use_db = _make_wide_db(use_db)
-        interpolators = _make_interpolator(
-            variable_follower,
-            variable_leaders,
-            use_db,
-            use_db_time_col,
-            interpkind=interpkind,
-        )
+        return super().derive_relationship(variable_follower=variable_follower, variable_leaders=variable_leaders, interpkind="linear")
 
-        def filler(in_iamdf):
-            """
-            Filler function derived from :obj:`DatabaseCruncherSSPSpecificRelation`.
-
-            Parameters
-            ----------
-            in_iamdf : :obj:`pyam.IamDataFrame`
-                Input data to fill data in
-
-            Returns
-            -------
-            :obj:`pyam.IamDataFrame`
-                Filled in data (without original source data)
-
-            Raises
-            ------
-            ValueError
-                The key db_times for filling are not in ``in_iamdf``.
-            """
-            if use_db_time_col != in_iamdf.time_col:
-                raise ValueError(
-                    "`in_iamdf` time column must be the same as the time column used "
-                    "to generate this filler function (`{}`)".format(use_db_time_col)
-                )
-
-            var_units = _get_unit_of_variable(in_iamdf, variable_leaders)
-            if var_units.size == 0:
-                raise ValueError(
-                    "There is no data for {} so it cannot be infilled".format(
-                        variable_leaders
-                    )
-                )
-            var_units = var_units[0]
-            lead_var = in_iamdf.filter(variable=variable_leaders)
-            assert (
-                lead_var["unit"].nunique() == 1
-            ), "There are multiple units for the lead variable."
-            if var_units != leader_units:
-                raise ValueError(
-                    "Units of lead variable is meant to be `{}`, found `{}`".format(
-                        leader_units, var_units
-                    )
-                )
-            times_needed = set(in_iamdf.data[in_iamdf.time_col])
-            if any(x not in interpolators.keys() for x in times_needed):
-                raise ValueError(
-                    "Not all required timepoints are present in the database we "
-                    "crunched, we crunched \n\t`{}`\nbut you passed in \n\t{}".format(
-                        list(interpolators.keys()),
-                        in_iamdf.timeseries().columns.tolist(),
-                    )
-                )
-            output_ts = lead_var.timeseries()
-            for time in times_needed:
-                output_ts[time] = interpolators[time](output_ts[time])
-            output_ts.reset_index(inplace=True)
-            output_ts["variable"] = variable_follower
-            output_ts["unit"] = follower_units[0]
-            return IamDataFrame(output_ts)
-
-        return filler

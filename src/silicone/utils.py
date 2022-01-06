@@ -189,6 +189,11 @@ def _make_interpolator(
     (one) variable_leader for each timestep in the data.
     """
     derived_relationships = {}
+    # We want a generic function to return constants where required
+    def f_factory(ys):
+        def f(x):
+            return ys[0] * np.ones(np.size(x))
+        return f
     for db_time, dbtdf in wide_db.groupby(time_col):
         xs = dbtdf[variable_leader].values.squeeze()
         ys = dbtdf[variable_follower].values.squeeze()
@@ -209,17 +214,26 @@ def _make_interpolator(
             ys = np.delete(ys, inds[1:])
         xs, ys = map(np.array, zip(*sorted(zip(xs, ys))))
         if xs.shape == (1,):
-            # If there is only one point, we must duplicate the data for interpolate
-            xs = np.append(xs, xs)
-            ys = np.append(ys, ys)
-        derived_relationships[db_time] = scipy.interpolate.interp1d(
-            xs,
-            ys,
-            bounds_error=False,
-            fill_value=(ys[0], ys[-1]),
-            assume_sorted=True,
-            kind=interpkind,
-        )
+            # If there is only one point, we must always return that point
+            derived_relationships[db_time] = f_factory(ys)
+        else:
+            if interpkind != "PchipInterpolator":
+                derived_relationships[db_time] = scipy.interpolate.interp1d(
+                    xs,
+                    ys,
+                    bounds_error=False,
+                    fill_value=(ys[0], ys[-1]),
+                    assume_sorted=True,
+                    kind=interpkind,
+                )
+            else:
+                # We must add boundaries to the spline to prevent extrapolating larger values
+                xs = np.append(np.append(xs[:1] - 1.0, xs), xs[-1:] + 1.0)
+                ys = np.append(np.append(ys[0], ys), ys[-1])
+                derived_relationships[db_time] = scipy.interpolate.PchipInterpolator(
+                    xs,
+                    ys,
+                )
     return derived_relationships
 
 
