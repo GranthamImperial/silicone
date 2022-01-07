@@ -181,6 +181,13 @@ def _remove_t0_from_wide_db(times_needed, _db):
             _db.loc[model, scenario, time] = _db.loc[model, scenario, time] - offset
 
 
+def _f_factory(ys):
+    # We want a generic function to return constants where required
+    def f(x):
+        return ys[0] * np.ones(np.size(x))
+    return f
+
+
 def _make_interpolator(
     variable_follower, variable_leader, wide_db, time_col, interpkind="linear"
 ):
@@ -189,12 +196,6 @@ def _make_interpolator(
     (one) variable_leader for each timestep in the data.
     """
     derived_relationships = {}
-    # We want a generic function to return constants where required
-    def f_factory(ys):
-        def f(x):
-            return ys[0] * np.ones(np.size(x))
-
-        return f
 
     for db_time, dbtdf in wide_db.groupby(time_col):
         xs = dbtdf[variable_leader].values.squeeze()
@@ -217,7 +218,7 @@ def _make_interpolator(
         xs, ys = map(np.array, zip(*sorted(zip(xs, ys))))
         if xs.shape == (1,):
             # If there is only one point, we must always return that point
-            derived_relationships[db_time] = f_factory(ys)
+            derived_relationships[db_time] = _f_factory(ys)
         else:
             if interpkind != "PchipInterpolator":
                 derived_relationships[db_time] = scipy.interpolate.interp1d(
@@ -230,7 +231,7 @@ def _make_interpolator(
                 )
             else:
                 # We must add boundaries to the spline to prevent extrapolating larger values
-                xs = np.append(np.append(xs[:1] - 1.0, xs), xs[-1:] + 1.0)
+                xs = np.concatenate(nxs[:1] - 1.0, xs, xs[-1:] + 1.0)
                 ys = np.append(np.append(ys[0], ys), ys[-1])
                 derived_relationships[db_time] = scipy.interpolate.PchipInterpolator(
                     xs,
