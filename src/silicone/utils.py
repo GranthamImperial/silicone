@@ -185,6 +185,7 @@ def _f_factory(ys):
     # We want a generic function to return constants where required
     def f(x):
         return ys[0] * np.ones(np.size(x))
+
     return f
 
 
