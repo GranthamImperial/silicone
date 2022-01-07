@@ -6,7 +6,7 @@ master
 ------
 Added
 ~~~~~
-- (`#146 <https://github.com/GranthamImperial/silicone/pull/146>`_) Added the ability to do non-linear interpolation.
+- (`#146 <https://github.com/GranthamImperial/silicone/pull/146>`_) Added the ability to do non-linear interpolation by introducing :class:`Interpolation`.
 
 Changed
 ~~~~~~~
