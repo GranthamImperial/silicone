@@ -11,7 +11,7 @@ Added
 Changed
 ~~~~~~~
 - (`#142 <https://github.com/GranthamImperial/silicone/pull/142>`_) Sped up RMS closest
-- (`#146 <https://github.com/GranthamImperial/silicone/pull/146>`_) Deprecated the linear interpolator in favour of a generic interpolator.
+- (`#146 <https://github.com/GranthamImperial/silicone/pull/146>`_) Deprecated the linear interpolator :class:`LinearInterpolation` in favour of a generic interpolator :class:`Interpolation`.
 
 Fixed
 ~~~~~
