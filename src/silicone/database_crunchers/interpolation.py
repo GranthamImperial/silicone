@@ -52,7 +52,7 @@ class Interpolation(_DatabaseCruncher):
             also be any value accepted as the "kind" option in
             scipy.interpolate.interp1d, or "PchipInterpolator", in which case
             scipy.interpolate.PchipInterpolator is used. Care should be taken if using
-            non-default interp1d options, as they are either uneven or have "ringing"
+            non-default interp1d options, as they are either uneven or have "ringing".
 
         Returns
         -------

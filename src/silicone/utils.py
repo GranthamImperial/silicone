@@ -195,6 +195,29 @@ def _make_interpolator(
     """
     Constructs a linear interpolator for variable_follower as a function of
     (one) variable_leader for each timestep in the data.
+
+    Parameters
+    ----------
+    variable_follower : str
+        The variable we want to interpolate and compare to the value in
+        variable_leaders. the x variable.
+
+    variable_leaders : list[str]
+        The variable we want to use to construct the interpolation
+        (e.g. ``["Emissions|CO2"]``). The y variable.
+
+    wide_db : pd.DataFrame
+        The dataframe of every year in wide format, with both x and y values
+
+    time_col : str
+        The name of the time column in wide_db
+
+    interpkind : str
+        The style of interpolation. By default, linear, but can
+        also be any value accepted as the "kind" option in
+        scipy.interpolate.interp1d, or "PchipInterpolator", in which case
+        scipy.interpolate.PchipInterpolator is used. Care should be taken if using
+        non-default interp1d options, as they are either uneven or have "ringing".
     """
     derived_relationships = {}
 
