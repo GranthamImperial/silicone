@@ -8,6 +8,10 @@ Added
 ~~~~~
 - (`#146 <https://github.com/GranthamImperial/silicone/pull/146>`_) Added the ability to do non-linear interpolation by introducing :class:`Interpolation`.
 
+Added
+~~~~~
+- (`#145 <https://github.com/GranthamImperial/silicone/pull/145>`_) :meth:`silicone.database_crunchers.RMSClosest.infill_multiple` which allows the root-mean square difference to be calculated only once even if multiple variables are to be infilled
+
 Changed
 ~~~~~~~
 - (`#142 <https://github.com/GranthamImperial/silicone/pull/142>`_) Sped up RMS closest
