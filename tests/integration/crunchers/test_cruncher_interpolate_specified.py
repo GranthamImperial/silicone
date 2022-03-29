@@ -9,6 +9,7 @@ from base import _DataBaseCruncherTester
 from pyam import IamDataFrame
 
 from silicone.database_crunchers import (
+    Interpolation,
     LinearInterpolation,
     ScenarioAndModelSpecificInterpolate,
 )
@@ -95,6 +96,7 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
     def test_database_crunchers_with_filters(self, test_db, simple_df):
         test_db = self._adjust_time_style_to_match(test_db, simple_df)
         tcruncher_filtered = self.tclass(test_db)
+        tcruncher_generic = Interpolation(test_db)
         tcruncher_linear = LinearInterpolation(test_db)
         filtered_cruncher = tcruncher_filtered.derive_relationship(
             "Emissions|CO2", ["Emissions|CH4"]
@@ -104,7 +106,12 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
             "Emissions|CO2", ["Emissions|CH4"]
         )
         infilled_linear = linear_cruncher(simple_df)
+        generic_cruncher = tcruncher_generic.derive_relationship(
+            "Emissions|CO2", ["Emissions|CH4"], interpkind="linear"
+        )
+        infilled_generic = generic_cruncher(simple_df)
         pd.testing.assert_frame_equal(infilled_filter.data, infilled_linear.data)
+        pd.testing.assert_frame_equal(infilled_generic.data, infilled_linear.data)
 
     def test_derive_relationship(self, test_db):
         tcruncher = self.tclass(test_db)
@@ -185,7 +192,29 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         if add_col:
             assert all(append_df[add_col] == add_col_val)
 
-    @pytest.mark.parametrize("interpkind", ["linear", "quadratic", "nearest"])
+    @pytest.mark.parametrize(
+        "interpkind", ["linear", "quadratic", "nearest", "PchipInterpolator"]
+    )
+    def test_working_with_repeat_values(self, test_db, interpkind):
+        # Do the crunchers work when all values are the same in both the input and
+        # output?
+        rep_db = test_db.copy().data
+        rep_db["value"] = 10
+        rep_db_2 = rep_db.copy()
+        rep_db_2["value"] = 2
+        rep_db = IamDataFrame(rep_db)
+        rep_db_2 = IamDataFrame(rep_db_2)
+        tcruncher = self.tclass(IamDataFrame(rep_db))
+        lead = ["Emissions|CH4"]
+        follow = "Emissions|CO2"
+        res = tcruncher.derive_relationship(follow, lead, interpkind=interpkind)(
+            rep_db_2
+        )
+        assert np.allclose(res.data.value, 10)
+
+    @pytest.mark.parametrize(
+        "interpkind", ["linear", "quadratic", "nearest", "PchipInterpolator"]
+    )
     def test_numerical_relationship(self, interpkind):
         # Calculate the values using the cruncher for a fairly detailed dataset
         large_db = IamDataFrame(self.large_db.copy())
@@ -205,14 +234,25 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         ys = large_db.filter(variable="Emissions|CH4").data["value"].values
         ys = [np.mean(ys[xs == x]) for x in xs]
         # We must remove the duplicate value from the lists
-        interpolate_fn = scipy.interpolate.interp1d(xs[:-1], ys[:-1], kind=interpkind)
+        if interpkind != "PchipInterpolator":
+            interpolate_fn = scipy.interpolate.interp1d(
+                xs[:-1], ys[:-1], kind=interpkind
+            )
+        else:
+            xsort = np.argsort(xs[:-1])
+            interpolate_fn = scipy.interpolate.PchipInterpolator(
+                xs[xsort], np.array(ys)[xsort]
+            )
         xs_to_interp = to_find.filter(variable="Emissions|CO2").data["value"].values
 
         expected = interpolate_fn(xs_to_interp)
 
         assert all(crunched.data["value"].values == expected)
 
-    def test_extreme_values_relationship(self):
+    @pytest.mark.parametrize(
+        "interpkind", ["linear", "quadratic", "nearest", "PchipInterpolator"]
+    )
+    def test_extreme_values_relationship(self, interpkind):
         # Our cruncher has a closest-point extrapolation algorithm and therefore
         # should return the same values when filling for data outside tht limits of
         # its cruncher
@@ -220,7 +260,9 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         # Calculate the values using the cruncher for a fairly detailed dataset
         large_db = IamDataFrame(self.large_db.copy())
         tcruncher = self.tclass(large_db)
-        res = tcruncher.derive_relationship("Emissions|CH4", ["Emissions|CO2"])
+        res = tcruncher.derive_relationship(
+            "Emissions|CH4", ["Emissions|CO2"], interpkind=interpkind
+        )
         assert callable(res)
         crunched = res(large_db)
 

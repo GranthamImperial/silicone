@@ -181,14 +181,46 @@ def _remove_t0_from_wide_db(times_needed, _db):
             _db.loc[model, scenario, time] = _db.loc[model, scenario, time] - offset
 
 
+def _f_factory(ys):
+    # We want a generic function to return constants where required
+    def f(x):
+        return ys[0] * np.ones(np.size(x))
+
+    return f
+
+
 def _make_interpolator(
     variable_follower, variable_leader, wide_db, time_col, interpkind="linear"
 ):
     """
     Constructs a linear interpolator for variable_follower as a function of
     (one) variable_leader for each timestep in the data.
+
+    Parameters
+    ----------
+    variable_follower : str
+        The variable we want to interpolate and compare to the value in
+        variable_leaders. the x variable.
+
+    variable_leaders : list[str]
+        The variable we want to use to construct the interpolation
+        (e.g. ``["Emissions|CO2"]``). The y variable.
+
+    wide_db : pd.DataFrame
+        The dataframe of every year in wide format, with both x and y values
+
+    time_col : str
+        The name of the time column in wide_db
+
+    interpkind : str
+        The style of interpolation. By default, linear, but can
+        also be any value accepted as the "kind" option in
+        scipy.interpolate.interp1d, or "PchipInterpolator", in which case
+        scipy.interpolate.PchipInterpolator is used. Care should be taken if using
+        non-default interp1d options, as they are either uneven or have "ringing".
     """
     derived_relationships = {}
+
     for db_time, dbtdf in wide_db.groupby(time_col):
         xs = dbtdf[variable_leader].values.squeeze()
         ys = dbtdf[variable_follower].values.squeeze()
@@ -209,17 +241,26 @@ def _make_interpolator(
             ys = np.delete(ys, inds[1:])
         xs, ys = map(np.array, zip(*sorted(zip(xs, ys))))
         if xs.shape == (1,):
-            # If there is only one point, we must duplicate the data for interpolate
-            xs = np.append(xs, xs)
-            ys = np.append(ys, ys)
-        derived_relationships[db_time] = scipy.interpolate.interp1d(
-            xs,
-            ys,
-            bounds_error=False,
-            fill_value=(ys[0], ys[-1]),
-            assume_sorted=True,
-            kind=interpkind,
-        )
+            # If there is only one point, we must always return that point
+            derived_relationships[db_time] = _f_factory(ys)
+        else:
+            if interpkind != "PchipInterpolator":
+                derived_relationships[db_time] = scipy.interpolate.interp1d(
+                    xs,
+                    ys,
+                    bounds_error=False,
+                    fill_value=(ys[0], ys[-1]),
+                    assume_sorted=True,
+                    kind=interpkind,
+                )
+            else:
+                # We must add boundaries to the spline to prevent extrapolating larger values
+                xs = np.concatenate([xs[:1] - 1.0, xs, xs[-1:] + 1.0])
+                ys = np.append(np.append(ys[0], ys), ys[-1])
+                derived_relationships[db_time] = scipy.interpolate.PchipInterpolator(
+                    xs,
+                    ys,
+                )
     return derived_relationships
 
 
