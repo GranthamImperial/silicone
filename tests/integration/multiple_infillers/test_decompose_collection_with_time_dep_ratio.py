@@ -99,9 +99,9 @@ class TestGasDecomposeTimeDepRatio:
         tcruncher = self.tclass(test_db.filter(variable=variable_leaders, keep=False))
 
         error_msg = re.escape(
-            "Attempting to construct a consistent {} but none of the components "
-            "present".format(follower)
-        )
+                "Attempting to construct a consistent {} but none of the components "
+                "present in the right region".format(follower)
+            )
         with pytest.raises(ValueError, match=error_msg):
             tcruncher.infill_components(
                 follower,

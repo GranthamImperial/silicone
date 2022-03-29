@@ -150,11 +150,14 @@ class DecomposeCollectionTimeDepRatio:
             "The database and to_infill_db fed into this have inconsistent columns, "
             "which will prevent adding the data together properly."
         )
-        self._filtered_db = self._db.filter(variable=components)
+        self._filtered_db = self._db.filter(
+            variable=components,
+            region=to_infill_df.region,
+        )
         if self._filtered_db.empty:
             raise ValueError(
                 "Attempting to construct a consistent {} but none of the components "
-                "present".format(aggregate)
+                "present in the right region".format(aggregate)
             )
         if only_consistent_cases:
             # Remove cases with nans at some time.
@@ -196,7 +199,7 @@ class DecomposeCollectionTimeDepRatio:
         self._filtered_db.append(consistent_composite, inplace=True)
         cruncher = TimeDepRatio(self._filtered_db)
         if self._set_of_units_without_equiv(
-            to_infill_df
+            to_infill_df.filter(variable=aggregate)
         ) != self._set_of_units_without_equiv(consistent_composite):
             raise ValueError(
                 "The units of the aggregate variable are inconsistent between the "
