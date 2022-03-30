@@ -157,7 +157,7 @@ class DecomposeCollectionTimeDepRatio:
         if self._filtered_db.empty:
             raise ValueError(
                 "Attempting to construct a consistent {} but none of the components "
-                "present in the right region".format(aggregate)
+                "present in region {}".format(aggregate, to_infill_df.region)
             )
         if only_consistent_cases:
             # Remove cases with nans at some time.
