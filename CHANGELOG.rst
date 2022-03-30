@@ -16,6 +16,7 @@ Changed
 Fixed
 ~~~~~
 - (`#144 <https://github.com/GranthamImperial/silicone/pull/144>`_) RMS closest no longer causes :class:`pd.core.common.SettingWithCopyWarning` to be raised
+- (`#147 <https://github.com/GranthamImperial/silicone/pull/147>`_) Filter prevents including data from the wrong regions in :class:`DecomposeCollectionTimeDepRatio`. Notebook fixed to run with updates in python 3.8.
 
 [v1.2.0] - 28 Sept 2021
 -----------------------

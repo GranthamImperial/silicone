@@ -163,7 +163,7 @@ class TestDatabaseCruncherTimeDepRatio:
 
         exp = test_downscale_df.filter(variable="Emissions|HFC|C2F6").data
 
-        exp["value"] = 0
+        exp["value"] = 0.0
         exp["variable"] = "Emissions|HFC|C5F12"
         exp["unit"] = "units"
         exp = IamDataFrame(exp)

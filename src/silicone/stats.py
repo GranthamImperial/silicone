@@ -351,7 +351,7 @@ def calc_all_emissions_correlations(emms_df, years, output_dir):
             )
     # Complete variance calc by removing mean and dividing through
     all_rank_corr_var_df = (
-        all_rank_corr_var_df - len(years) * all_rank_corr_df ** 2
+        all_rank_corr_var_df - len(years) * all_rank_corr_df**2
     ) / (len(years) - 1)
     if output_dir is not None:
         all_rank_corr_var_df.to_csv(
