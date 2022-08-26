@@ -1,4 +1,5 @@
 import datetime as dt
+import logging
 import re
 
 import numpy as np
@@ -279,7 +280,45 @@ class TestDatabaseCruncherExtendLatestTimeQuantile:
             append_ts[2050], [min(n + 2, 102) for n in append_ts[2015]]
         )
 
-    def test_time_val_warning(self, test_db, test_downscale_df):
+    def test_random_value_evolution_behaviour(self, range_df, sparse_df, caplog):
+        variable = "Emissions|CO2"
+        randdf = range_df.timeseries()
+        np.random.seed(10)
+        randdf = IamDataFrame(randdf * np.random.random() * 2)
+        target_df = IamDataFrame(sparse_df)
+        tcruncher = self.tclass(randdf)
+        filler = tcruncher.derive_relationship(variable)
+        with caplog.at_level(
+            logging.INFO, logger="silicone.time_projectors.extend_latest_time_quantile"
+        ):
+            res = filler(target_df)
+        assert len(caplog.record_tuples) == 0
+        randts = randdf.timeseries()
+        target_dfts = target_df.timeseries()
+        rests = res.timeseries()
+        start_year = 2015
+        quants0 = [
+            sum(x <= randts[start_year]) / len(randts[start_year])
+            for x in target_dfts[start_year]
+        ]
+        for year in res.year:
+            quant1 = [sum(x <= randts[year]) / len(randts[year]) for x in rests[year]]
+            assert quants0 == quant1
+        # And if we have one time-point missing we should get a warning error message
+        tcruncher = self.tclass(randdf.filter(year=2050, scenario="*9*", keep=False))
+        filler = tcruncher.derive_relationship(variable)
+        with caplog.at_level(
+            logging.INFO, logger="silicone.time_projectors.extend_latest_time_quantile"
+        ):
+            res = filler(target_df)
+        assert len(caplog.record_tuples) == 1
+        assert (
+            caplog.record_tuples[0][2]
+            == "The input database may be inconsistent at later times"
+        )
+        assert res.timeseries().isna().sum().sum() == 0
+
+    def test_time_val_error(self, test_db, test_downscale_df):
         tcruncher = self.tclass(test_db)
         variable = "Emissions|HFC|C2F6"
         filler = tcruncher.derive_relationship(variable=variable)

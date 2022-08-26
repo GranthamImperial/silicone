@@ -157,6 +157,15 @@ class ExtendLatestTimeQuantile:
                 quantiles = [0.5 if np.isnan(q) else q for q in quantiles]
             output_ts = target_df.timeseries()
             iamdf_ts = iamdf.timeseries()
+            if (
+                iamdf_ts.loc[:, later_times]
+                .dropna(axis=0, how="all")
+                .isna()
+                .sum()
+                .sum()
+                != 0
+            ):
+                logger.warning("The input database may be inconsistent at later times")
             for time in later_times:
                 output_ts[time] = calc_quantiles_of_data(
                     iamdf_ts[time], quantiles, smoothing, weighting, to_quantile=False
