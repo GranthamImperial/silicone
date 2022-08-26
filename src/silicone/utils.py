@@ -456,7 +456,7 @@ def download_or_load_sr15(filename, valid_model_ids="*"):
     filename : str
         Filename in which to look for/save the data
     valid_model_ids : str
-        Models to return from date
+        Models to return from data
 
     Returns
     -------
