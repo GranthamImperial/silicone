@@ -199,7 +199,7 @@ class RMSClosest(_DatabaseCruncher):
                 tmp.loc[:, "scenario"] = scenario
                 for col in in_iamdf.extra_cols:
                     tmp[col] = lead_var_mod_scen.index.get_level_values(col).tolist()[0]
-                output_ts_list.append(tmp)
+                output_ts_list.append(pyam.IamDataFrame(tmp))
             return pyam.concat(output_ts_list)
 
         return filler

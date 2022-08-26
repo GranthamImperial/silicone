@@ -536,9 +536,9 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         scen_c_df["scenario"] = "scen_c"
         if add_col:
             scen_c_df[add_col] = add_col_val
-            scen_c_df = IamDataFrame(scen_c_df)
             scen_b_df[add_col] = add_col_val
-            scen_b_df = IamDataFrame(scen_b_df)
+        scen_c_df = IamDataFrame(scen_c_df)
+        scen_b_df = IamDataFrame(scen_b_df)
         exp = concat([scen_b_df, scen_c_df])
 
         pd.testing.assert_frame_equal(
