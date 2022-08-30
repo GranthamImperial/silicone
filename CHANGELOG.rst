@@ -10,12 +10,13 @@ Added
 
 Changed
 ~~~~~~~
-- (`#149 <https://github.com/GranthamImperial/silicone/pull/149>`_) Sped up RMS closest
+- (`#149 <https://github.com/GranthamImperial/silicone/pull/149>`_) Checked consistency of time extender database before extending at constant quantiles.
 - (`#142 <https://github.com/GranthamImperial/silicone/pull/142>`_) Sped up RMS closest
 - (`#146 <https://github.com/GranthamImperial/silicone/pull/146>`_) Deprecated the linear interpolator :class:`LinearInterpolation` in favour of a generic interpolator :class:`Interpolation`.
 
 Fixed
 ~~~~~
+- (`#149 <https://github.com/GranthamImperial/silicone/pull/149>`_) Ensured RMS closest works with the latest version of pyam
 - (`#144 <https://github.com/GranthamImperial/silicone/pull/144>`_) RMS closest no longer causes :class:`pd.core.common.SettingWithCopyWarning` to be raised
 - (`#147 <https://github.com/GranthamImperial/silicone/pull/147>`_) Filter prevents including data from the wrong regions in :class:`DecomposeCollectionTimeDepRatio`. Notebook fixed to run with updates in python 3.8.
 
