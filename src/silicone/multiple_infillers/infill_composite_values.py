@@ -63,8 +63,12 @@ def infill_composite_values(df, composite_dic=None):
     # Disable core logging to prevent warnings about empty filters
     logging.getLogger("pyam.core").setLevel(logging.CRITICAL)
     for composite, composite_variables in composite_dic.items():
-        if df.filter(variable=composite_variables).data.empty:
-            logger.warning("No data found for {}".format(composite_variables))
+        if isinstance(composite_variables, dict):
+            question_var = composite_variables.keys()
+        else:
+            question_var = composite_variables
+        if df.filter(variable=question_var).data.empty:
+            logger.warning("No data found for {}".format(question_var))
             to_delete.append(composite)
 
     logging.getLogger("pyam.core").setLevel(logging.WARNING)
