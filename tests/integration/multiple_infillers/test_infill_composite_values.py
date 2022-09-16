@@ -73,6 +73,17 @@ class TestInfillCompositeValues:
             )
         assert len(caplog.record_tuples) == 0
         with caplog.at_level("DEBUG"):
+            infill_composite_values(
+                larger_df,
+                composite_dic={
+                    "Emissions|CO2": {
+                        "Emissions|CO2|AFOLU": 1,
+                        "Emissions|CO2|Energy and Industrial applications": 1,
+                    }
+                },
+            )
+        assert len(caplog.record_tuples) == 0
+        with caplog.at_level("DEBUG"):
             infill_composite_values(larger_df)
         # Warnings are reported by the system for non-available data.
         assert caplog.record_tuples[0][2] == "No data found for {}".format(
