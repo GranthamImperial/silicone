@@ -2,8 +2,9 @@ Changelog
 =========
 
 
-master
-------
+[v1.3.0] - 14 Oct 2022
+----------------------
+
 Added
 ~~~~~
 - (`#146 <https://github.com/GranthamImperial/silicone/pull/146>`_) Added the ability to do non-linear interpolation by introducing :class:`Interpolation`.
@@ -13,6 +14,7 @@ Changed
 - (`#149 <https://github.com/GranthamImperial/silicone/pull/149>`_) Checked consistency of time extender database before extending at constant quantiles.
 - (`#142 <https://github.com/GranthamImperial/silicone/pull/142>`_) Sped up RMS closest
 - (`#146 <https://github.com/GranthamImperial/silicone/pull/146>`_) Deprecated the linear interpolator :class:`LinearInterpolation` in favour of a generic interpolator :class:`Interpolation`.
+- (`#150 <https://github.com/GranthamImperial/silicone/pull/150>`_) Added more info when returning an error message in multiple infillers.
 
 Fixed
 ~~~~~
