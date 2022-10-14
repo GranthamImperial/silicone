@@ -289,7 +289,11 @@ def _perform_crunch_and_check(
     cruncher = type_of_cruncher(df)
     filled = [to_fill]
     for req_var in tqdm.tqdm(required_variables, desc="Filling required variables"):
-        infilled = _infill_variable(cruncher, req_var, leaders, to_fill, **kwargs)
+        try:
+            infilled = _infill_variable(cruncher, req_var, leaders, to_fill, **kwargs)
+        except ValueError as err:
+            warnings.warn(f"Error encountered when infilling {req_var}")
+            raise ValueError(err)
         if infilled:
             filled.append(infilled)
 
