@@ -80,7 +80,9 @@ class RMSClosest(_DatabaseCruncher):
         if not weighting:
             weighting = {variab: 1 for variab in variable_leaders}
         if any(var not in weighting.keys() for var in variable_leaders):
-            raise ValueError("Weighting does not include all lead variables.")
+            error_msg = "Weighting does not include all lead variables."
+            logger.error(error_msg)  # Added structured logging for error
+            raise ValueError(error_msg)
         iamdf_lead, iamdf_follower = _filter_for_overlap(
             iamdf_lead,
             iamdf_follower,

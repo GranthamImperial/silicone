@@ -101,8 +101,7 @@ class ConstantRatio(_DatabaseCruncher):
                 warn_str = "Note that the lead variable {} goes negative.".format(
                     variable_leaders
                 )
-                logger.warning(warn_str)
-                print(warn_str)
+                logger.warning(warn_str)  # Use logger for warning
             assert (
                 output_ts["unit"].nunique() == 1
             ), "There are multiple or no units for the lead variable."
