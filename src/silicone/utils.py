@@ -101,23 +101,26 @@ def find_matching_scenarios(
         Not all required timepoints are present in the database we crunched, we have
          `{dates we have}` but you passed in `{dates we need}`."
     """
-    assert all(
-        x in options_df.variable for x in [variable_follower] + variable_leaders
-    ), "Not all required data is present in compared series"
+    # Check all required variables are present
+    missing_vars = [x for x in [variable_follower] + variable_leaders if x not in options_df.variable]
+    if missing_vars:
+        logger.error(f"Not all required data is present in compared series. Missing: {missing_vars}")
+        raise AssertionError(f"Not all required data is present in compared series. Missing: {missing_vars}")
+
     assert len(variable_leaders) == 1, "This is only calibrated to work with one leader"
     time_col = options_df.time_col
-    assert (
-        to_compare_df.time_col == time_col
-    ), "The time column in the data to classify does not match the cruncher"
+    if to_compare_df.time_col != time_col:
+        logger.error(f"The time column in the data to classify ({to_compare_df.time_col}) does not match the cruncher ({time_col})")
+        raise AssertionError(f"The time column in the data to classify ({to_compare_df.time_col}) does not match the cruncher ({time_col})")
+
     times_needed = set(to_compare_df.data[time_col])
-    if any(x not in options_df.data[time_col].values for x in times_needed):
+    missing_times = [x for x in times_needed if x not in options_df.data[time_col].values]
+    if missing_times:
+        logger.error(f"Not all required timepoints are present in the database we crunched. Missing: {missing_times}. Available: {list(set(options_df.data[time_col]))}")
         raise ValueError(
-            "Not all required timepoints are present in the database we "
-            "crunched, we have `{}` but you passed in {}.".format(
-                list(set(options_df.data[time_col])),
-                list(set(to_compare_df.data[time_col])),
-            )
+            f"Not all required timepoints are present in the database we crunched. Missing: {missing_times}. Available: {list(set(options_df.data[time_col]))}"
         )
+
     assert (
         len(times_needed) > 1 or use_change_not_abs == False
     ), "We need data from multiple times in order to calculate a difference."

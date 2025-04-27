@@ -190,8 +190,7 @@ class TimeDepRatio(_DatabaseCruncher):
                         variable_leaders
                     )
                 )
-                logger.warning(warn_str)
-                print(warn_str)
+                logger.warning(warn_str)  # Use logger for warning
             times_needed = set(in_iamdf.data[in_iamdf.time_col])
             if any(
                 [
