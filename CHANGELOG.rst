@@ -1,6 +1,12 @@
 Changelog
 =========
 
+[v1.3.0] - 27 Apr 2025
+----------------------
+
+changed
+~~~~~~
+- (`#151 <https://github.com/GranthamImperial/silicone/pull/151>`_) Improved error handling and structured logging in ratio-based crunchers and utilities.
 
 [v1.3.0] - 14 Oct 2022
 ----------------------
