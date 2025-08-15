@@ -9,7 +9,7 @@ import scipy.interpolate
 from pyam import IamDataFrame
 
 from ..stats import rolling_window_find_quantiles
-from ..utils import _get_unit_of_variable
+from ..utils import _get_unit_of_variable, _remove_missing_values
 from .base import _DatabaseCruncher
 
 logger = logging.getLogger(__name__)
@@ -177,10 +177,7 @@ class QuantileRollingWindows(_DatabaseCruncher):
         wide_db = self._db.filter(
             variable=[variable_follower] + variable_leaders
         ).pivot_table(index=idx, columns=columns, aggfunc="sum")
-
-        # make sure we don't have empty strings floating around (pyam bug?)
-        wide_db = wide_db.applymap(lambda x: np.nan if isinstance(x, str) else x)
-        wide_db = wide_db.dropna(axis=0)
+        wide_db = _remove_missing_values(wide_db)
 
         derived_relationships = {}
         for db_time, dbtdf in wide_db.groupby(db_time_col):

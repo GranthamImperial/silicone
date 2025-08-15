@@ -277,10 +277,8 @@ def _make_wide_db(use_db):
         use_db.data.groupby(idx + ["variable"]).count().max().max() <= 1
     ), "The table contains multiple entries with the same model and scenario"
     use_db = use_db.pivot_table(index=idx, columns="variable", aggfunc="sum")
-    # make sure we don't have empty strings floating around (pyam bug?)
-    use_db = use_db.applymap(lambda x: np.nan if isinstance(x, str) else x)
-    use_db = use_db.dropna(axis=0)
-    return use_db
+
+    return _remove_missing_values(use_db)
 
 
 def _get_unit_of_variable(df, variable, multiple_units="raise"):
@@ -613,3 +611,26 @@ def _make_weighting_series(df, weights):
     for (key, val) in weights.items():
         result[key[0], key[1]] = val
     return result
+
+
+def _remove_missing_values(df):
+    """
+    Remove missing values and empty strings from a DataFrame.
+
+    Parameters
+    ----------
+    df: :obj:`pd.DataFrame`
+        A DataFrame that may contain empty strings.
+
+    Returns
+    -------
+    :obj:`pd.DataFrame`
+        A dataframe with the rows containing empty strings or missing values removed
+    """
+    # make sure we don't have empty strings floating around (pyam bug?)
+    if hasattr(df, "map"):
+        df = df.map(lambda x: np.nan if isinstance(x, str) else x)
+    else:
+        # Deprecation: applymap has been deprecated in pandas 2.1
+        df = df.applymap(lambda x: np.nan if isinstance(x, str) else x)
+    return df.dropna(axis=0)
