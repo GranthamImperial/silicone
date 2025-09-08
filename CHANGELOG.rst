@@ -1,6 +1,13 @@
 Changelog
 =========
 
+main
+----
+
+- - (`#156 <https://github.com/GranthamImperial/silicone/pull/156>`_) Fix CI
+
+
+
 [v1.3.0] - 27 Apr 2025
 ----------------------
 
