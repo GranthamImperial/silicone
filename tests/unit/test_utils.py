@@ -147,10 +147,13 @@ def test_find_matching_scenarios_complicated(options, expected):
 
 
 def test_find_matching_scenarios_dual_region():
-    multiregion_df = simple_df.data.append(
-        pd.DataFrame(
-            [[_mc, _sa, "Country", _eco2, _gtc, 2010, 2]],
-            columns=_msrvu + [simple_df.time_col, "value"],
+    multiregion_df = pd.concat(
+        (
+            simple_df.data,
+            pd.DataFrame(
+                [[_mc, _sa, "Country", _eco2, _gtc, 2010, 2]],
+                columns=_msrvu + [simple_df.time_col, "value"],
+            ),
         )
     )
     multiregion_df = pyam.IamDataFrame(multiregion_df)

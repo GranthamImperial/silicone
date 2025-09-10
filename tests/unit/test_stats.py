@@ -372,7 +372,7 @@ def test_calc_all_emissions_numerical(tmpdir):
     # Now do a test for just the variance. This requires multiple years
     numerical_df = numerical_df.data
     numerical_df["value"] += 10
-    numerical_df = numerical_df.append(simple_df.data)
+    numerical_df = pd.concat((numerical_df, simple_df.data))
     numerical_df["year"] = numerical_df["year"].map(lambda x: int(x))
     numerical_df = pyam.IamDataFrame(numerical_df)
     rank_cors = []

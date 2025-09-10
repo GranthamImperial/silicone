@@ -203,7 +203,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         equal_df = unequal_df.filter(model="model_a")
         invert_sign = equal_df.filter(variable=lead).data
         invert_sign["value"] = -1 * invert_sign["value"]
-        invert_sign = invert_sign.append(equal_df.filter(variable=follow).data)
+        invert_sign = pd.concat((invert_sign, equal_df.filter(variable=follow).data))
         invert_sign["model"] = "negative_model"
         invert_sign = IamDataFrame(invert_sign)
         equal_df.append(invert_sign, inplace=True)
