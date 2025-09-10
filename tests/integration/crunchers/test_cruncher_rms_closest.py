@@ -324,20 +324,18 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
                 "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
             )
 
-    def test_relationship_complex_usage(self, larger_df, test_downscale_df):
+    def test_relationship_complex_usage(self, larger_df, test_downscale_df, recwarn):
         tcruncher = self.tclass(larger_df)
 
-        with pytest.warns(None) as record:
-            filler = tcruncher.derive_relationship(
-                "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
-            )
-
-            res = filler(test_downscale_df)
+        filler = tcruncher.derive_relationship(
+            "Emissions|HFC|C5F12", ["Emissions|HFC|C2F6"]
+        )
+        res = filler(test_downscale_df)
 
         # check no copy warning was raised
         assert not any(
-            isinstance(w.message, pd.core.common.SettingWithCopyWarning)
-            for w in record.list
+            isinstance(warning.message, pd.errors.SettingWithCopyWarning)
+            for warning in recwarn
         )
 
         np.testing.assert_allclose(
