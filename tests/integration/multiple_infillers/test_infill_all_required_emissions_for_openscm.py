@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pyam
 import pytest
+from pyam import assert_iamframe_equal
 
 from silicone.database_crunchers.constant_ratio import ConstantRatio
 from silicone.multiple_infillers.infill_all_required_emissions_for_openscm import (
@@ -62,7 +63,9 @@ class TestGasDecomposeTimeDepRatio:
             output_timesteps=output_times,
             required_variables_list=required_variables_list,
         )
-        assert infilled.data.equals(test_db.data)
+        infilled.meta = pd.DataFrame()
+        test_db.meta = pd.DataFrame()
+        assert_iamframe_equal(infilled, test_db)
 
     def test_infillallrequiredvariables_warning(self, test_db):
         output_times = list(set(test_db[test_db.time_col]))
@@ -115,10 +118,14 @@ class TestGasDecomposeTimeDepRatio:
             infilled_data_prefix=infilled_data_prefix,
             output_timesteps=output_times,
         )
-        assert not output_df.filter(
-            variable=required_variables_list, keep=False
-        ).data.equals(to_fill.data)
-        assert output_df.data.equals(test_db.data)
+
+        with pytest.raises(AssertionError):
+            assert_iamframe_equal(
+                output_df.filter(variable=required_variables_list, keep=False), to_fill
+            )
+        output_df.meta = pd.DataFrame()
+        test_db.meta = pd.DataFrame()
+        assert_iamframe_equal(output_df, test_db)
 
     def test_infillallrequiredvariables_check_results(self, test_db):
         required_variables_list = ["HFC|C5F12"]
@@ -147,7 +154,9 @@ class TestGasDecomposeTimeDepRatio:
         assert not output_df.filter(
             variable=required_variables_list, keep=False
         ).data.equals(to_fill.data)
-        assert output_df.data.equals(test_db.data)
+        output_df.meta = pd.DataFrame()
+        test_db.meta = pd.DataFrame()
+        assert_iamframe_equal(output_df, test_db)
 
     def test_infillallrequiredvariables_check_results_use_old_prefix(self, test_db):
         required_variables_list = ["HFC|C5F12"]
@@ -177,7 +186,9 @@ class TestGasDecomposeTimeDepRatio:
         assert not output_df.filter(
             variable=required_variables_list, keep=False
         ).data.equals(to_fill.data)
-        assert output_df.data.equals(test_db.data)
+        output_df.meta = pd.DataFrame()
+        test_db.meta = pd.DataFrame()
+        assert_iamframe_equal(output_df, test_db)
 
     def test_infillallrequiredvariables_check_results_fails_wrong_times(self, test_db):
         # We do not have data for all the default times, so this fails
