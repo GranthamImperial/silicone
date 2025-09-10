@@ -6,3 +6,6 @@ __version__ = get_versions()["version"]
 del get_versions
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
+
+from . import _version
+__version__ = _version.get_versions()['version']
