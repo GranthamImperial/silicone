@@ -628,8 +628,9 @@ def test_get_weights_wrong_names():
     wrong_name = "wrong name"
     maps = {("model_a", _sa): 2, (_mc, wrong_name): 3}
     msg = re.escape(
-        "Not all the weighting values are found in the database. We "
-        "lack {}".format([(_mc, wrong_name)])
+        "Not all the weighting values are found in the database. We lack {}".format(
+            [(_mc, wrong_name)]
+        )
     )
     with pytest.raises(ValueError, match=msg):
         _make_weighting_series(test_db.timeseries(), maps)

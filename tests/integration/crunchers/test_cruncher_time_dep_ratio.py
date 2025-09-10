@@ -69,8 +69,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
     def test_derive_relationship_error_multiple_lead_vars(self, test_db):
         tcruncher = self.tclass(test_db)
         error_msg = re.escape(
-            "For `TimeDepRatio`, ``variable_leaders`` should only "
-            "contain one variable"
+            "For `TimeDepRatio`, ``variable_leaders`` should only contain one variable"
         )
         with pytest.raises(ValueError, match=error_msg):
             tcruncher.derive_relationship("Emissions|HFC|C5F12", ["a", "b"])
@@ -413,45 +412,39 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             res = filler(test_downscale_df)
 
     @pytest.mark.parametrize("consistent_cases", [True, False])
-    def test_multiple_units_breaks_infiller_follower(
-        self, test_db, test_downscale_df, consistent_cases
-    ):
+    def test_multiple_units_breaks_infiller_follower(self, test_db, consistent_cases):
         test_db = test_db.data
         test_db["unit"].iloc[2] = "bad units"
         test_db = IamDataFrame(test_db)
         if consistent_cases:
             error_str = (
-                "No data is complete enough to use in the time-dependent "
-                "ratio cruncher"
+                "No data is complete enough to use in the time-dependent ratio cruncher"
             )
         else:
             error_str = "There are multiple/no units in follower data"
 
         with pytest.raises(ValueError, match=error_str):
             tcruncher = self.tclass(test_db)
-            filler = tcruncher.derive_relationship(
+            tcruncher.derive_relationship(
                 "Emissions|HFC|C5F12",
                 ["Emissions|HFC|C2F6"],
                 only_consistent_cases=consistent_cases,
             )
 
     @pytest.mark.parametrize("consistent_cases", [True, False])
-    def test_multiple_units_breaks_infiller_leader(
-        self, test_db, test_downscale_df, consistent_cases
-    ):
+    def test_multiple_units_breaks_infiller_leader(self, test_db, consistent_cases):
         test_db = test_db.data
         test_db["unit"].iloc[0] = "bad units"
         test_db = IamDataFrame(test_db)
         if consistent_cases:
             error_str = (
-                "No data is complete enough to use in the time-dependent "
-                "ratio cruncher"
+                "No data is complete enough to use in the time-dependent ratio cruncher"
             )
         else:
             error_str = "There are multiple/no units for the leader data."
         with pytest.raises(ValueError, match=error_str):
             tcruncher = self.tclass(test_db)
-            filler = tcruncher.derive_relationship(
+            tcruncher.derive_relationship(
                 "Emissions|HFC|C5F12",
                 ["Emissions|HFC|C2F6"],
                 only_consistent_cases=consistent_cases,
