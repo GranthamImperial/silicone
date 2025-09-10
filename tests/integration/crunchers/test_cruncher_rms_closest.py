@@ -465,9 +465,7 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
     def test_derive_relationship_error_multiple_lead_vars(self, test_db):
         tcruncher = self.tclass(test_db)
         leaders = ["a", "b"]
-        error_msg = re.escape(
-            "No data for `variable_leaders` (['a', 'b']) in database".format(leaders)
-        )
+        error_msg = re.escape("No data for `variable_leaders` (['a', 'b']) in database")
         with pytest.raises(ValueError, match=error_msg):
             tcruncher.derive_relationship("Emissions|HFC|C5F12", leaders)
 
