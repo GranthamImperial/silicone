@@ -8,4 +8,5 @@ del get_versions
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 from . import _version
-__version__ = _version.get_versions()['version']
+
+__version__ = _version.get_versions()["version"]

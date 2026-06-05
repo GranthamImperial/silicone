@@ -102,21 +102,37 @@ def find_matching_scenarios(
          `{dates we have}` but you passed in `{dates we need}`."
     """
     # Check all required variables are present
-    missing_vars = [x for x in [variable_follower] + variable_leaders if x not in options_df.variable]
+    missing_vars = [
+        x
+        for x in [variable_follower] + variable_leaders
+        if x not in options_df.variable
+    ]
     if missing_vars:
-        logger.error(f"Not all required data is present in compared series. Missing: {missing_vars}")
-        raise AssertionError(f"Not all required data is present in compared series. Missing: {missing_vars}")
+        logger.error(
+            f"Not all required data is present in compared series. Missing: {missing_vars}"
+        )
+        raise AssertionError(
+            f"Not all required data is present in compared series. Missing: {missing_vars}"
+        )
 
     assert len(variable_leaders) == 1, "This is only calibrated to work with one leader"
     time_col = options_df.time_col
     if to_compare_df.time_col != time_col:
-        logger.error(f"The time column in the data to classify ({to_compare_df.time_col}) does not match the cruncher ({time_col})")
-        raise AssertionError(f"The time column in the data to classify ({to_compare_df.time_col}) does not match the cruncher ({time_col})")
+        logger.error(
+            f"The time column in the data to classify ({to_compare_df.time_col}) does not match the cruncher ({time_col})"
+        )
+        raise AssertionError(
+            f"The time column in the data to classify ({to_compare_df.time_col}) does not match the cruncher ({time_col})"
+        )
 
     times_needed = set(to_compare_df.data[time_col])
-    missing_times = [x for x in times_needed if x not in options_df.data[time_col].values]
+    missing_times = [
+        x for x in times_needed if x not in options_df.data[time_col].values
+    ]
     if missing_times:
-        logger.error(f"Not all required timepoints are present in the database we crunched. Missing: {missing_times}. Available: {list(set(options_df.data[time_col]))}")
+        logger.error(
+            f"Not all required timepoints are present in the database we crunched. Missing: {missing_times}. Available: {list(set(options_df.data[time_col]))}"
+        )
         raise ValueError(
             f"Not all required timepoints are present in the database we crunched. Missing: {missing_times}. Available: {list(set(options_df.data[time_col]))}"
         )
