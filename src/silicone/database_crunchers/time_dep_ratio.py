@@ -116,21 +116,21 @@ class TimeDepRatio(_DatabaseCruncher):
             variable_follower, variable_leaders
         )
 
-        data_follower_unit = np.unique(iamdf_follower.data["unit"].values)
-        if data_follower_unit.size == 1:
-            data_follower_unit = data_follower_unit[0]
-        else:
+        data_follower_unit = iamdf_follower.data["unit"].dropna().unique()
+        if len(data_follower_unit) != 1:
             raise ValueError("There are multiple/no units in follower data")
+        data_follower_unit = data_follower_unit[0]
         data_follower_time_col = iamdf_follower.time_col
         iamdf_leader = self._filtered_db.filter(variable=variable_leaders[0])
         data_leader = iamdf_leader.timeseries()
-        if iamdf_leader["unit"].nunique() != 1:
+        leader_units = iamdf_leader.data["unit"].dropna().unique()
+        if len(leader_units) != 1:
             raise ValueError("There are multiple/no units for the leader data.")
         if data_follower.size != data_leader.size:
             error_msg = "The follower and leader data have different sizes"
             raise ValueError(error_msg)
         # Calculate the ratios to use
-        all_times = np.unique(iamdf_leader.data[iamdf_leader.time_col])
+        all_times = sorted(iamdf_leader.data[iamdf_leader.time_col].unique())
         scaling = pd.DataFrame(index=all_times, columns=["pos", "neg"])
         if same_sign:
             # We want to have separate positive and negative answers. We calculate a

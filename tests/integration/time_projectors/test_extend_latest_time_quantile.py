@@ -229,11 +229,11 @@ class TestDatabaseCruncherExtendLatestTimeQuantile:
         infilled_test = cruncher(test_db)
         assert infilled_filt.equals(infilled_test)
         times = [
-            time
-            for time in infiller_df[infiller_df.time_col].unique()
-            if time > max(infill_df[infill_df.time_col])
-        ]
-        assert all(infilled_filt[infilled_filt.time_col].unique() == times)
+                time
+                for time in infiller_df[infiller_df.time_col].unique()
+                if time > max(infill_df[infill_df.time_col])
+            ]
+        assert sorted(infilled_filt[infilled_filt.time_col].unique()) == times
         if len(extra_info) == 1:
             # If there is only one row in the infiller dataframe, we return that row.
             expected = IamDataFrame(extra_info).filter(year=[2020, 2030]).data["value"]

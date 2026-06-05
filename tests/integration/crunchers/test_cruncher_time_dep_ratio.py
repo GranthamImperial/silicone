@@ -413,8 +413,13 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
 
     @pytest.mark.parametrize("consistent_cases", [True, False])
     def test_multiple_units_breaks_infiller_follower(self, test_db, consistent_cases):
+        time_col = test_db.time_col
         test_db = test_db.data
-        test_db.at[test_db.index[2], "unit"] = "bad units"
+        follower_mask = (
+            (test_db["variable"] == "Emissions|HFC|C5F12")
+            & (test_db[time_col] == test_db[time_col].iloc[0])
+        )
+        test_db.loc[follower_mask, "unit"] = "bad units"
         test_db = IamDataFrame(test_db)
         if consistent_cases:
             error_str = (
