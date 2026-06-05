@@ -279,8 +279,7 @@ def _make_interpolator(
                 xs = np.concatenate([xs[:1] - 1.0, xs, xs[-1:] + 1.0])
                 ys = np.append(np.append(ys[0], ys), ys[-1])
                 derived_relationships[db_time] = scipy.interpolate.PchipInterpolator(
-                    xs,
-                    ys,
+                    xs, ys,
                 )
     return derived_relationships
 

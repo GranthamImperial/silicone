@@ -123,11 +123,7 @@ class ExtendLatestTimeQuantile:
 
             key_timepoint = max(target_df.data[infiller_time_col])
             later_times = sorted(
-                [
-                    t
-                    for t in iamdf.data[infiller_time_col].unique()
-                    if t > key_timepoint
-                ]
+                [t for t in iamdf.data[infiller_time_col].unique() if t > key_timepoint]
             )
             if not later_times:
                 raise ValueError(

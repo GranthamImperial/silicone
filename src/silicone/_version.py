@@ -131,9 +131,7 @@ def run_command(
 
 
 def versions_from_parentdir(
-    parentdir_prefix: str,
-    root: str,
-    verbose: bool,
+    parentdir_prefix: str, root: str, verbose: bool,
 ) -> Dict[str, Any]:
     """Try to determine the version from the parent directory name.
 
@@ -194,9 +192,7 @@ def git_get_keywords(versionfile_abs: str) -> Dict[str, str]:
 
 @register_vcs_handler("git", "keywords")
 def git_versions_from_keywords(
-    keywords: Dict[str, str],
-    tag_prefix: str,
-    verbose: bool,
+    keywords: Dict[str, str], tag_prefix: str, verbose: bool,
 ) -> Dict[str, Any]:
     """Get version information from git keywords."""
     if "refnames" not in keywords:

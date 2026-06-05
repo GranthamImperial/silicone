@@ -151,8 +151,7 @@ class DecomposeCollectionTimeDepRatio:
             "which will prevent adding the data together properly."
         )
         self._filtered_db = self._db.filter(
-            variable=components,
-            region=to_infill_df.region,
+            variable=components, region=to_infill_df.region,
         )
         if self._filtered_db.empty:
             raise ValueError(
