@@ -267,8 +267,10 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
                 columns=_msrvu + [time],
             )
         )
-        test_db.data.loc[test_db.data["value"] > 50, "value"] = (
-            test_db.data.loc[test_db.data["value"] > 50, "value"] / 100
+        test_db.data["value"] = np.where(
+            test_db.data["value"] > 50,
+            test_db.data["value"] / 100,
+            test_db.data["value"]
         )
         if test_db.time_col == "year":
             test_db.filter(year=int(time), inplace=True)
