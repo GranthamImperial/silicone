@@ -228,7 +228,9 @@ def test_find_matching_scenarios_differential():
     # But if we add a small amount to only one point in the differential, it will
     # be downgraded
     df_to_test_mod = df_to_test.data.copy()
-    df_to_test_mod["value"].iloc[0] = df_to_test_mod["value"].iloc[0] + 0.1
+    df_to_test_mod.loc[df_to_test_mod.index[0], "value"] = (
+        df_to_test_mod.loc[df_to_test_mod.index[0], "value"] + 0.1
+    )
     df_to_test_mod = pyam.IamDataFrame(df_to_test_mod)
     all_data = find_matching_scenarios(
         df_to_test_mod,
@@ -243,7 +245,9 @@ def test_find_matching_scenarios_differential():
     assert all_data[0][0] == ("high_model", "right_scenario")
     assert all_data[0][1] != all_data[1][1]
     df_to_test_mod = df_to_test_mod.data
-    df_to_test_mod["value"].iloc[0] = df_to_test_mod["value"].iloc[0] - 0.6
+    df_to_test_mod.loc[df_to_test_mod.index[0], "value"] = (
+        df_to_test_mod.loc[df_to_test_mod.index[0], "value"] - 0.6
+    )
     df_to_test_mod = pyam.IamDataFrame(df_to_test_mod)
     all_data = find_matching_scenarios(
         df_to_test_mod,
@@ -375,7 +379,7 @@ def test_return_cases_which_consistently_split_one_fails(check_aggregate_df):
     limited_check_agg = check_aggregate_df.filter(
         variable="Primary Energy*", keep=False
     ).data
-    limited_check_agg["value"].iloc[0] = 41
+    limited_check_agg.loc[limited_check_agg.index[0], "value"] = 41
     limited_check_agg = pyam.IamDataFrame(limited_check_agg)
     cases = return_cases_which_consistently_split(limited_check_agg, "*CO2", ["*CO2*"])
     # This time do not match the initial case, so we have to remove that to do the
@@ -392,7 +396,7 @@ def test_convert_units_to_mtco2_equiv_fails_with_month_units(check_aggregate_df)
     limited_check_agg = check_aggregate_df.filter(
         variable="Primary Energy*", keep=False
     ).data
-    limited_check_agg["unit"].iloc[0] = "Mt CH4/mo"
+    limited_check_agg.loc[limited_check_agg.index[0], "unit"] = "Mt CH4/mo"
     limited_check_agg = pyam.IamDataFrame(limited_check_agg)
     err_msg = "'mo' is not defined in the unit registry"
     with pytest.raises(UndefinedUnitError, match=err_msg):
@@ -403,7 +407,7 @@ def test_convert_units_to_mtco2_equiv_fails_with_unknown_units(check_aggregate_d
     limited_check_agg = check_aggregate_df.filter(
         variable="Primary Energy*", keep=False
     ).data
-    limited_check_agg["unit"].iloc[0] = "Tt CO2"
+    limited_check_agg.loc[limited_check_agg.index[0], "unit"] = "Tt CO2"
     limited_check_agg = pyam.IamDataFrame(limited_check_agg)
     err_msg = re.escape(
         "Cannot convert from Tt CO2 (cleaned is: Tt CO2) to Mt CO2-equiv/yr (cleaned is: Mt CO2/yr)"
@@ -420,7 +424,7 @@ def test_convert_units_to_mtco2_equiv_fails_with_bad_units(check_aggregate_df):
     limited_check_agg = check_aggregate_df.filter(
         variable="Primary Energy*", keep=False
     ).data
-    limited_check_agg["unit"].iloc[0] = "bad unit"
+    limited_check_agg.loc[limited_check_agg.index[0], "unit"] = "bad unit"
     limited_check_agg = pyam.IamDataFrame(limited_check_agg)
     err_msg = "'bad' is not defined in the unit registry"
     with pytest.raises(UndefinedUnitError, match=err_msg):
@@ -533,7 +537,7 @@ def test_get_files_and_use_them():
         pytest.skip("Could not connect to the IIASA database: {}".format(e))
 
 
-def test__construct_consistent_values():
+def test_construct_consistent_values():
     test_db_co2 = convert_units_to_MtCO2_equiv(test_db)
     aggregate_name = "agg"
     assert aggregate_name not in test_db_co2.variable
@@ -555,7 +559,7 @@ def test__construct_consistent_values():
     )
 
 
-def test__construct_consistent_values_with_equiv():
+def test_construct_consistent_values_with_equiv():
     test_db_co2 = convert_units_to_MtCO2_equiv(test_db).data
     test_db_co2.loc[0:1, "unit"] = "Mt CO2/yr"
     test_db_co2 = pyam.IamDataFrame(test_db_co2)

@@ -303,8 +303,8 @@ class TestDatabaseCruncherRMSClosest(_DataBaseCruncherTester):
         self, bad_df, test_downscale_df
     ):
         odd_times = bad_df.copy().data
-        odd_times["scenario"].iloc[0] = "scen_d"
-        odd_times["model"].iloc[0] = "model_b"
+        odd_times.at[odd_times.index[0], "scenario"] = "scen_d"
+        odd_times.at[odd_times.index[0], "model"] = "model_b"
         tcruncher = self.tclass(IamDataFrame(odd_times))
 
         filler = tcruncher.derive_relationship(

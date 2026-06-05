@@ -175,9 +175,11 @@ def find_matching_scenarios(
                     variable_follower, leader, wide_db, time_col
                 )
                 for row in to_compare_db.iterrows():
+                    # use .at on the series to avoid chained-indexing patterns
+                    series = row[1]
                     squared_dif += (
-                        row[1][variable_follower]
-                        - all_interps[row[1][time_col]](row[1][leader])
+                        series.at[variable_follower]
+                        - all_interps[series.at[time_col]](series.at[leader])
                     ) ** 2
             scen_model_rating[model, scenario] = squared_dif
     ordered_scen = sorted(scen_model_rating.items(), key=lambda item: item[1])

@@ -396,7 +396,7 @@ class TestDatabaseCruncherExtendLatestTimeQuantile:
         )
         # Adjust the data to have a lowest value well below the normal range
         to_infill = to_infill.data
-        to_infill.value.iloc[0] = -100
+        to_infill.at[to_infill.index[0], "value"] = -100
         to_infill = IamDataFrame(to_infill)
 
         variable = "Emissions|CO2"

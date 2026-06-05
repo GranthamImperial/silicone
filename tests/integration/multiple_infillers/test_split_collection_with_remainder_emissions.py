@@ -293,7 +293,7 @@ class TestSplitCollectionWithRemainderEmissions:
         remainder = "Emissions|CO2"
         # Make the test data variables appropriate
         test_db = test_db.data
-        test_db["variable"].iloc[0:2] = aggregate
+        test_db.loc[test_db.index[0:2], "variable"] = aggregate
         test_db["unit"] = "Mt CO2-equiv/yr"
         test_db = pyam.IamDataFrame(test_db)
         # We remove the extra column from the larger_df as it's not found in test_df

@@ -139,19 +139,19 @@ class TimeDepRatio(_DatabaseCruncher):
                 warnings.simplefilter("ignore")
                 for year in all_times:
                     pos_inds = data_leader[year].values > 0
-                    scaling["pos"][year] = np.nanmean(
+                    scaling.loc[year, "pos"] = np.nanmean(
                         data_follower[year].iloc[pos_inds].values
                     ) / np.nanmean(data_leader[year].iloc[pos_inds].values)
-                    scaling["neg"][year] = np.nanmean(
+                    scaling.loc[year, "neg"] = np.nanmean(
                         data_follower[year].iloc[~pos_inds].values
                     ) / np.nanmean(data_leader[year].iloc[~pos_inds].values)
         else:
             # The tuple is the same in both cases
             for year in all_times:
-                scaling["pos"][year] = np.mean(data_follower[year].values) / np.mean(
-                    data_leader[year].values
-                )
-            scaling["neg"] = scaling["pos"]
+                scaling.loc[year, "pos"] = np.mean(
+                    data_follower[year].values
+                ) / np.mean(data_leader[year].values)
+            scaling["neg"] = scaling["pos"].values.copy()
 
         def filler(in_iamdf):
             """
@@ -203,28 +203,21 @@ class TimeDepRatio(_DatabaseCruncher):
                     "the lead gas ({})".format(variable_leaders[0])
                 )
                 raise ValueError(error_msg)
-            output_ts = lead_var.timeseries()
+            output_ts = lead_var.timeseries().copy()
 
             for year in times_needed:
-                if (
-                    scaling.loc[year][
-                        output_ts[year].map(lambda x: "neg" if x < 0 else "pos")
-                    ]
-                    .isnull()
-                    .values.any()
-                ):
+                # create a series of labels ('pos'/'neg') for each value
+                sign_labels = output_ts[year].map(lambda x: "neg" if x < 0 else "pos")
+                # map to scaling values per element to avoid chained indexing
+                mapped_scaling = sign_labels.map(lambda lbl: scaling.loc[year, lbl])
+                if mapped_scaling.isnull().any():
                     raise ValueError(
                         "Attempt to infill {} data using the time_dep_ratio cruncher "
                         "where the infillee data has a sign not seen in the infiller "
                         "database for year "
                         "{}.".format(variable_leaders, year)
                     )
-                output_ts[year] = (
-                    output_ts[year].values
-                    * scaling.loc[year][
-                        output_ts[year].map(lambda x: "pos" if x > 0 else "neg")
-                    ].values
-                )
+                output_ts[year] = output_ts[year].values * mapped_scaling.values
             output_ts.reset_index(inplace=True)
             output_ts["variable"] = variable_follower
             output_ts["unit"] = data_follower_unit

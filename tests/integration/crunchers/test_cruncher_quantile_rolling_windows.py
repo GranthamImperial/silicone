@@ -267,8 +267,8 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
                 columns=_msrvu + [time],
             )
         )
-        test_db.data["value"][test_db.data["value"] > 50] = (
-            test_db.data["value"][test_db.data["value"] > 50] / 100
+        test_db.data.loc[test_db.data["value"] > 50, "value"] = (
+            test_db.data.loc[test_db.data["value"] > 50, "value"] / 100
         )
         if test_db.time_col == "year":
             test_db.filter(year=int(time), inplace=True)
@@ -299,7 +299,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
         same_db.append(range_db, inplace=True)
         nearly_same_db = same_db.copy().data
         # We change the value of one point on the nearly_same and remove it on the same
-        nearly_same_db["value"].iloc[1] = 0
+        nearly_same_db.at[nearly_same_db.index[1], "value"] = 0
         same_db = IamDataFrame(same_db)
         same_db.filter(scenario="0", keep=False, inplace=True)
         nearly_same_db = IamDataFrame(nearly_same_db)
@@ -389,7 +389,7 @@ class TestDatabaseCruncherRollingWindows(_DataBaseCruncherTester):
             filler(test_downscale_df)
         assert len(caplog.record_tuples) == 0
         test_downscale_df = test_downscale_df.data
-        test_downscale_df["value"].iloc[0] = -1
+        test_downscale_df.at[test_downscale_df.index[0], "value"] = -1
         test_downscale_df = IamDataFrame(test_downscale_df)
         with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
             filler(test_downscale_df)

@@ -205,7 +205,7 @@ class TestDatabaseCruncherScenarioAndModelSpecificInterpolate(_DataBaseCruncherT
         to_infill = test_db.filter(
             **{test_db.time_col: large_db[large_db.time_col][0]}
         ).data
-        to_infill["value"].iloc[-1] = 3.7
+        to_infill.at[to_infill.index[-1], "value"] = 3.7
         to_infill = IamDataFrame(to_infill)
         lead = ["Emissions|CO2"]
         follow = "Emissions|CH4"

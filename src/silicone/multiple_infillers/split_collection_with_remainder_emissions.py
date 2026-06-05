@@ -82,7 +82,7 @@ class SplitCollectionWithRemainderEmissions:
             assert (
                 remainder in all_units["variable"].values
             ), "No remainder data in database."
-        desired_unit = all_units["unit"][all_units["variable"] == aggregate]
+        desired_unit = all_units.loc[all_units["variable"] == aggregate, "unit"]
         assert len(desired_unit) == 1, "Multiple units for the aggregate variable"
         desired_unit = desired_unit.iloc[0]
         desired_unit_eqiv = _remove_equivs(desired_unit)
