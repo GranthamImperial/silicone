@@ -84,7 +84,7 @@ test-notebooks: $(VENV_DIR)  ## test the notebooks
 
 .PHONY: format-notebooks
 format-notebooks: $(VENV_DIR)  ## format the notebooks
-	$(VENV_DIR)/bin/black-nb $(NOTEBOOKS_DIR)
+	$(VENV_DIR)/bin/nbqa black $(NOTEBOOKS_DIR)
 
 .PHONY: docs
 docs: $(VENV_DIR)  ## make docs
