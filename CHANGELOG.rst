@@ -4,7 +4,8 @@ Changelog
 main
 ----
 
-- - (`#156 <https://github.com/GranthamImperial/silicone/pull/156>`_) Fix CI
+- (`#157 <https://github.com/GranthamImperial/silicone/pull/155>`_) Reduce SettingWithCopyWarning messages and added Philip to the author list.
+- (`#156 <https://github.com/GranthamImperial/silicone/pull/156>`_) Fix CI
 
 
 

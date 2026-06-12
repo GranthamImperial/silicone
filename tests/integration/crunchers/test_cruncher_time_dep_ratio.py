@@ -265,7 +265,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
     ):
         leader = ["Emissions|HFC|C2F6"]
         equal_df = unequal_df.filter(model="model_a").data
-        equal_df["value"].iloc[0] = np.nan
+        equal_df.at[equal_df.index[0], "value"] = np.nan
         equal_df = IamDataFrame(equal_df)
         tcruncher = self.tclass(equal_df)
         test_downscale_df = self._adjust_time_style_to_match(
@@ -310,7 +310,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
         # Otherwise, the ratio is -1 : 1.
         leader = ["Emissions|HFC|C2F6"]
         equal_df = unequal_df.filter(scenario="scen_a").data
-        equal_df["value"].iloc[0] = -1
+        equal_df.at[equal_df.index[0], "value"] = -1
         equal_df = IamDataFrame(equal_df)
         tcruncher = self.tclass(equal_df)
         test_downscale_df = self._adjust_time_style_to_match(
@@ -404,7 +404,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
             .filter(year=[2010, 2015])
             .data
         )
-        test_downscale_df["unit"].iloc[0] = "bad units"
+        test_downscale_df.at[test_downscale_df.index[0], "unit"] = "bad units"
         test_downscale_df = IamDataFrame(test_downscale_df)
         with pytest.raises(
             AssertionError, match="There are multiple units for the lead variable."
@@ -413,8 +413,13 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
 
     @pytest.mark.parametrize("consistent_cases", [True, False])
     def test_multiple_units_breaks_infiller_follower(self, test_db, consistent_cases):
+        time_col = test_db.time_col
         test_db = test_db.data
-        test_db["unit"].iloc[2] = "bad units"
+        follower_mask = (
+            (test_db["variable"] == "Emissions|HFC|C5F12")
+            & (test_db[time_col] == test_db[time_col].iloc[0])
+        )
+        test_db.loc[follower_mask, "unit"] = "bad units"
         test_db = IamDataFrame(test_db)
         if consistent_cases:
             error_str = (
@@ -434,7 +439,7 @@ class TestDatabaseCruncherTimeDepRatio(_DataBaseCruncherTester):
     @pytest.mark.parametrize("consistent_cases", [True, False])
     def test_multiple_units_breaks_infiller_leader(self, test_db, consistent_cases):
         test_db = test_db.data
-        test_db["unit"].iloc[0] = "bad units"
+        test_db.at[test_db.index[0], "unit"] = "bad units"
         test_db = IamDataFrame(test_db)
         if consistent_cases:
             error_str = (

@@ -17,11 +17,7 @@ class TimeDepQuantileRollingWindows(_DatabaseCruncher):
     """
 
     def derive_relationship(
-        self,
-        variable_follower,
-        variable_leaders,
-        time_quantile_dict,
-        **kwargs,
+        self, variable_follower, variable_leaders, time_quantile_dict, **kwargs,
     ):
         """
         Derive the relationship between two variables from the database.

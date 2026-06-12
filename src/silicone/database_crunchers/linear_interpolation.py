@@ -39,9 +39,7 @@ class LinearInterpolation(Interpolation):
         super().__init__(db)
 
     def derive_relationship(
-        self,
-        variable_follower,
-        variable_leaders,
+        self, variable_follower, variable_leaders,
     ):
         """
         Derive the relationship between two variables from the database.

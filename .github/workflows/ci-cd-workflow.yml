@@ -23,7 +23,7 @@ jobs:
       # - `bandit -c .bandit.yml -r src`
       # - `flake8 src tests setup.py` and `pylint src`
       run: |
-        black-nb --check notebooks
+        nbqa black --check notebooks
         black --check src tests setup.py --exclude silicone/_version.py
         isort --check-only --quiet --recursive src tests setup.py
     - name: Build docs

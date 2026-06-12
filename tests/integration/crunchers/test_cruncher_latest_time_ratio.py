@@ -211,7 +211,7 @@ class TestDatabaseCruncherLatestTimeRatio(_DataBaseCruncherTester):
             filler(test_downscale_df)
         assert len(caplog.record_tuples) == 0
         test_downscale_df = test_downscale_df.data
-        test_downscale_df["value"].iloc[0] = -1
+        test_downscale_df.at[test_downscale_df.index[0], "value"] = -1
         test_downscale_df = IamDataFrame(test_downscale_df)
         with caplog.at_level(logging.INFO, logger="silicone.crunchers"):
             filler(test_downscale_df)
